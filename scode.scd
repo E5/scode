@@ -20,6 +20,7 @@ var tagList, titleList, addTag, addSnippet, snippet, appliedTags;
 
 k= ();
 k.tags= [\gui, \synthdef, \control];
+k.snippets= [];
 
 w= Window("scode", Rect(318, 325, 750, 560)).front;
 w.addFlowLayout(10@10, 10@10);
@@ -60,15 +61,14 @@ addSnippet= SmoothButton(w, 20@20)
 			"Untitled Snippet", // default
 			"Please enter your snippet title", // question
 			{ |newSnippetTitle| // action
+				k.snippets= k.snippets.add(()); // add a new snippet Event
+				x= k.snippets.size; // get the new snippet array size
+				k.snippets[x-1].title= newSnippetTitle; // store the title
+				titleList.items= titleList.items.add(k.snippets[x-1].title);
+				snippet.enabled_(true); // enable the text editor
+				
 			}
 		);
-//		x = SCModalSheet(w, 380@70);
-//		SCButton(x, Rect(20,20,340,30))
-//			.states_([
-//				["Dismiss me", Color.black, Color.red]
-//			])
-//			.onClose_({"Dismissed!".postln})
-//			.action_({ x.close });
 	}
 	.focusColor_(Color.clear)
 	.radius_(0)
