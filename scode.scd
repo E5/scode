@@ -37,10 +37,14 @@ addTag= SmoothButton(w, 20@20)
 	.states_([
 		[ '+', Color.white, Color.black.alpha_(0.25) ] ])
 	.action_{|me|
-		SCRequestString( "new tag", "please enter your new tag", { |newTag|
-					k.tags= k.tags.add(newTag.asSymbol);
-					tagList.items_(["= ALL ="]++k.tags);
-				} )
+		SCRequestString(
+			"new tag", // default
+			"please enter your new tag", // question
+			{ |newTag| // action
+				k.tags= k.tags.add(newTag.asSymbol);
+				tagList.items_(["= ALL ="]++k.tags);
+			}
+		);
 	}
 	.focusColor_(Color.clear)
 	.radius_(0)
@@ -51,7 +55,21 @@ w.view.decorator.shift(110, 0);
 addSnippet= SmoothButton(w, 20@20)
 	.states_([
 		[ '+', Color.white, Color.black.alpha_(0.25) ] ])
-	.action_{|me| }
+	.action_{|me|
+		SCRequestString(
+			"Untitled Snippet", // default
+			"Please enter your snippet title", // question
+			{ |newSnippetTitle| // action
+			}
+		);
+//		x = SCModalSheet(w, 380@70);
+//		SCButton(x, Rect(20,20,340,30))
+//			.states_([
+//				["Dismiss me", Color.black, Color.red]
+//			])
+//			.onClose_({"Dismissed!".postln})
+//			.action_({ x.close });
+	}
 	.focusColor_(Color.clear)
 	.radius_(0)
 	.border_(1);
