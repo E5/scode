@@ -16,18 +16,29 @@ to a snippet.
 
 *******************************************************************************/
 
-var tagList, titleList, addTag, addSnippet, snippet, appliedTags;
+var tagList, titleList, addTag, deleteTag, addSnippet, snippet, appliedTags;
 
 k= ();
-k.tags= [\gui, \synthdef, \control];
+
+k.tags= Set[\gui, \synthdef, \control];
 k.snippets= [];
+k.currentTag= 0;
 
 w= Window("scode", Rect(318, 325, 750, 560)).front;
 w.addFlowLayout(10@10, 10@10);
 
 tagList= ListView(w, 130@220)
-	.action_{|me| }
-	.items_(["= ALL ="]++k.tags);
+	.action_{|me|
+		k.currentTag= me.value;
+		switch(me.value,
+			0, {deleteTag.enabled= false;},
+			1, {deleteTag.enabled= true;},
+			2, {deleteTag.enabled= true;},
+			3, {deleteTag.enabled= true;}
+		
+		);
+	}
+	.items_(["= ALL ="] ++ k.tags.asArray.sort);
 
 titleList= ListView(w, 590@220)
 	.action_{|me| };
@@ -43,7 +54,7 @@ addTag= SmoothButton(w, 20@20)
 			"please enter your new tag", // question
 			{ |newTag| // action
 				k.tags= k.tags.add(newTag.asSymbol);
-				tagList.items_(["= ALL ="]++k.tags);
+				tagList.items_(["= ALL ="] ++ k.tags.asArray.sort);
 			}
 		);
 	}
@@ -51,7 +62,23 @@ addTag= SmoothButton(w, 20@20)
 	.radius_(0)
 	.border_(1);
 
-w.view.decorator.shift(110, 0);
+deleteTag= SmoothButton(w, 20@20)
+	.states_([
+		[ '-', Color.white, Color.black.alpha_(0.25) ] ])
+	.action_{|me|
+		SCAlert(
+			 "Are you sure?\nThis will remove this tag from all snippets",
+			  [ "cancel", "ok" ],
+			  [{0.postln;}, {1.postln;}],
+			  background: Color.clear
+		);
+	}
+	.focusColor_(Color.clear)
+	.radius_(0)
+	.border_(1)
+	.enabled_(false);
+
+w.view.decorator.shift(80, 0);
 
 addSnippet= SmoothButton(w, 20@20)
 	.states_([
@@ -83,8 +110,8 @@ w.view.decorator.nextLine;
 appliedTags= Array.fill(k.tags.size, {|i|
 	SmoothButton(w, 60@20)
 		.states_([
-			[ k.tags[i].asString, Color.black, Color.clear ], 
-			[ k.tags[i].asString, Color.white, Color.black.alpha_(0.25) ] ])
+			[ k.tags.asArray[i].asString, Color.black, Color.clear ], 
+			[ k.tags.asArray[i].asString, Color.white, Color.black.alpha_(0.25) ] ])
 		.action_{|me| }
 		.focusColor_(Color.clear)
 		.border_(1);
