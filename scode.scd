@@ -16,20 +16,23 @@ to a snippet.
 
 *******************************************************************************/
 
-var tagList, titleList, addTag, deleteTag, addSnippet, snippet, appliedTags;
+var tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
+	currentTag, currentSnippet;
 
 k= ();
 
 k.tags= Set[\gui, \synthdef, \control];
 k.snippets= [];
-k.currentTag= 0;
+//k.currentTag= 0;
+
+currentTag= 0;
 
 w= Window("scode", Rect(318, 325, 750, 560)).front;
 w.addFlowLayout(10@10, 10@10);
 
 tagList= ListView(w, 130@220)
 	.action_{|me|
-		k.currentTag= me.value;
+		currentTag= me.value;
 		switch(me.value,
 			0, {deleteTag.enabled= false;},
 			1, {deleteTag.enabled= true;},
@@ -40,7 +43,7 @@ tagList= ListView(w, 130@220)
 	}
 	.items_(["= ALL ="] ++ k.tags.asArray.sort);
 
-titleList= ListView(w, 590@220)
+snippetList= ListView(w, 590@220)
 	.action_{|me| };
 
 w.view.decorator.nextLine;
@@ -88,11 +91,20 @@ addSnippet= SmoothButton(w, 20@20)
 			"Untitled Snippet", // default
 			"Please enter your snippet title", // question
 			{ |newSnippetTitle| // action
-				k.snippets= k.snippets.add(()); // add a new snippet Event
-				x= k.snippets.size; // get the new snippet array size
-				k.snippets[x-1].title= newSnippetTitle; // store the title
-				titleList.items= titleList.items.add(k.snippets[x-1].title);
-				snippet.enabled_(true); // enable the text editor
+				// add a new snippet Event
+				k.snippets= k.snippets.add(());
+				// get the new snippet array size
+				x= k.snippets.size;
+				currentSnippet= x-1;
+				// store the title
+				k.snippets[currentSnippet].title= newSnippetTitle;
+				// update the snippetList
+				snippetList.items= snippetList.items.add(
+					k.snippets[currentSnippet].title);
+				k.snippets[currentSnippet].snippet= "yes";
+				snippet.string_(k.snippets[currentSnippet].snippet);
+				// enable the text editor
+				snippet.enabled_(true);
 				
 			}
 		);
@@ -116,5 +128,12 @@ appliedTags= Array.fill(k.tags.size, {|i|
 		.focusColor_(Color.clear)
 		.border_(1);
 });
+
+	SmoothButton(w, 60@20)
+		.states_([
+			[ "Add...", Color.black, Color.clear ] ])
+		.action_{|me| }
+		.focusColor_(Color.clear)
+		.border_(1);
 
 )
