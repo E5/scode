@@ -16,14 +16,13 @@ to a snippet.
 
 *******************************************************************************/
 
-var tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
-	currentTag, currentSnippet;
+var	tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
+	currentTag, currentSnippet, updateTagButtons, snippetAddTag;
 
 k= ();
 
 k.tags= Set[\gui, \synthdef, \control];
 k.snippets= [];
-//k.currentTag= 0;
 
 currentTag= 0;
 
@@ -44,7 +43,9 @@ tagList= ListView(w, 130@220)
 	.items_(["= ALL ="] ++ k.tags.asArray.sort);
 
 snippetList= ListView(w, 590@220)
-	.action_{|me| };
+	.action_{|me|
+		currentSnippet= me.value;
+};
 
 w.view.decorator.nextLine;
 
@@ -98,13 +99,20 @@ addSnippet= SmoothButton(w, 20@20)
 				currentSnippet= x-1;
 				// store the title
 				k.snippets[currentSnippet].title= newSnippetTitle;
+				// make space for Tags
+				k.snippets[currentSnippet].tags= Set[];
 				// update the snippetList
 				snippetList.items= snippetList.items.add(
 					k.snippets[currentSnippet].title);
-				k.snippets[currentSnippet].snippet= "yes";
-				snippet.string_(k.snippets[currentSnippet].snippet);
+				snippet.string_("empty snippet");
+				snippet.font_(Font("HelveticaNeue-Italic", 14));
+				snippet.stringColor_(Color.grey);
+//				k.snippets[currentSnippet].snippet= "empty snippet";
+//				snippet.string_(k.snippets[currentSnippet].snippet);
 				// enable the text editor
 				snippet.enabled_(true);
+				// enable the snippet's Add Tag button
+				snippetAddTag.enabled_(true);
 				
 			}
 		);
@@ -114,26 +122,58 @@ addSnippet= SmoothButton(w, 20@20)
 	.border_(1);
 
 snippet= TextView(w, 730@250)
-	.action_{|me| }
+	.action_{|me|
+//		me.value.postln;
+	}
+	.hasVerticalScroller_(true)
+	.hasHorizontalScroller_(true)
+	.autohidesScrollers_(true)
 	.enabled_(false);
+
+//snippet.mouseUpAction_{|it, x, y, modifiers, buttonNumber, clickCount, pos|
+//	[t.string, x, y, modifiers, buttonNumber, clickCount, pos].postln;
+//};
 
 w.view.decorator.nextLine;
 
-appliedTags= Array.fill(k.tags.size, {|i|
-	SmoothButton(w, 60@20)
-		.states_([
-			[ k.tags.asArray[i].asString, Color.black, Color.clear ], 
-			[ k.tags.asArray[i].asString, Color.white, Color.black.alpha_(0.25) ] ])
-		.action_{|me| }
-		.focusColor_(Color.clear)
-		.border_(1);
-});
+snippetAddTag= SmoothButton(w, 60@20)
+	.states_([
+		[ "Add...", Color.black, Color.clear ] ])
+	.action_{|me|
+		SCRequestString(
+			"new tag", // default
+			"please enter your new tag", // question
+			{ |newTag| // action
+				k.snippets[currentSnippet].tags.add(newTag.asSymbol);
+				updateTagButtons.value(currentSnippet);
+			}
+		);
+	}
+	.focusColor_(Color.clear)
+	.border_(1)
+	.enabled_(false);
 
-	SmoothButton(w, 60@20)
-		.states_([
-			[ "Add...", Color.black, Color.clear ] ])
-		.action_{|me| }
-		.focusColor_(Color.clear)
-		.border_(1);
+updateTagButtons= {|snippet|
+	// remove existing buttons
+	appliedTags.do{|item, i|
+		item.remove;
+		w.refresh;
+	};
+	
+	w.view.decorator.reset.shift(70, 520);
+	
+	// collect the current snippet's tags
+	// build the tag buttons array
+	appliedTags= Array.fill(k.snippets[snippet].tags.size, {|i|
+		SmoothButton(w, 60@20)
+			.states_([
+				[ k.snippets[snippet].tags.asArray[i].asString, Color.black, Color.clear ], 
+				[ k.snippets[snippet].tags.asArray[i].asString, Color.white, Color.black.alpha_(0.25) ] ])
+			.action_{|me| }
+			.focusColor_(Color.clear)
+			.border_(1);
+	});
+	
+};
 
 )
