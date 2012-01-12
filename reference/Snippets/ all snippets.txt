@@ -1,0 +1,6902 @@
+Playing Random Position Of Buffers
+============================================================
+Language: C
+Licence: Other
+Tags: buffer,patch,control
+
+/*
+Here is a skeleton of something I made to do just that.
+
+You must load the sample with the gui before booting the synth.
+
+This design is easy to expand on.
+
+Hope it's good for you
+
+P
+*/
+
+(var win , but ; //boot gui for sample loading
+
+win = SCWindow.new("sample",Rect(200,200,200,200));
+but = SCButton(win,Rect(0,0,100,40));
+but.states = [["file 1"]];
+but.action = {  File.openDialog("", {arg path1; ~file1 = path1;
+                                           ~s1=Buffer.read(s,~file1); 
+                                           ~s11=BBCutBuffer(~file1)})};
+                                           win.front)
+( SynthDef ( "buf" , {
+|at,dec,pos|
+var ampEnv,buf;
+
+  ampEnv = EnvGen.ar(Env.perc(at,dec,1,0),1,doneAction:2);
+
+  buf = PlayBuf.ar(1,~s1.bufnum,1,1,pos).clip(0.5,-0.5);
+
+ Out.ar(0,Pan2.ar(buf,0,ampEnv)).clip(0.8,-0.8);
+
+   }).send(s))
+
+   (Tdef(\bufplay , { inf.do {
+
+   ~samplePosition = ~s1.numFrames.rand;
+
+     Synth("buf",[          
+                                         \sample,~s1.bufnum,                                                   
+                                         \pos,~s1.numFrames.rand,
+                                         \at,0.01,
+                                         \dec,0.5,
+
+     ]);0.5.wait}}).play)
+
+
+
+
+
+A Bass Sound Starter
+============================================================
+Language: C
+Licence: Other
+Tags: patch,synthdef
+
+(
+// A Bass sound starter
+{
+	var freq=100;
+//	var freq=SampleRate.ir/512;
+	var saw = LFSaw.ar(freq).range(-1,1);
+	var sig = saw.wrap(0,1) * 2 - 1;
+	sig = sqrt(1 - sig.squared) * saw.sign;
+	sig= MoogFF.ar(
+		sig,
+		(SinOsc.kr(0.2) + SinOsc.kr(3.3)).range(80, 10000),
+		0.5
+	);
+	sig !2
+}.play;
+)
+
+
+
+Using BBCut and a Simple Drum Machine
+============================================================
+Language: C
+Licence: Other
+Tags: patch,pattern
+
+/*
+Using BBCut and a Simple Drum Machine
+
+I've had this code for ages but I forgot about it. 
+It's my simple drum machine again, but this time put through BBCut, the beat slicing library. I've got to admit, it doesn't sound too good yet, but the principle's there. 
+
+Also it's yet another experiment with formatting, I'll find a something that works one day.
+*/
+
+s.boot
+
+(
+SynthDef(\drums, {|out = 0, bassLevel = 0, 
+snareLevel = 0, hatLevel = 0, tomLevel = 0,
+ pan1 = 0, pan2 = 0, pan3 = 0, pan4 = 0|
+
+    var  env1, env2, env3, bass, snare, hat, tom, bassOut, snareOut,
+    hatOut, tomOut, mixer; 
+    env1 = EnvGen.kr(Env.perc(0.001, 0.2, 1, -4), 1, doneAction:2);
+    env2 = EnvGen.kr(Env.perc(0.002, 0.3, 1, -2), 1, doneAction:2);
+    env3 = EnvGen.kr(Env.perc(0.001, 0.1, 1, -5), 1, doneAction:2);    
+    bass = SinOsc.ar(80) + Crackle.ar(1, 0.5);
+    bassOut = Pan2.ar(bass*env1, pan1, bassLevel);
+    
+    snare = SinOsc.ar(40) - WhiteNoise.ar(0.5, 0.5);
+    snareOut = Pan2.ar(snare*env1, pan2, snareLevel);    
+    
+    hat = Klank.ar(`[ [ 6563, 9875 ],
+               [ 0.61, 0.55046827363918 ],
+               [ 0.0024, 0.0036 ] ], PinkNoise.ar(1));    
+    hatOut = Pan2.ar(hat*env2, pan2, hatLevel);    
+    
+    tom =  SinOsc.ar(440); 
+    tomOut = Pan2.ar(tom*env3, pan4, tomLevel);    
+    
+    mixer = (bassOut + snareOut) + (hatOut + tomOut); 
+    
+    
+    Out.ar(out, mixer);
+    
+    }).store
+    
+    )
+    
+TempoClock.default.tempo_(3);
+
+(
+var buf, clock, bbcutgroup;
+~synthbus = Bus.audio(s,2);
+~synthgroup= Group.head(Node.basicNew(s,1));
+
+    a = Pseq  ([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+    b = Pseq  ([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0]);
+    c = Pseq  ([0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0]);
+    d = Pseq  ([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1]);    
+
+p = Pbind(
+       \instrument, \drums,
+       \dur, 0.2,
+       \bassLevel,  Pseq ([a], inf), 
+       \snareLevel, Pseq ([b], inf),
+       \hatLevel,   Pseq ([c], inf),       
+       \tomLevel,   Pseq ([d], inf),
+       \group, ~synthgroup,
+       \out, ~synthbus
+).play;
+
+clock= ExternalClock(TempoClock.default);
+
+bbcutgroup= Group.after(~synthgroup);
+
+Routine.run({
+buf= BBCutBuffer.alloc(s,44100,2);
+s.sync; //this forces a wait for the Buffer to be allocated
+BBCut2(CutGroup(CutStream1(~synthbus.index, buf, 0.75, 0.01, 0.5,
+-4),bbcutgroup, numChannels:2), SQPusher1.new).play(clock);
+});
+clock.play;
+)
+~synthbus.free;
+
+/*
+The code is not to hard to follow I hope, it's adapted from the BBcut help file with help from Dan once again. The only tough bits are the groups and nodes stuff, which to be honest I don't fully understand myself. Maybe I'll post about them in more detail if I ever fathom it.
+*/
+
+
+
+SOS Drum SynthDefs
+============================================================
+Language: C
+Licence: Other
+Tags: synthdef
+
+// SOS Drum SynthDefs
+
+// Renick Bell	– drum synthdefs enclosed
+
+// Here are some synthdefs I made based on Gordon Reid's Synth Secrets 
+// series in Sound On Sound: a kick, a snare, a cymbal, and a tom. The 
+// cymbal isn't quite what I'd like, but the snare sounds decent, I 
+// think. Suggestions for improvement are welcome. 
+
+// Renick 
+
+///////////////////////////////////////////////////////////////////// 
+//SOSdrums 
+( 
+SynthDef(\SOSkick, 
+// recipe basically from Gordon Reid 
+// http://www.soundonsound.com/sos/jan02/articles/synthsecrets0102.asp
+// programmed by Renick Bell, renick_at_gmail.com 
+// increase mod_freq and mod_index for interesting electronic percussion 
+        { arg out = 0, freq = 50, mod_freq = 5, mod_index = 5, 
+        decay = 0.4, amp = 0.8, 
+        beater_noise_level = 0.025; 
+        var pitch_contour, drum_osc, drum_lpf, drum_env; 
+        var beater_source, beater_hpf, beater_lpf, lpf_cutoff_contour, beater_env; 
+        var kick_mix; 
+        pitch_contour = Line.kr(freq*2, freq, 0.02); 
+        drum_osc = PMOsc.ar(	pitch_contour, 
+                                mod_freq, 
+                                mod_index/1.3, 
+                                mul: 1, 
+                                add: 0); 
+        drum_lpf = LPF.ar(in: drum_osc, freq: 1000, mul: 1, add: 0); 
+        drum_env = drum_lpf * EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2); 
+        beater_source = WhiteNoise.ar(beater_noise_level); 
+        beater_hpf = HPF.ar(in: beater_source, freq: 500, mul: 1, add: 0); 
+        lpf_cutoff_contour = Line.kr(6000, 500, 0.03); 
+        beater_lpf = LPF.ar(in: beater_hpf, freq: lpf_cutoff_contour, mul: 1, add: 0); 
+        beater_env = beater_lpf * EnvGen.ar(Env.perc, 1.0, doneAction: 2); 
+        kick_mix = Mix.new([drum_env, beater_env]) * 2 * amp; 
+        Out.ar(out, [kick_mix, kick_mix]) 
+        } 
+        ).store 
+) 
+( 
+SynthDef(\SOSsnare, 
+// recipe basically from Gordon Reid 
+// http://www.soundonsound.com/sos/Mar02/articles/synthsecrets0302.asp
+// programmed by Renick Bell, renick_at_gmail.com 
+        {arg out = 0, decay = 0.1, drum_mode_level = 0.25, 
+        snare_level = 40, snare_tightness = 1000, 
+        freq = 405, amp = 0.8; 
+        var drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc, drum_mode_mix, 
+drum_mode_env; 
+        var snare_noise, snare_brf_1, snare_brf_2, snare_brf_3, snare_brf_4, 
+snare_reson; 
+        var snare_env; 
+        var snare_drum_mix; 
+
+        drum_mode_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2); 
+        drum_mode_sin_1 = SinOsc.ar(freq*0.53, 0, drum_mode_env * 0.5); 
+        drum_mode_sin_2 = SinOsc.ar(freq, 0, drum_mode_env * 0.5); 
+        drum_mode_pmosc = PMOsc.ar(	Saw.ar(freq*0.85), 
+                                        184, 
+                                        0.5/1.3, 
+                                        mul: drum_mode_env*5, 
+                                        add: 0); 
+        drum_mode_mix = Mix.new([drum_mode_sin_1, drum_mode_sin_2, 
+drum_mode_pmosc]) * drum_mode_level; 
+
+// choose either noise source below 
+//	snare_noise = Crackle.ar(2.01, 1); 
+        snare_noise = LFNoise0.ar(20000, 0.1); 
+        snare_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2); 
+        snare_brf_1 = BRF.ar(in: snare_noise, freq: 8000, mul: 0.5, rq: 0.1); 
+        snare_brf_2 = BRF.ar(in: snare_brf_1, freq: 5000, mul: 0.5, rq: 0.1); 
+        snare_brf_3 = BRF.ar(in: snare_brf_2, freq: 3600, mul: 0.5, rq: 0.1); 
+        snare_brf_4 = BRF.ar(in: snare_brf_3, freq: 2000, mul: snare_env, rq: 0.0001); 
+        snare_reson = Resonz.ar(snare_brf_4, snare_tightness, mul: snare_level) ; 
+        snare_drum_mix = Mix.new([drum_mode_mix, snare_reson]) * 5 * amp; 
+        Out.ar(out, [snare_drum_mix, snare_drum_mix]) 
+        } 
+).store 
+) 
+
+( 
+SynthDef(\SOShats, 
+// recipe basically from Gordon Reid 
+// http://www.soundonsound.com/sos/Jun02/articles/synthsecrets0602.asp
+// programmed by Renick Bell, renick_at_gmail.com 
+        {arg out = 0, freq = 6000, dur = 0.1, amp = 0.8; 
+        var root_cymbal, root_cymbal_square, root_cymbal_pmosc; 
+        var initial_bpf_contour, initial_bpf, initial_env; 
+        var body_hpf, body_env; 
+        var cymbal_mix; 
+        
+        root_cymbal_square = Pulse.ar(freq, 0.5, mul: 1); 
+        root_cymbal_pmosc = PMOsc.ar(root_cymbal_square, 
+                                        [freq*1.34, freq*2.405, freq*3.09, freq*1.309], 
+                                        [310/1.3, 26/0.5, 11/3.4, 0.72772], 
+                                        mul: 1, 
+                                        add: 0); 
+        root_cymbal = Mix.new(root_cymbal_pmosc); 
+
+        initial_bpf_contour = Line.kr(15000, 9000, 0.1); 
+        initial_env = EnvGen.ar(Env.perc(0.005, 0.1), 1.0); 
+        initial_bpf = BPF.ar(root_cymbal, initial_bpf_contour, mul:initial_env); 
+        
+        body_env = EnvGen.ar(Env.perc(0.005, dur, 1, -2), 1.0, doneAction: 2); 
+        body_hpf = HPF.ar(in: root_cymbal, freq: Line.kr(9000, 12000, dur), 
+mul: body_env, add: 0); 
+
+        cymbal_mix = Mix.new([initial_bpf, body_hpf]) * amp; 
+        Out.ar(out, [cymbal_mix, cymbal_mix]) 
+        }).store 
+) 
+
+( 
+SynthDef(\SOStom, 
+// recipe basically from Gordon Reid 
+// http://www.soundonsound.com/sos/Mar02/articles/synthsecrets0302.asp
+// programmed by Renick Bell, renick_at_gmail.com 
+        {arg out = 0, decay = 0.4, drum_mode_level = 0.25, 
+        freq = 90, drum_timbre = 1.0, amp = 0.8; 
+        var drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc, drum_mode_mix, 
+drum_mode_env; 
+        var stick_noise, stick_env; 
+        var drum_reson, tom_mix; 
+
+        drum_mode_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2); 
+        drum_mode_sin_1 = SinOsc.ar(freq*0.8, 0, drum_mode_env * 0.5); 
+        drum_mode_sin_2 = SinOsc.ar(freq, 0, drum_mode_env * 0.5); 
+        drum_mode_pmosc = PMOsc.ar(	Saw.ar(freq*0.9), 
+                                                                freq*0.85, 
+                                                                drum_timbre/1.3, 
+                                                                mul: drum_mode_env*5, 
+                                                                add: 0); 
+        drum_mode_mix = Mix.new([drum_mode_sin_1, drum_mode_sin_2, 
+drum_mode_pmosc]) * drum_mode_level; 
+        
+        stick_noise = Crackle.ar(2.01, 1); 
+        stick_env = EnvGen.ar(Env.perc(0.005, 0.01), 1.0) * 3; 
+        
+        tom_mix = Mix.new([drum_mode_mix, stick_env]) * 2 * amp; 
+        Out.ar(out, [tom_mix, tom_mix]) 
+        } 
+).store 
+); 
+
+
+-- 
+Renick Bell 
+http://www.the3rd2nd.com
+_______________________________________________ 
+sc-users mailing list 
+sc-users@... 
+http://www.create.ucsb.edu/mailman/listinfo/sc-users
+
+
+
+
+
+
+Voicer and MIDI PB
+============================================================
+Language: C
+Licence: Other
+Tags: control,midi
+
+/*
+On May 26, 2008, at 1:38 PM, Dan Stowell wrote:
+BTW is there a way to get a Voicer to respond to pitch bends? I might
+just not have spotted it.
+
+The first example in VoicerMIDISocket help illustrates it.
+*/
+
+// First, the synthdef has to have an argument for pitch bend, given as a ratio where 1 is normal pitch, 0.5 is an octave lower etc.
+
+i = Instr([\test, \miditest], {
+	arg freq = 440, gate = 0, env, pb = 1, ffreq = 1000, rq = 1;
+	var out, amp;
+	amp = Latch.kr(gate, gate);	// velocity sensitivity
+	out = EnvGen.kr(env, gate, doneAction:2) *
+		RLPF.ar(Pulse.ar(freq * pb, 0.25, amp), ffreq, rq);
+	[out,out]
+}, [\freq, \amp, nil, nil, \freq, \rq]);
+
+v = Voicer(10, i, [\env, Env.adsr(0.01, 0.2, 0.75, 0.1), \rq, `0.2]);
+
+k = VoicerMIDISocket(0, v);
+k.addControl(1, \ffreq, 1000, \freq);   // filt. cutoff by mw
+
+// Then add a control to the socket using \pb it as the controller number. This is mapped to the pitch bend input and the number given as the "spec" to the addControl method is interpreted as the number of semitones up or down to bend.
+
+// the first \pb is the controller ID; the second \pb is the synthdef argument name
+// the synthdef argument can be called anything but you have to use \pb to identify the midi controller
+
+k.addControl(\pb, \pb, 1, 3);	// 3-semitone bend
+
+v.gui;	// the controllers show up in the window, w/ visual feedback when you move the wheels
+
+/*
+You might also have some fun with the miditest method for SynthDef and Instr, which creates global controls for synthdef arguments and then displays them all in a GUI. This is really useful for tuning parameters while playing notes on the keyboard.
+
+hjh
+*/
+
+
+
+Bypassing With JITLib
+============================================================
+Language: C
+Licence: Other
+Tags: jitlib
+
+/*
+Julian Rohrhuber
+SC-Users Dec 16, 2007
+*/
+
+~filt={Formlet.ar(~hat.ar,[1000,1002],0.3,0.2) }
+
+~filthat = { |mix= -1| XFade2.ar(~filt.ar, ~hat.ar, mix) }
+
+~filthat.play; // don't play ~filt or ~hat.
+
+// or e.g. make yourself a little convenience function:
+
+q = ();
+q.mix = {|q, in, func| XFade2.ar(in, func.(in), Control.names(\mix).kr(1)) };
+
+~filt={ q.mix(~hat.ar, { |in| Formlet.ar(in,[1000,1002],0.3,0.2) } }
+
+/*
+Hi everyone,
+
+I would like to know how it's possible to bypass filters under ProxySpace env.
+Here is an example, so that's easier to explain :
+*/
+
+~hat.ar(2);
+~hat.play;
+~hat.fadeTime=10;
+~hat=0;
+
+~hat={|t_trig=1| EnvGen.kr(Env.perc(0.02,0.01,2), t_trig *PinkNoise.ar(1!2)}
+
+(
+Tdef(\hat,
+   {|e|
+   e=Pseq([0.5,0.125,0.125,0.25],inf).asStream;
+   inf.do{
+   ~hat.set(\t_trig,1);
+   e.next.wait;
+}
+})
+)
+
+Tdef(\hat).play;
+
+~filt.ar(2);
+~filt.play;
+~filt.fadeTime=2;
+
+~filt={Formlet.ar(~hat.ar,[1000,1002],0.3,0.2)}
+~filt=0;
+
+/*
+I got a synth, called ~hat,  and I would like that, when I turn the filter on, I don't hear the plain ~hat anymore, but the filtered one only. I may had other questions, but I would like to solve this issue first ...
+
+Cheers
+
+Sylvain
+*/
+
+
+
+Startup File
+============================================================
+Language: C
+Licence: Other
+Tags: system,info
+
+/*************************************************************************************************/
+
+// listener stuff
+
+//the listener a.k.a. posting window - text and background colour
+//(the listener changes after opening a file ...)
+Document.listener.background_(Color.new255(50, 60, 70, 245));
+Document.listener.stringColor_(Color.new255(245, 255, 255, 145));
+//Document.listener.title="listener";
+//Document.listener.font_(Font("Monaco", 9), -1);
+//{Document.listener.bounds_(Rect(396, 41, 626, 481))}.defer(0.5);
+
+/*************************************************************************************************/
+
+// new document stuff
+
+//Document.initAction_({|doc|
+////	var selStart, selSize;
+//	
+//	Document.listener.background_(Color.new255(50, 60, 70, 245));
+//	Document.listener.stringColor_(Color.new255(245, 255, 255, 145));
+//	Document.listener.title="listener";
+//	// open docs in same position
+//	doc.bounds_(Rect(309, 116, 711, 630));
+//
+////	selStart= doc.selectionStart;
+////	selSize= doc.selectionSize;
+////	doc.selectRange(0, 0); // mm
+//
+//	// change font
+//
+////	doc.font_(Font("ProFont", 9), -1);
+////	doc.stringColor_(Color.new255(10, 10, 10));
+//
+//	// or use this line if only on new empty docs
+////	if(doc.string.size==0) {doc.font_(Font("ProFont", 9), -1)};
+//
+////	doc.syntaxColorize;
+////	doc.removeUndo;
+////	doc.selectRange(selStart, selSize);
+////	doc.background_(Color.new255(230, 230, 230/*, 255 245*/));
+//
+//});
+
+/*************************************************************************************************/
+
+// overload killer - posted to sc-users by Felix Sat, 18 Sep 2004
+
+// the only way it can get caught is if the cpu jumps so fast that 
+// the server never gets a chance to send out an osc status message. 
+// I find that above 60% is generally a problem, your mileage may vary.
+
+Updater(Server.default, {|server, what|
+	if(server.avgCPU > 70, { server.freeAll });
+});
+
+/**************************************************************************************************/
+
+// enable autocompletion for all new docs
+
+//Document.initAction_({ |doc|
+//	doc.autoComplete;
+//});
+//
+//// enable autocompletion for old docs, except the post window
+//
+//Document.allDocuments.do({ |doc|
+//	doc.isListener.not.if({ doc.autoComplete });
+//});
+
+/**************************************************************************************************/
+
+// use crucial server gui instead of regular server window for speed
+
+//f = MultiPageLayout("Servers", Rect(1, 1, 345, 77));
+//
+//[Server.local, Server.internal].do({|s|
+//	s.window.close;
+//	s.gui(f);
+//	f.view.decorator.nextLine;
+//});
+//
+//f.background_(Color(0.39, 0.39, 0.39, 0.78));
+//f.window.alpha_(0.9);
+//f.front;
+
+/*************************************************************************************************/
+
+// Save doc positions
+// posted by Julian Rohrhuber <rohrhuber@uni-hamburg.de>
+// to sc-users on 20 September 2005
+
+if(Archive.global.at(\docPositions).isNil){
+	Archive.global.put(\docPositions, IdentityDictionary.new);
+};
+
+
+Document.initAction_{|doc|
+	var arch, pos, cursor;
+	#pos, cursor = Archive.global.at(\docPositions).at(doc.path.asSymbol).asArray;
+
+	if(pos.notNil){{doc.bounds = pos}.defer(0.1)};
+	if(cursor.notNil and: { doc.path.endsWith(".sc").not }){{doc.selectRange(cursor)}.defer(0.1)};
+
+	doc.onClose_{|doc| if(doc.path.notNil) {
+		Archive.global.at(\docPositions).put(doc.path.asSymbol, [doc.bounds, doc.selectionStart])
+	}
+	}
+};
+
+/*************************************************************************************************/
+
+// set Server memory size
+
+s.options.memSize_(32768);
+
+/*************************************************************************************************/
+
+// Load a file to remind me what I'm MEANT to be doing
+
+//Document.open("/Volumes/Audio OS/Users/jimwhelan/Documents/SuperCollider/Must Do These.rtf");
+
+/*************************************************************************************************/
+
+// This is my Crucial stuff
+
+Instr.dir= "/Users/Shared/Documents/SuperCollider/jpw_instr";
+
+//Sample.soundFilePath = "/Applications/SC3/sounds/";
+//Sample.soundsDir = "/Applications/SC3/sounds/";
+
+/*************************************************************************************************/
+
+// Dewdrop & ChuckLib stuff
+
+//Server.set.do({ |srv| srv.addDependant(MixerChannel) });
+//Server.set.do({ |srv| srv.addDependant(MixerChannel) });
+//(AbstractChuckArray.directory ++ "startup*.rtf").loadPaths;
+
+/*************************************************************************************************/
+
+// backups every move you make
+AutoBackup.start;
+
+/*************************************************************************************************/
+
+// boot the local server
+Server.local.boot; 
+
+
+
+
+Wow
+============================================================
+Language: C
+Licence: Other
+Tags: patch
+
+// shortest pop.song, ever.
+
+// server samplerate should be 44100
+
+{Splay.ar(Ringz.ar(Impulse.ar([2, 1, 4], [0.1, 0.11, 0.12]), [0.1, 0.1, 0.5])) * EnvGen.kr(Env([1, 1, 0], [120, 10]), doneAction: 2)}.play
+
+/*
+cheers
+	Till
+*/
+
+
+
+Reverse Delay
+============================================================
+Language: C
+Licence: Other
+Tags: fx
+
+/*
+Posted by Dan Stowell
+SC-Users 10 Dec. 2007
+
+Hi -
+
+You might not need two separate buffers. Have you tried just using a
+single buffer? If I'm reading your code right, you should be able to
+get the same effect just by using one long buffer rather than two
+shorter ones.
+
+The "read head" will be scanning backwards and at the point where it
+crosses over the "write head" there will typically be a click because
+of the sudden jump from reading old stuff to reading new stuff. (This
+will be exactly the same whether using two bufs or one.)
+
+The first thing I would try is to filter out the clicks since their
+timing is so predictable:
+*/
+
+s.boot
+
+b = Buffer.alloc(s, 88200);
+
+(
+SynthDef(\revDelay, {|buf1 = 1, rate = 1|
+       var recorder1, input, player1, crossovertrigs, crossoverbumps, filt;
+       input = AudioIn.ar(1);
+
+// Note the phase
+crossovertrigs = Impulse.ar(BufDur.kr(buf1).reciprocal * 2, 0.05);
+crossoverbumps = EnvGen.ar(Env.perc(0.05, 0.05, 2, curve: 'sine'),
+crossovertrigs);
+
+       recorder1 = RecordBuf.ar(input, buf1, 0, 1, 0, 1, 1);
+       player1 = PlayBuf.ar(1, buf1, -1, 1, 0, 1);
+
+filt = XFade2.ar(player1, LPF.ar(player1, 1000), -1 + crossoverbumps);
+
+       Out.ar(0, (filt * 0.02).dup);
+       }).send(s);
+)
+
+~revDelay = Synth(\revDelay, [\buf1, b]);
+
+
+Dan
+
+
+
+
+DubDelay
+============================================================
+Language: C
+Licence: Other
+Tags: fx
+
+//select all and execute as one
+//two delays with a single tap-tempo control (tap T Key)
+//delay is triggered by sending "n_set (nodeID) t_trig 1" to sc from pd
+//because pd has the bonk~ object which is rather useful with dub and 
+//delays :)
+// requires BoxGrid to be installed too
+
+//change Audio Input!!!
+//reading whole buffer, when only the recorded part should be read
+
+var win, but, grid, slid2, slid3, synth, synth2, clock, timeArray;
+var last = 10000, tempo = 1, tempoText, triggerLights, synthID1;
+var synthID2, but2, grid2, slid22, slid32, resp, filterMouse=0;
+var filterSynth, filterLevel, trackLevel, delayLevel1, delayLevel2, recSynths, sampLevels, canRecord, canPlay, sampLevelsArray, oldLengths;
+
+SynthDef(\shortTermMemory, { | t_trig, bufNum = 5, length = 4.0  |
+var gate, recordPeriod, in, delayed, recorder;
+
+gate = Env.new([0, 1, 0], [length, 0.0]);
+recordPeriod = EnvGen.kr( gate, t_trig )   >   0.0 ;
+
+in = AudioIn.ar(1);
+
+delayed = DelayN.ar(in, length, length) ;
+
+recorder = RecordBuf.ar(delayed, bufNum, run: recordPeriod, preLevel: 0.5);
+
+}).load(s);
+
+SynthDef(\bandPassFilter, { |toggle, filterLevel, trackLevel |
+var input, filter, logicX, logicY;
+logicX = Latch.kr(MouseX.kr(30, 10000), Impulse.kr(500, 0, toggle));
+logicY = Latch.kr(MouseY.kr(0, 1), Impulse.kr(500, 0, toggle));
+
+input = AudioIn.ar([1, 1]) * (trackLevel);
+filter = Resonz.ar(input, logicX, logicY, 10*filterLevel);
+Out.ar(0, filter+input)
+}).load(s);
+
+SynthDef(\dubDelay, { | del, feedBack, t_trig, length, inBus, outBus, amplitude |
+
+var loop, input, delayed, enwelope, trigger;
+
+enwelope = Env.perc(0.005, length);
+
+input = In.ar(inBus) * EnvGen.ar(enwelope, t_trig);
+
+loop = LocalIn.ar + input;
+
+delayed = DelayN.ar(loop, 1.0, del);
+
+LocalOut.ar(delayed * feedBack);
+
+trigger = SendTrig.kr(t_trig, 5, 5);
+
+Out.ar(outBus, delayed*amplitude);
+
+}).load(s);
+
+SynthDef(\playNewTempo, { | bufferNumber, newLength = 4.0, amp = 1.0, oldLength = 4.0 |
+var player, doneEnv, speedScale, lengthScale, envelope;
+speedScale = oldLength / newLength;
+lengthScale = newLength;
+player = PlayBuf.ar(1, [bufferNumber , bufferNumber ], speedScale);
+envelope = Env.new([0, 1, 0], [1, 1],'sine');
+doneEnv = EnvGen.ar(envelope, 1, amp,timeScale: lengthScale , doneAction: 2);
+Out.ar(0, player * doneEnv)
+}).load(s);
+
+
+timeArray = [0, 0, 0, 0];
+clock = SystemClock.new;
+	
+	
+synth = Synth(\dubDelay, [0, 1, 1, 0.5, 2, 0, 3, 0.4, 4, 0, 5, 0, 6, 0]);
+synthID1 = synth.nodeID;
+synth2 = Synth(\dubDelay, [0, 1, 1, 0.5, 2, 0, 3, 0.4, 4, 1, 5, 1, 6, 0]);
+synthID2 = synth2.nodeID;
+4.do{ arg i;
+Buffer.alloc(s, 222000, 1, bufnum: i+6);
+};
+
+recSynths = Array.fill(4, {arg i; Synth(\shortTermMemory, [0, 0, 1, 6+i, 2, 4.0])});
+
+filterSynth = Synth(\bandPassFilter, [0, 0, 1, 0, 2, 0 ]); 
+
+oldLengths = [0, 0, 0, 0];
+
+win = SCWindow("", Rect(200, 300, 775, 195)).front
+	.onClose_({ synth.free;
+	synth2.free;
+	4.do{ arg i;
+	recSynths.at(i).free;
+	};
+	 filterSynth.free;
+	 });
+win.view.keyDownAction_({ arg this, that; 
+	var diff;
+		if(that == $t, {
+		
+		diff = clock.seconds - last;
+		if(diff < 6.0, {
+		timeArray = timeArray.rotate(1);
+		timeArray.put(0, diff);
+		tempo = timeArray.mean;
+		});
+			last = clock.seconds;
+
+tempoText.string = (((tempo.reciprocal*600).round)/10).asString++" BPM";
+4.do{ arg i;
+recSynths.at(i).set(2, tempo) //keep recordings in time with current beat
+};
+		
+		});
+		if(that == $f, {
+		filterMouse = (filterMouse.neg+1); // toggle
+		filterSynth.set(\toggle, filterMouse);
+		});
+		
+	});
+
+but = SCButton(win, Rect(20, 20, 20, 20)).states = [["capture"]];
+but.action = { synth.set(\t_trig, 1) };
+grid = BoxGrid.new(win, bounds: Rect(20, 50, 300, 20), columns: 16, rows: 1);
+grid.nodeDownAction_({arg nodeloc; 
+	synth.set(\del, tempo/(nodeloc.at(0)+1));
+		grid.clearGrid;
+
+	grid.setState_(nodeloc.at(0), 0, 1);
+	
+});
+slid2 = SCSlider(win, Rect(20, 100, 300, 20))
+	.action = {arg a; synth.set(\feedBack, a.value-0.0001) };
+slid3 = SCSlider(win, Rect(50, 20, 270, 20))
+	.action = {arg a; synth.set(\length, a.value) };
+
+
+/////////////////////
+but2 = SCButton(win, Rect(450, 20, 20, 20)).states = [["capture"]];
+but2.action = { synth2.set(\t_trig, 1) };
+grid2 = BoxGrid.new(win, bounds: Rect(450, 50, 300, 20), columns: 16, rows: 1);
+grid2.nodeDownAction_({arg nodeloc; 
+	synth2.set(\del, tempo/(nodeloc.at(0)+1));
+		grid2.clearGrid;
+
+	grid2.setState_(nodeloc.at(0), 0, 1);
+	
+});
+slid22 = SCSlider(win, Rect(450, 100, 300, 20))
+	.action = {arg a; synth2.set(\feedBack, a.value-0.0001) };
+slid32 = SCSlider(win, Rect(480, 20, 270, 20))
+	.action = {arg a; synth2.set(\length, a.value) };
+////////////////////
+
+tempoText = SCStaticText(win, Rect(355, 10, 100, 20));
+tempoText.string = "BPM";
+
+canRecord = BoxGrid.new(win, bounds: Rect(290, 130, 200, 20), columns: 4, rows: 1).setFillColor_(Color.red);
+canPlay = BoxGrid.new(win, bounds: Rect(290, 155, 200, 20), columns: 4, rows: 1).setFillColor_(Color.green);
+
+triggerLights = BoxGrid.new(win, bounds: Rect(340, 50, 90, 70), columns: 2, rows: 1).setFillColor_(Color.red);
+
+resp = OSCresponder(s.addr,'/tr',{ arg time,responder,msg;
+	if(msg.at(3)==5, {
+if(msg.at(1)==synthID1, {
+2.do{ arg i;
+if(canRecord.getState(i, 0)==1, {
+{canRecord.setState_(i, 0, 0)}.defer; //switch off rec-light
+recSynths.at(i).set(0, 1); //record
+oldLengths.put(i, tempo);
+});
+if(canPlay.getState(i, 0)==1, {
+Synth(\playNewTempo, [\bufferNumber, i+6, \newLength, tempo, \amp, sampLevelsArray.at(i),\oldLength, oldLengths.at(i)]);
+});
+};
+
+	{triggerLights.setState_( 0, 0, 1)}.defer;
+	{triggerLights.setState_( 0, 0, 0)}.defer(0.3);
+		});
+if(msg.at(1)==synthID2, {
+2.do{ arg i;
+if(canRecord.getState(i+2, 0) .value==1, {
+{canRecord.setState_(i+2, 0, 0)}.defer; //switch off rec-light
+recSynths.at(i+2).set(0, 1); //record
+oldLengths.put(i+2, tempo);
+});
+if(canPlay.getState(i+2, 0)==1, {
+Synth(\playNewTempo, [\bufferNumber, i+8, \newLength, tempo, \amp, sampLevelsArray.at(i+2), \oldLength, oldLengths.at(i+2)]);
+});
+};
+	{triggerLights.setState_( 1, 0, 1)}.defer;
+	{triggerLights.setState_( 1, 0, 0)}.defer(0.3);
+		});
+
+});
+}).add;
+	("synthNodes: "++synthID1++" "++synthID2).asString.postln;
+	
+	filterLevel = SCSlider(win, Rect(20, 130, 50, 50))
+		.action = { arg a; filterSynth.set(\trackLevel, a.value) };
+	trackLevel = SCSlider(win, Rect(80, 130, 50, 50))
+		.action = { arg a; filterSynth.set(\filterLevel, a.value) };
+	delayLevel1 = SCSlider(win, Rect(140, 130, 50, 50))
+		.action = { arg a; synth.set(\amplitude, a.value) };
+	delayLevel2 = SCSlider(win, Rect(200, 130, 50, 50))
+			.action = { arg a; synth2.set(\amplitude, a.value) };
+
+
+sampLevelsArray = [0, 0, 0, 0];
+sampLevels = Array.fill(4, { arg i;
+SCSlider(win, Rect(530+(i*60), 130, 50, 50))
+	.action = {arg a; sampLevelsArray.put(i, a.value); };
+});
+//	SCDragSink(win, Rect(340, 130, 100, 30)); 
+	
+	
+//bobby
+
+
+
+AutoCompletion
+============================================================
+Language: C
+Licence: Other
+Tags: system
+
+/*
+From: James Harkins <jamshark70@gmail.com>
+Date: 21 September 2008 20:18:00 BDT
+To: sc-users@lists.bham.ac.uk
+Subject: Re: [sc-users] OSX vs. Linux vs. Win32/64
+Reply-To: sc-users@lists.bham.ac.uk
+
+On Sep 21, 2008, at 12:59 PM, nescivi wrote:
+
+On the upside, the scel editor has some things I miss greatly when working in 
+the OSX editor... like autocompletion when looking for a certain method... in 
+scel I can just do C-c C-h, type a letter with which I think a topic should 
+start and press <TAB> to see the possible options... Same for looking for 
+class definitions or methods (C-c :, C-c ; respectively).
+I like this much better than having to type the whole word and then find 
+help...
+
+OSX has something similar - http://supercollider.svn.sourceforge.net/viewvc/supercollider/trunk/build/Help/GUI/DocumentAutoCompletion.html
+
+By enabling this optional behavior, the editor can match partial class and method names, and insert method templates. I can type e.g. "aString.esca(" and upon the open-paren, a window pops up with all method names including "esca"... choosing String:escapeChar from the list puts "aString.escapeChar(charToEscape)" into the text window, with charToEscape highlighted so all I have to is replace it.
+
+It isn't in the helpfile, but I have these in my startup file to enable autocompletion for new documents, and re-enable it when recompiling the class lib.
+*/
+
+// enable autocompletion for all new docs
+Document.initAction_({ |doc|
+	doc.autoComplete;
+});
+
+// enable autocompletion for old docs, except the post window
+Document.allDocuments.do({ |doc, i|
+	doc.isListener.not.if({ doc.autoComplete });
+});
+
+hjh
+
+
+
+
+Auto Program Load
+============================================================
+Language: C
+Licence: Other
+Tags: system
+
+/*
+From: Fredrik Olofsson <f@fredrikolofsson.com>
+Date: 16 September 2008 07:40:13 BDT
+To: sc-users@lists.bham.ac.uk
+Subject: Re: [sc-users] auto program load
+Reply-To: sc-users@lists.bham.ac.uk
+
+one way is to use a routine like below.*/
+
+/*RUN*/ 
+
+/*
+..at the top of a document automatically executes the code when the document is opened.
+see also the recent thread "file".load.value.  you could use .load to separate your code into smaller parts and then the routine to load them one after the other.
+
+put this in an empty doc, save and open again.
+*/
+
+/*RUN*/
+Routine({
+
+0.5.wait;
+
+"init1 - open something".postln;
+Document.open("Help/Help.html");
+
+1.wait;
+"init2 - booting server...".postln;
+s.waitForBoot{
+
+"init3 - whatever".postln;
+2.wait;
+"init - done".postln;
+};
+
+}).play(AppClock)
+
+//////////////////////
+
+/*
+16 sep 2008 kl. 15.16 skrev poppi doser:
+
+Hi List,
+
+I'm wondering if it's possible to set a program to load automatically, i.e. without stepping through the program's code and initiating it section for section..?
+
+Any suggestions would be appreciated.
+
+poppi
+*/
+
+
+
+Local SVN Repos
+============================================================
+Language: C
+Licence: Other
+Tags: system,info
+
+/*
+In case this helps anybody :
+
+How to create and maintain a local SVN repository for your private work.
+If you are just working locally, you don't have to run an svn server at all.
+Its much easier than I thought.
+
+My personal class work is in a quark called 'felix' that is obviously not checked into the public repository.
+
+I want to keep it in a local svn, but since the whole quarks folder is checked out from sourceforge svn,  I don't want this subfolder to get confused.
+
+Here is how I solved this:
+
+I uninstall it for the moment (using Quarks.gui) and moved the folder to ~/Documents/SC3docs/felix-imported
+
+
+created a local svn repository
+
+first make the directory it will go in:
+*/
+
+mkdir ~/svn
+mkdir ~/svn/sc
+mkdir ~/svn/sc/trunk
+
+svnadmin create ~/svn/sc/trunk
+
+// import the felix quark:
+
+cd ~/Documents/SC3docs
+
+svn import felix-imported file:///Users/crucial/svn/sc/trunk/felix -m "initial felix import"
+
+// then check out a working copy:
+
+svn co file:///Users/crucial/svn/sc/trunk/felix ~/Documents/SC3docs/felix
+
+/*
+then make a symlink from this working copy to the quarks folder (not the installed quarks, but the all checked out quarks)
+*/
+
+cd /Users/crucial/Library/Application\ Support/SuperCollider/quarks
+ln -s ~/Documents/SC3docs/felix felix
+
+/*
+So now Quarks is installing/uninstalling a symlink to a symlink to a folder in my documents folder that is under svn control.
+
+Note there is a felix.quark file in DIRECTORY
+If you wanted to do several personal quarks you could either make several symlinks or you could put them all in one folder and make one symlink.  Either way you would still need several quark files in DIRECTORY
+
+So this is nice because you svn is a time machine, and you can tag your own work.
+For any snapshot that is supposed to work I will still have to record the sc svn revision and the quarks revision.
+
+The other thing I do for working with TextMate :
+
+I created ~/sc and put 2 symlinks inside it:
+*/
+
+ln -s ~/Library/Application\ Support/SuperCollider/Extensions Extensions
+ln -s /Users/crucial/scsvn/sctrunk/build/SCClassLibrary SCClassLibrary
+
+/*
+this means that I now have
+~/sc/Extensions
+~/sc/SCClassLibrary
+
+which is all of the currently active classes for SC.  
+Inside Extensions there is Extensions/quarks and I can install and uninstall quarks and always the ~/sc folder contains everything that is currently installed.  This means that I can run TextMate and open that directory as a single project.
+
+-cx
+*/
+
+
+
+Slider -> Synth
+============================================================
+Language: C
+Licence: Other
+Tags: gui,control
+
+/*
+From Jonathon Segal
+SC_Users 6 June 2008
+*/
+//synth slider example
+(
+var w, slider, bus, levSpec, but, r;
+
+w=GUI.window.new("thing", Rect(300, 600, 100, 190)).front;
+
+slider=GUI.slider.new(w, Rect(30,60,40, 100));
+
+levSpec=ControlSpec(0,1,\linear,0.001);
+bus=Bus.new(\control,1,1,s);
+bus.value=0.0;
+
+
+
+slider.action={bus.value_(levSpec.map(slider.value))};
+slider.value_(levSpec.unmap(0.0));
+
+
+but=GUI.button.new(w,Rect(30, 10, 40, 40)).states_([
+            ["run", Color.black, Color.new255(210,235,235)],
+            ["stop", Color.white, Color.new255(210,35,35)]
+         ]).action={ if (but.value==1, {r.reset; r.play;},{r.stop})};
+
+
+
+SynthDef(\bloop, { |freq=1000, lev=1, dur=0.5, outBus=0|
+		var env, osc, out;
+		env=EnvGen.kr(Env.perc(0.01, 0.99,1, -2), levelScale: 0.6,  
+timeScale: dur*1.2, doneAction: 2);
+	     osc=SinOsc.ar(freq);
+	     out=Out.ar(outBus, env*osc*lev);
+}).send(s);
+
+
+r=Routine({
+	var nextTime, root, scale;
+	scale=[0, 3.16, 7.02, 9.69];
+	root=[60, 72];
+	loop({
+		nextTime=[0.125,0.25,0.5].choose;
+			Synth(\bloop, [
+				\freq,  (root.choose+scale.choose).midicps
+				]).map(\lev, 1);
+			nextTime.wait;
+		});
+	});
+	
+w.onClose={r.stop;};	
+)
+
+
+
+
+From Pdef To Gui - A Working Example
+============================================================
+Language: C
+Licence: Other
+Tags: gui,pattern,patch
+
+/*Hi all,
+
+I have been playing with a pretty simple sampler sequencer that uses a Pdef and a Gui.
+Its fairly straight forward to modify the Pdef from the GUI but does anyone know if its possible to 
+send messages back into the GUI from the pattern. 
+
+Iwant to have some visual feedback so that I know where I am in the sequence. But because I am doing
+strange things with the Pdef tempo I think it would be best if the messages came from inside the Pdef itself, but
+I have no idea how to do this.
+
+I mean something like
+
+\updateGUI, Pseq (something here to trigger the gui, inf),
+
+Here is the example code.... (In reality I am stepping through the sequences in odd timings)
+
+1000 thanks
+
+Simon
+*/
+
+
+// a sound in the buffer
+b = Buffer.read(s, "sounds/drums.wav");
+
+
+// playback synth
+
+SynthDef("sampler1",{ arg bus=0,bufnum=0,rated=1,volu=1, trigger, starting = 0,attack = 0,length = 0.1,decay = 0 ;
+	Out.ar(bus,
+		PlayBuf.ar(1,bufnum,rated,trigger,starting,loop: 1.0)*EnvGen.kr(Env.linen(attack,length,decay,volu), doneAction:2)
+	)
+}).store;
+
+
+// Set up the pattern one. it uses Pdef so that it can be dynamically controlled when running.
+
+(
+Pdef(\loop1).set(\voluArray, [1,1,1,1,1,1,1,1]);
+Pdef(\loop1).set(\startingArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\attackArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\decayArray, [0,0,0,0,0,0,0,0]);
+g = Pdef(\loop1,
+	Prout { |e|
+		Pbind(
+			\volu,Pseq (e.voluArray, inf),
+			\dur, 0.6,
+			\starting, Pseq (e.startingArray, inf),
+			\attack,Pseq (e.attackArray, inf),
+			\decay, Pseq (e.decayArray,inf),
+			\bus,0,
+			\bufnum, 0,
+			\instrument, \sampler1		).embedInStream(e);
+	}
+)
+
+)
+
+// set the Pdef running
+
+Pdef(\loop1).play(quant:0);
+
+
+
+
+// the gui controller
+
+(
+
+var d,b2, at_knobs, at_knob,dec_knobs, dec_knob,vol_slider, vol_sliders, sam_sliders, sam_slider, top,mid,bot, cs,attack,length,decay;
+
+
+d=SCWindow("lathe groove - bodger edition/standard", Rect(10,520,470,400),resizable:false); 
+
+// the sliders
+
+vol_sliders = Array.fill(8, {arg i;
+	vol_slider = SCSlider(d,Rect(((50 * i)+45),20,20,70))
+	.value_(1)
+	.background_(Color.new255(120, 120, 120))
+	.action_({[vol_sliders[i].value].postln;
+	Pdef(\loop1).envir.voluArray[0]=vol_sliders[i].value}); 
+	});
+
+
+sam_sliders = Array.fill(8, {arg i;
+	sam_slider = SCSlider(d,Rect(((50 * i)+45),130,20,70))
+	.background_(Color.new255(120, 120, 120))
+	.step_(0.1).action_({[sam_sliders[i].value].postln;
+	Pdef(\loop1).envir.startingArray[0]=sam_sliders[i].value*(441000)}); 
+	});
+	
+at_knobs = Array.fill(8, {arg i;
+	at_knob = Knob(d,Rect(((50 * i)+40),235,30,30)).canFocus_(false)
+	.action_({[at_knobs[i].value].postln; 
+	Pdef(\loop1).envir.attackArray[i]=at_knobs[i].value});
+	};);
+
+dec_knobs = Array.fill(8, {arg i;
+	dec_knob = Knob(d,Rect(((50 * i)+40),290,30,30)).canFocus_(false)
+	.action_({[dec_knobs[i].value].postln; 
+	Pdef(\loop1).envir.decayArray[i]=dec_knobs[i].value});
+	};);
+	
+d.front;
+
+
+// labels
+
+top = SCStaticText(d, Rect(45, 95, 100, 20)).stringColor_(Color.grey);
+top.string = "volume";
+mid = SCStaticText(d, Rect(45, 205, 100, 20)).stringColor_(Color.grey);
+mid.string = "start point";
+attack = SCStaticText(d, Rect(45, 265, 100, 20)).stringColor_(Color.grey);
+attack.string = "attack";
+decay = SCStaticText(d, Rect(45, 320, 100, 20)).stringColor_(Color.grey);
+decay.string = "decay";
+
+// here is the remains of the old visual feedback, that I ran externally to the Pdef
+
+~b = Array.new(8);
+8.do{arg i;
+	var c;
+	c = SCButton(d,Rect(50 + ( 50 * i),355,10,10));
+	c.states = [
+			["",Color.black,Color.clear],
+			["",Color.black,Color.black]
+			];
+	c.action = { arg butt;};
+	
+	~b = ~b.add(c);
+	}; 
+)
+
+///////////////
+
+/*
+you can set the environment from inside the stream, and even evaluate functions you added.*/
+
+Pdef(\loop1).set(\updateGui, { |self| myGuiValue = sel [myStreamVal] });
+
+// and then use a Pfunc to call it:
+
+Pfunc { |envir| envir.updateGui }
+
+////////////////////////
+/*
+Hi Jullian,
+
+That sounds great but I am a little unsure how to implement it.
+
+Take this example that has a function in the stream. Where should the Pfunc go in this situation.
+
+Thanks for your patience... I still have a little confusion about patterns and environments.
+
+Cheers
+
+Simon
+*/
+(
+Pdef(\loop1).set(\voluArray, [1,1,1,1,1,1,1,1]);
+Pdef(\loop1).set(\startingArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\attackArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\decayArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\functioncalled, {"hello".postln}); // the function
+g = Pdef(\loop1,
+	Prout { |e|
+		Pfunc { |envir| envir.functioncalled};// the Pfunc to call the function... where to put it
+		Pbind(
+			\volu,Pseq (e.voluArray, inf),
+			\dur, 0.6,
+			\starting, Pseq (e.startingArray, inf),
+			\attack,Pseq (e.attackArray, inf),
+			\decay, Pseq (e.decayArray,inf),
+			\bus,0,
+			\bufnum, 0,
+			\instrument, \sampler1		).embedInStream(e);
+
+					
+	}
+)
+)
+
+
+Pdef(\loop1).play(quant:0);
+
+//////////////
+/*
+Please excuse my impatience.... want to get back to those sounds.
+
+This is more like it  (it prints hello) but I am still not sure if its what you meant. Or the 
+right way to do things.
+
+Cheers
+
+Simon
+*/
+(
+Pdef(\loop1).set(\voluArray, [1,1,1,1,1,1,1,1]);
+Pdef(\loop1).set(\startingArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\attackArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\decayArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\functioncalled, {"hello".postln}); // the function
+g = Pdef(\loop1,
+	Prout { |e|
+		// the Pfunc to call the function... where to put it
+		Pbind(
+			\volu,Pseq (e.voluArray, inf),
+			\dur, 0.6,
+			\functioncalled, Pfunc { e.functioncalled},
+			\starting, Pseq (e.startingArray, inf),
+			\attack,Pseq (e.attackArray, inf),
+			\decay, Pseq (e.decayArray,inf),
+			\bus,0,
+			\bufnum, 0,
+			\instrument, \sampler1		).embedInStream(e);
+
+					
+	}
+)
+)
+
+
+Pdef(\loop1).play(quant:0);
+
+//////////////////////
+/*
+it seems fine. I've added a function from which you can reach the environment, and you can set the GUI from there, I think.
+*/
+
+(
+Pdef(\loop1).set(\voluArray, [1,1,1,1,1,1,1,1]);
+Pdef(\loop1).set(\startingArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\attackArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\decayArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\functioncalled, { |event| event.postln }); // the function
+Pdef(\loop1,
+	Prout { |e|
+		// the Pfunc to call the function... where to put it
+		Pbind(
+			\volu,Pseq (e.voluArray, inf),
+			\dur, 0.6,
+			\starting, Pseq (e.startingArray, inf),
+			\attack,Pseq (e.attackArray, inf),
+			\decay, Pseq (e.decayArray,inf),
+			\bus,0,
+			\bufnum, 0,
+			\instrument, \sampler1,
+			\functioncalled, Pfunc { e.functioncalled}
+		).embedInStream(e);
+
+
+
+	}
+)
+)
+
+
+Pdef(\loop1).play(quant:0);
+
+
+// an alternative way to write it is:
+// (ref avoids multichannel expansion.)
+
+(
+Pdef(\loop1).set(\voluArray, `[1,1,1,1,1,1,1,1]);
+
+Pdef(\loop1).set(\startingArray, `[0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\attackArray, `[0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\decayArray, `[0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\functioncalled, { |event| event.postln }); // the function
+Pdef(\loop1, { |voluArray, startingArray, attackArray, decayArray, functioncalled|
+	Pbind(
+			\volu,Pseq (voluArray.value, inf),
+			\dur, 0.6,
+			\starting, Pseq (startingArray.value, inf),
+			\attack,Pseq (attackArray.value, inf),
+			\decay, Pseq (decayArray.value,inf),
+			\bus,0,
+			\bufnum, 0,
+			\instrument, \sampler1,
+			\functioncalled, Pfunc(functioncalled)
+	)
+	}
+)
+)
+
+////////////////////
+
+/* Thanks Julian this is all very helpful, now I seem to have run into a problem though.
+
+A function in the Pdef like this works fine
+
+Pdef(\loop1).set(\functioncalled, {x = x + 1; x.postln}); 
+
+x can be set before the Pdef has started and it can be changed at any time while the pattern is running.
+
+However if I change the function to something more useful to me like this - k[0].value = 1;
+I get an error saying operation cannot be called from this Process.
+
+It seems that k[0].value = 1 is fine outside the Pdef but not in it.
+
+I am not quite clear how I can actually get to the GUI from the Pdef.... Although seems close now.
+
+The answer is probably in you original response, but I am a little confused by the meaning of the variables here.
+Pdef(\loop1).set(\updateGui, { |self| myGuiValue = self[myStreamVal] });
+
+
+All of the code is below...
+
+Thank you again.
+
+Cheers
+
+Simon
+*/
+
+
+
+// a sound in the buffer
+b = Buffer.read(s, "sounds/drums.wav");
+
+
+// playback synth
+
+SynthDef("sampler1",{ arg bus=0,bufnum=0,rated=1,volu=1, trigger, starting = 0,attack = 0,length = 0.1,decay = 0 ;
+	Out.ar(bus,
+		PlayBuf.ar(1,bufnum,rated,trigger,starting,loop: 1.0)*EnvGen.kr(Env.linen(attack,length,decay,volu), doneAction:2)
+	)
+}).store;
+
+
+x = 0; // set the value of x
+k[0].valueAction = 0;  // When Gui is open this works fine here but not in Pdef
+
+
+
+(
+Pdef(\loop1).set(\voluArray, [1,1,1,1,1,1,1,1]);
+Pdef(\loop1).set(\startingArray, [0,0,0,0,0,0,0,0]);d
+Pdef(\loop1).set(\attackArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\decayArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\functioncalled, {x = x + 1; x.postln}); // this function works fine
+//Pdef(\loop1).set(\functioncalled, {k[0].valueAction = 1;}); // operation cannot be called from this Process.
+Pdef(\loop1,
+	Prout { |e|
+		Pbind(
+			\volu,Pseq (e.voluArray, inf),
+			\dur, 0.6,
+			\starting, Pseq (e.startingArray, inf),
+			\attack,Pseq (e.attackArray, inf),
+			\decay, Pseq (e.decayArray,inf),
+			\bus,0,
+			\bufnum, 0,
+			\instrument, \sampler1,
+			\functioncalled, Pfunc { e.functioncalled}
+		).embedInStream(e);
+	}
+)
+)
+
+
+Pdef(\loop1).play(quant:0);
+// the value of x can be changed while Pdef is running
+x = 1;
+
+// the gui controller
+
+(
+
+var d,b2, at_knobs, at_knob,dec_knobs, dec_knob,vol_slider, vol_sliders, sam_sliders, sam_slider, top,mid,bot, cs,attack,length,decay;
+
+
+d=SCWindow("lathe groove - bodger edition/standard", Rect(10,520,470,400),resizable:false); 
+
+// the sliders
+
+vol_sliders = Array.fill(8, {arg i;
+	vol_slider = SCSlider(d,Rect(((50 * i)+45),20,20,70))
+	.value_(1)
+	.background_(Color.new255(120, 120, 120))
+	.action_({[vol_sliders[i].value].postln;
+	Pdef(\loop1).envir.voluArray[i]=vol_sliders[i].value}); 
+	});
+
+
+sam_sliders = Array.fill(8, {arg i;
+	sam_slider = SCSlider(d,Rect(((50 * i)+45),130,20,70))
+	.background_(Color.new255(120, 120, 120))
+	.step_(0.1).action_({[sam_sliders[i].value].postln;
+	Pdef(\loop1).envir.startingArray[i]=sam_sliders[i].value*(441000)}); 
+	});
+	
+at_knobs = Array.fill(8, {arg i;
+	at_knob = Knob(d,Rect(((50 * i)+40),235,30,30)).canFocus_(false)
+	.action_({[at_knobs[i].value].postln; 
+	Pdef(\loop1).envir.attackArray[i]=at_knobs[i].value});
+	};);
+
+dec_knobs = Array.fill(8, {arg i;
+	dec_knob = Knob(d,Rect(((50 * i)+40),290,30,30)).canFocus_(false)
+	.action_({[dec_knobs[i].value].postln; 
+	Pdef(\loop1).envir.decayArray[i]=dec_knobs[i].value});
+	};);
+	
+d.front;
+
+
+// labels
+
+top = SCStaticText(d, Rect(45, 95, 100, 20)).stringColor_(Color.grey);
+top.string = "volume";
+mid = SCStaticText(d, Rect(45, 205, 100, 20)).stringColor_(Color.grey);
+mid.string = "start point";
+attack = SCStaticText(d, Rect(45, 265, 100, 20)).stringColor_(Color.grey);
+attack.string = "attack";
+decay = SCStaticText(d, Rect(45, 320, 100, 20)).stringColor_(Color.grey);
+decay.string = "decay";
+
+// here is the remains of the old visual feedback, that I ran externally to the Pdef
+
+k = Array.new(8);
+8.do{arg i;
+	var c;
+	c = SCButton(d,Rect(50 + ( 50 * i),355,10,10));
+	c.states = [
+			["",Color.black,Color.clear],
+			["",Color.black,Color.black]
+			];
+	c.action = { arg butt;};
+	
+	k = k.add(c);
+	}; 
+)
+
+// This works fine outside of the Pdef but not in it
+k[0].valueAction = 0;
+k[0].value = 1;
+
+////////////
+
+/*oh, sure - if you want to set a GUI from a routine running in SystemClock, you have to defer whatever you do, e.g.: */
+
+{ defer { k[0].value = 1 } }
+
+////////////
+/*
+Thanks again Julian,
+
+Thats finally sorted it, it seems much more elegant than that what I was doing before (running separate routines outside Pdef to update GUI).
+
+Here is the whole thing... If anyone has any suggestions for improvement they would be much appreciated.
+
+I normally control the tempo externally using the .embedinStream(e) method on the Pbind.
+
+Also you will need to make sure that you have the Knob class installed.
+I have set up the start point sliders to clip, so that you can store a selection of different samples in regular places in the buffer.
+
+Cheers
+
+Simon
+*/
+
+(
+// the gui controller
+
+
+
+var d,b2, at_knobs, at_knob,dec_knobs, dec_knob,vol_slider, vol_sliders, sam_sliders, sam_slider, top,mid,bot, cs,attack,length,decay;
+
+
+d=SCWindow("simple Pdef - Gui sequencer sampler", Rect(10,520,470,400),resizable:false); 
+
+// the sliders
+
+vol_sliders = Array.fill(8, {arg i;
+	vol_slider = SCSlider(d,Rect(((50 * i)+45),20,20,70))
+	.value_(1)
+	.background_(Color.new255(120, 120, 120))
+	.action_({[vol_sliders[i].value].postln;
+	Pdef(\loop1).envir.voluArray[i]=vol_sliders[i].value}); 
+	});
+
+
+sam_sliders = Array.fill(8, {arg i;
+	sam_slider = SCSlider(d,Rect(((50 * i)+45),130,20,70))
+	.background_(Color.new255(120, 120, 120))
+	.step_(0.1).action_({[sam_sliders[i].value].postln;
+	Pdef(\loop1).envir.startingArray[i]=sam_sliders[i].value*(441000)}); 
+	});
+	
+at_knobs = Array.fill(8, {arg i;
+	at_knob = Knob(d,Rect(((50 * i)+40),235,30,30)).canFocus_(false)
+	.action_({[at_knobs[i].value].postln; 
+	Pdef(\loop1).envir.attackArray[i]=at_knobs[i].value});
+	};);
+
+dec_knobs = Array.fill(8, {arg i;
+	dec_knob = Knob(d,Rect(((50 * i)+40),290,30,30)).canFocus_(false)
+	.action_({[dec_knobs[i].value].postln; 
+	Pdef(\loop1).envir.decayArray[i]=dec_knobs[i].value});
+	};);
+	
+d.front;
+
+
+// labels
+
+top = SCStaticText(d, Rect(45, 95, 100, 20)).stringColor_(Color.grey);
+top.string = "volume";
+mid = SCStaticText(d, Rect(45, 205, 100, 20)).stringColor_(Color.grey);
+mid.string = "start point";
+attack = SCStaticText(d, Rect(45, 265, 100, 20)).stringColor_(Color.grey);
+attack.string = "attack";
+decay = SCStaticText(d, Rect(45, 320, 100, 20)).stringColor_(Color.grey);
+decay.string = "decay";
+
+// here is the remains of the old visual feedback, that I ran externally to the Pdef
+
+k = Array.new(8);
+8.do{arg i;
+	var c;
+	c = SCButton(d,Rect(50 + ( 50 * i),355,10,10));
+	c.states = [
+			["",Color.black,Color.clear],
+			["",Color.black,Color.black]
+			];
+	c.action = { arg butt;};
+	
+	k = k.add(c);
+	}; 
+
+
+
+// a sound in the buffer
+b = Buffer.read(s, "sounds/drums.wav");
+
+
+// playback synth
+
+SynthDef("sampler1",{ arg bus=0,bufnum=0,rated=1,volu=1, trigger, starting = 0,attack = 0,length = 0.1,decay = 0 ;
+	Out.ar(bus,
+		PlayBuf.ar(1,bufnum,rated,trigger,starting,loop: 1.0)*EnvGen.kr(Env.linen(attack,length,decay,volu), doneAction:2)
+	)
+}).store;
+
+
+
+x = 0;
+
+Pdef(\loop1).set(\voluArray, [1,1,1,1,1,1,1,1]);
+Pdef(\loop1).set(\startingArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\attackArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\decayArray, [0,0,0,0,0,0,0,0]);
+Pdef(\loop1).set(\functioncalled, {defer {k[x].value = 1;
+						x= x+1; 
+						if(x >= 2, {y=x-2});
+						k[y].value = 0;
+						if(x == 8,{x = 0;});
+						if(x == 1 ,{k[7].value = 0;});
+						}}); // a clunky function to update gui buttons
+Pdef(\loop1,
+	Prout { |e|
+		Pbind(
+			\volu,Pseq (e.voluArray, inf),
+			\dur, 0.6,
+			\starting, Pseq (e.startingArray, inf),
+			\attack,Pseq (e.attackArray, inf),
+			\decay, Pseq (e.decayArray,inf),
+			\bus,0,
+			\bufnum, 0,
+			\instrument, \sampler1,
+			\functioncalled, Pfunc { e.functioncalled}
+		).embedInStream(e);
+	}
+);
+
+
+Pdef(\loop1).play(quant:0);
+
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Buffer + FFT
+============================================================
+Language: C
+Licence: Other
+Tags: buffer,fft
+
+/*
+From: "Dan Stowell" <danstowell@gmail.com>
+Date: 21 September 2008 22:10:46 BDT
+To: sc-users@lists.bham.ac.uk
+Subject: Re: [sc-users] buffer + FFT
+Reply-To: sc-users@lists.bham.ac.uk
+
+Hi Volker -
+
+Within a single synth, the FFT process always runs on a predictable
+timer: the very first execution will always be after the synth has
+been running for 2048 samples (or however big your audio window is).
+So in practice, your approach of using a Phasor is probably fine,
+since it will tend to stay "in phase" with the FFT process. However
+there are two things I think you should know:
+
+* Firstly, the FFT process runs (by default) with a hop size of 50%,
+meaning the gap between FFT frames in your example is 1024, not 2048.
+So if I launch your synth at time T (measured in audio samples), the
+first FFT will fire at T+2048, then the next one will fire at T+3072,
+then T+4096, then T+5120, etc etc. So your example actually "misses"
+every other FFT frame. If this is important to you then change it to
+make sure you catch every frame. One way is to change the FFT hopsize
+from 0.5 to 1, but that is only useful if you don't intend to
+resynthesise.
+
+* The "chain" that FFT outputs is actually an numeric value:
+less-than-zero when the FFT is not firing, and zero-or-greater when it
+is firing. So, if desired, you can directly use the "chain" value to
+trigger something (e.g. resetting a Phasor, or some kind of analysis
+process).
+
+    ffthasfired = (chain >= 0);
+
+Hope this helps
+Dan
+*/
+
+/////////////////
+
+/*
+2008/9/20, volker böhm <vboehm@gmx.ch>:
+
+ On 19 Sep 2008, at 18:13, volker böhm wrote:
+
+hello,
+i'm trying to sync the reading of a buffer to an FFT process. don't know
+wether this is easily possible.
+right now i'm doing the following:
+*/
+
+b = Buffer.alloc(s, 2048, 1);
+w = Buffer.alloc(s, 2048, 1);
+// testsignal
+w.sine2([10,20,30,40,50,60,70], 1.0/[1,2,3,4,5,6,7], true, false, true);
+
+(
+SynthDef("test", {
+       var in, chain, out;
+       in = BufRd.ar(1, w.bufnum, Phasor.ar(0, 1, 0, 2048), 1, 1);
+       chain = FFT(b.bufnum, in);
+       out = IFFT(chain);
+       Out.ar(0, out);
+}).play(s);
+)
+
+
+//  it seems the code above should be fine for what i need.
+// if i do this:
+
+ b = Buffer.alloc(s, 2048, 1);
+ w = Buffer.alloc(s, 2048, 1);
+ w.sine2([10,20,30,40,50,60,70], 1.0/[1,2,3,4,5,6,7], true, false, true);
+
+ (
+ SynthDef("test", {
+        var in, chain, out;
+        in = BufRd.ar(1, w.bufnum, Phasor.ar(0, 1, 0, 2048), 1, 1);
+        chain = FFT(b.bufnum, in);
+ }).play(s);
+ )
+
+// checking the real part of the local FFT buffer with this:
+
+ (
+ b.getn(0, 200, { arg buf;
+                var z, x;
+                z = buf.clump(2).flop;
+                x = Complex(z[0], z[1]);
+                { [ z[0], z[1], x.magnitude ].flop.flat.plot(numChannels: 3)}.defer;
+        });
+ )
+
+// shows that it's near zero. so i conclude that the reading of the buffer and the FFT are in sync.
+
+/*
+ regards,
+
+ volker.
+*/
+
+
+
+JIT, BBCut1
+============================================================
+Language: C
+Licence: Other
+Tags: jitlib,class,control,bbcut
+
+/*
+Re: JIT, bbcut  
+by Fredrik Olofsson Mar 10, 2006; 11:46am 
+
+afraid jitlib+bbcut are not too compatible these days.  i've use bbcut 
+version 1 with jitlib quite a bit before, but i can't really recommend 
+this.  still, if you're not doing anything too complicated, version 1 
+will work.  check out jitlib support folder in bbcut 1.3.1 
+and here's a required hack + example... 
+*/
+s.boot 
+p= ProxySpace.push(s) 
+c= p.makeTempoClock(2.3).clock 
+~mix.play 
+f= SF3.new("break", 8); 
+g= SF3.new("break", 8); 
+
+( 
+~b1= BBCut(BBCutSynthSF(f), SQPusher1(0.1), c); 
+~b2= BBCut(BBCutSynthSF(g), WarpCutProc1({0.1.rrand(0.3)}), c); 
+) 
+
+~mix= ~b1+~b2	 //start output sound 
+~mix.fadeTime_(4)	//crossfade time 
+~mix= ~b2	 //mute b1 
+~mix= ~b1 
+~mix= ~b1+~b2 
+
+
+// save following as extBBCutControl.sc 
+
++ BBCutControl { 
+        
+        playToBundle {|bundle, args, target| 
+                bundle.addMessage(this, \play); 
+                ^source.bbcgarray[0].group.nodeID 
+        } 
+        stopToBundle { arg bundle; 
+                bundle.addMessage(this, \stop); 
+        } 
+        freeToBundle { arg bundle, fadeTime; 
+                if(fadeTime.isNil) { 
+                        bundle.addmessage(this, \free) 
+                }{ 
+                        bundle.sched(fadeTime, { source.free }) 
+                } 
+        } 
+} 
+
+/*
+Re: JIT, bbcut  
+by Julian Rohrhuber Mar 10, 2006; 02:31pm
+
+The code below seems reasonable. I haven't had the time to look at 
+the link. It shouldn't be too difficult. 
+If this doesn't conform with the Control classes (StreamControl / 
+SynthControl etc.) you have to write such a simple subclass. 
+buildForProxy needs to be implemented then. As I don't know BBCut 
+well enough I don't know when the busses are allocated and so on. 
+
+>save following as extBBCutControl.sc 
+> 
+>+ BBCutControl { 
+> 
+>	playToBundle {|bundle, args, target| 
+>	 bundle.addMessage(this, \play); 
+>	 ^source.bbcgarray[0].group.nodeID 
+>	} 
+>	stopToBundle { arg bundle; 
+>	 bundle.addMessage(this, \stop); 
+>	} 
+>	freeToBundle { arg bundle, fadeTime; 
+>	 if(fadeTime.isNil) { 
+>	 bundle.addmessage(this, \free) 
+>	 }{ 
+>	 bundle.sched(fadeTime, { source.free }) 
+>	 } 
+>	} 
+>}
+«  [hide part of quote]
+
+typo: addmessage -> addMessage 
+-- 
+*/
+
+=========
+
+/*
+Re: Synchronising BBCut with JITLib  
+by Fredrik Olofsson Jul 09, 2005; 11:26pm
+
+hi jim, 
+yes, i've done this quite a bit.  but be warned... using bbcut inside 
+jitlib has been broken for quite some time.  here's a stop-gap 
+workaround until something better shows. 
+*/
+
++ BBCutControl { 
+        playToBundle {|bundle| 
+                bundle.addMessage(this, \play); 
+                ^source.bbcgarray[0].group.nodeID 
+        } 
+        stopToBundle { arg bundle; 
+                bundle.addMessage(this, \stop); 
+        } 
+        freeToBundle { arg bundle, fadeTime; 
+                if(fadeTime.isNil) { 
+                        bundle.addmessage(this, \free) 
+                }{ 
+                        bundle.sched(fadeTime, { source.free }) 
+                } 
+        } 
+} 
+
+and some testcode... 
+
+
+s.boot 
+p= ProxySpace.push(s); 
+f= SF3("sounds/break", 4); 
+c= p.makeTempoClock(2.2).clock; 
+
+~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(2, 2), c); 
+~beats2= BBCut(BBCutSynthSF(f), ChooseBlockProc(2, 4), c); 
+
+~beats1.vol_(0.9).quant(4); 
+~beats2.vol_(0.7).quant(4); 
+~beats1.play(0); 
+~beats2.play(0); 
+
+( 
+~asdf= { 
+        var trig, freq; 
+        trig= Impulse.kr(c.tempo/4); 
+        freq= Stepper.kr(trig, 0, 100, 500, 98); 
+        SinOsc.ar(freq.dup, 0, Decay.kr(trig)); 
+} 
+) 
+( 
+c.playNextBar({ 
+        ~asdf.vol_(0.9).quant(1); 
+        ~asdf.play(0); 
+}) 
+) 
+
+~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(1, 2), c); 
+~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(2, 2), c); 
+~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(4, 2), c); 
+
+~asdf.stop 
+~beats1.stop 
+~beats2.stop 
+
+~beats1.free 
+~beats2.free 
+~asdf.free 
+
+/*
+.release and .filter doesn't work.  don't know enough to fix it. 
+_f 
+
+On 09.07.2005, at 20:07, collisionist wrote: 
+
+> Does any one have experience of synchronising BBCut with JITLib? I see 
+> there are a couple of JITLib-specific classes in BBCut called 
+> "BBCutControl" and "bbcutjitlib", but I can't find any examples of how 
+> to use them, neither in the BBCut/JITLib distributions, nor sc-users. 
+> 
+> There is an example in BBCut called "bbcut and jitlib", but this only 
+> deals with playing a single process, whereas I'd really like to be 
+> able to synchronise a BBCut procedure with other elements (eg. a 
+> bassline) within JITLib. 
+> 
+> Any clues anyone? 
+> 
+> Apologies for asking about 3rd party libraries here, I know Nick 
+> Collins is busy with other stuff at the moment, so I'm hoping someone 
+> else will know.
+
+Re: Synchronising BBCut with JITLib  
+by collision.ist@virgin.net Jul 10, 2005; 04:33pm
+
+Hey Fredrik 
+
+This is great. I'll be able to do something now. 
+
+Also, thanks for the (offlist) erratum. For the record: 
+
+> ahh, crap! 
+> i should start to THINK before posting.  in my example please use _ 
+> for all quant 
+> ~beats1.vol_(0.9).quant_(4); 
+> ~beats2.vol_(0.7).quant_(4); 
+> sorry for that. 
+
+Cheers, 
+Jim 
+*/
+
+
+
+
+
+Soundfile Selection
+============================================================
+Language: C
+Licence: Other
+Tags: control,gui,buffer
+
+(
+w = SCWindow.new("soundfile test", Rect(200, 200, 800, 400));
+a = SCSoundFileView.new(w, Rect(20,20, 700, 60));
+
+f = SoundFile.new;
+f.openRead("sounds/a11wlk01.wav");
+
+a.soundfile = f;
+a.read(0, f.numFrames);
+a.elasticMode = true;
+
+a.timeCursorOn = true;
+a.timeCursorColor = Color.red;
+a.timeCursorPosition = 2050;
+a.drawsWaveForm = true;
+a.gridOn = true;
+a.gridResolution = 0.2;
+a.mouseUpAction = {
+	("mouseUp, current selection is now:"
+		+ a.selections[a.currentSelection]).postln;
+	c.set(\startLoop, a.selections[a.currentSelection][0]);
+	c.set(\endLoop, a.selections[a.currentSelection].sum);
+};
+w.front;
+w.onClose= {c.free; b.free};
+
+s.waitForBoot{
+	b= Buffer.read(s, f.path);
+	s.sync;
+	SynthDef(\soundfileMono, {|out=0, bufnum=0, rate=1, startLoop= 0, endLoop= 0|	//in percent
+		var z;
+		z= LoopBuf.ar(1, bufnum, BufRateScale.ir(bufnum)*rate, 1, 0, startLoop, endLoop);
+		Out.ar(out, z);
+	}).send(s);
+	s.sync;
+	c= Synth(\soundfileMono, [\bufnum, b.bufnum]);
+}
+)
+
+
+
+
+Plotting A Buffer
+============================================================
+Language: C
+Licence: Other
+Tags: buffer,gui
+
+/*
+Re: plotting a buffer in a gui panel  
+by grammerfest Oct 23, 2007; 10:54am
+
+Hey, 
+
+Just to add my two cents... this is what I do for plotting buffers, using blackrain's handy extension to SCSoundFileView: SCSoundFileView-plus.sc: 
+*/
+
+( 
+var path,b,folder,items,w,menu,sfv; 
+
+//put your folder of sounds here 
+path = "sounds/guitar_harmonics/"; 
+
+b = Buffer.readDir(path,10,"aif");// using wslib 
+
+folder = (path ++ "*").pathMatch; 
+items = Array(folder.size); 
+folder.do{|path,i| 
+    var clip; 
+    clip = PathName(path); 
+    items.add(clip.fileNameWithoutExtension); 
+}; 
+    
+w = SCWindow.new.front; 
+
+menu = SCPopUpMenu(w,Rect(10,110,250,20)); 
+menu.items  = items; 
+menu.action_{|item| 
+        sfv.plotBuffer(b[item.value],showProgress:false);//plots selected buffer 
+};         
+
+sfv = SCSoundFileView(w,Rect(10,10,300,100)); 
+
+) 
+
+//code is a little messy but I'm a little foggy this morning 
+
+/***********************************************************
+
+Re: plotting a buffer in a gui panel  
+by Scott Wilson-8 Oct 22, 2007; 08:48pm
+
+Hey Dan, 
+
+I don't think you can do this in a straightforward way. I suppose a   
+modified SCScope could do this and would be useful, but I don't think   
+it would work in its current form. 
+
+There is of course Buffer:plot, but that's a lot of data to throw   
+around if you want it to update as recording is happening. Probably   
+best would be to mirror the data clientside in an array, and update/ 
+draw that with getn, taking a small chunk at a time. That might work. 
+
+S. 
+*/
+
+
+
+
+GUI.skin
+============================================================
+Language: C
+Licence: Other
+Tags: gui,system
+
+/*************************************************
+On Fri, Feb 29, 2008 at 2:43 PM, Wouter Snoei <mailinglists@woutersnoei.nl> wrote:
+Hi list,
+
+how does GUI.skin work?
+
+cheers,
+Wouter
+
+Wouter Snoei
+
+/////////////////
+
+I recently asked that and nobody has yet answered.
+
+*************************************************/
+
+// I added 
+
+	
+	/**
+	 *	Add skins by GUI.skins.put(skinName,( fontSpecs: etc.  )  )
+	 *	Set that as default here.
+	 */
+	*setSkin { arg skinName;
+		skin = skins[skinName];
+		scheme.font.new(*GUI.skin.fontSpecs).setDefault;
+	}
+
+// and <skins so you can do this:
+
+		GUI.skins.put(\crucial,
+			(
+				fontSpecs: 	["Helvetica", 11.0],
+				fontColor: 	Color.black,
+				background: 	Color.white,
+				foreground:	Color.grey(0.95),
+				onColor:		Color.new255(255, 250, 250),
+				offColor:		Color.clear,
+				gap:			4 @ 4,
+				margin: 		2@0,
+				buttonHeight:	17
+			));
+
+
+// in your startup
+GUI.setSkin(\crucial)
+
+// then
+
+thing.background_(GUI.skin.background)
+
+// and Font.default works
+
+// I think it looks fine and we should go ahead with that.
+
+/***************************************************
+
+On Mar 21, 2008, at 10:10 AM, jostM wrote:
+
+Could someone give a short description of how GUI.skins is meant to be 
+used? I would like to replace my own colorScheme object with this 
+eventually, sichce it is now part of SC.
+
+***************************************************/
+
+// In 3.2 you will have to add these:
+
++ GUI {
+	*skins { ^skins }
+	*setSkin { |name| skin = skins[name] }
+}
+
+// Then you can add your own skin by doing
+
+GUI.skins.put(\mySkin, (
+	fontSpecs: 	["Monaco", 10],
+	fontColor: 	Color.black,
+	background: 	Color(0.8, 0.85, 0.7, 0.5),
+	foreground:	Color.grey(0.95),
+	onColor:		Color(0.5, 1, 0.5), 
+	offColor:		Color.clear,
+	gap:			0 @ 0,
+	margin: 		2@2,
+	buttonHeight:	16
+));
+
+// ... but replace the actual values with your desired preferences.
+
+// Then, GUI.setSkin(\mySkin) applies the preferences.
+// hjh
+
+
+
+
+
+
+
+
+
+Kuler Colours
+============================================================
+Language: C
+Licence: Other
+Tags: gui,patch
+
+/*
+This patch extracts color values from the kuler api via a themeID and converts them to Color objects.
+It requires
+	the XML quark by Jens Gulden (wow! thanx) for parsing the xml stuff and
+	the wslib quark by wouter snoei (wow, too!) for Meta_Color:newHex
+	a valid kuler dev-key (see http://kuler.adobe.com/api/ for details)
+*/	
+
+// Process Kuler rss feed for Color extraction
+
+(
+~getFeed = {
+	arg
+		fileName,
+		kulerKey, // your kuler key; if you don't know what this is, visit kuler.adobe.com, or contact me off-list
+		themeID(347630); // ID of a kuler theme
+
+	"curl \"http://kuler-api.adobe.com/rss/search.cfm?itemsPerPage=20&startIndex=0&searchQuery=themeID:%&key=%\" > /tmp/%".format(themeID, kulerKey, fileName).unixCmd
+};
+~xml2color = {|fileName|
+	DOMDocument("/tmp/%".format(fileName)).getElementsByTagName("kuler:swatch").collect{|swatch| swatch.getElementsByTagName("kuler:swatchHexColor").collect(_.getText)}.flatten.collect{|str| Color.newHex(str)}
+};
+~tidy = {|fileName|
+	"rm /tmp/%".format(fileName).unixCmd;
+};
+~show = {|color, bounds(Rect(30,300, 100, 30))|
+	var window;
+	var extent = bounds.extent.asArray;
+	window = Window.new("ColorTest", bounds, false);
+	window.drawHook = {
+		3.do{|i|
+			Pen.color = Color.gray(i * 0.5);
+			Pen.fillRect(Rect.fromArray([i*(extent.first/3),0] ++ (extent * [1/3, 1])));
+		};
+		Pen.color = color;
+		Pen.fillRect(Rect.fromArray(extent*0.1 ++ extent * 0.8));
+	};
+	window.front;
+}
+)
+(
+{
+	~fileName = "%.xml".format(Date.getDate.stamp);
+	// this is my Kuler ID
+	~getFeed.value(~fileName, "F9C80E28B022C4E352CA74690B0C6139");
+	2.wait;
+	"less /tmp/%".format(~fileName).unixCmd;
+	a = ~xml2color.value(~fileName);
+	1.wait;
+	~tidy.value(~fileName)
+}.fork;
+)
+
+a.do{|c| ~show.(c)}
+
+
+
+
+Graphic Equalizer
+============================================================
+Language: C
+Licence: Other
+Tags: fx
+
+/*
+Re: graphic equalizer? 
+by Alberto de Campo-2 Nov 08, 2008; 10:25am
+or you can use MidEQ, something like this, with JITLib gui: 
+*/
+
+p = ProxySpace.push; 
+m = ProxyMixer(p); 
+
+( 
+var freqs = 31.25 * (2 ** (0..9)); 
+var names = freqs.collect { |freq| ("dB_" ++ freq).replace("000", 
+"k").asSymbol }; 
+
+names.do (Spec.add(_, [-24, 24])); 
+Spec.add(\bandWidth, [0.03, 1, \exp]); 
+Spec.add(\postGain, [-24, 24]); 
+
+~src = { PinkNoise.ar * 0.1 }; 
+
+~graphicEQ = { |bandWidth=0.5, postGain=1| 
+        var snd = ~src.ar; 
+
+        var gains = names.collect { |name| Control.names([name]).kr(0) }; 
+        freqs.do { |freq, i| snd = MidEQ.ar(snd, freq, bandWidth, gains[i]) }; 
+        snd * postGain.lag(0.1).dbamp; 
+}; 
+) 
+
+// is that what you intended? 
+
+// best, adc 
+
+
+
+
+Get Supercollider Tweets
+============================================================
+Language: C
+Licence: Other
+Tags: patch
+
+/*
+twitterpated with #supercollider overload?
+jonesin' for a 140-char-max fix in your ear?
+
+fret not!
+
+and execute:
+*/
+
+
+(
+var p, a, l, d, doc;
+p = Pipe.new(
+ "curl http://search.twitter.com/search.atom?q=%23supercollider+play",
+ "r"
+);
+a = "";
+l = p.getLine;
+while({l.notNil}, {a = a + l; l = p.getLine; });
+p.close;
+
+d = DOMDocument.new;
+d.parseXML(a);
+t = d.getElementsByTagName("entry").collect { |e|
+
+ "// by " + e.getElementsByTagName("author").first
+         .getElementsByTagName("name").first.getText() + ":\n" +
+
+ e.getElementsByTagName("title").first.getText()
+
+};
+
+Document(string:"// #supercollider tweets\n\n\n" + t.join("\n\n\n\n")).syntaxColorize;
+)
+
+
+/*
+THE CAVEAT SLIDE
+a slight delay is to be expected, to await the gathering of twitters' reply.
+(do not be alarmed. all part of the show, my friends)
+oh and yeah you'll need the XML Quark (http://quarks.svn.sourceforge.net/viewvc/quarks/XML/)
+and it only works if you can run Pipe (sorry, PC  ... ceci n'est pas une pipe)
+
+enjoy
+e
+*/
+
+
+
+Envelope -> Synth
+============================================================
+Language: C
+Licence: Other
+Tags: control
+
+/*
+You can send an envelope to a synth at run time using Control.names.  
+Here is a simple example:
+*/
+
+SynthDef(\test, {
+	var freqenv, freq;
+	freqenv = Control.names([\freqenv]).kr(Env.newClear(8).asArray); // up to 8 breakpoints
+	freq = EnvGen.kr(freqenv, doneAction: 2);
+	Out.ar(0, SinOsc.ar(freq, 0, 0.1))
+	}).send(s);
+	
+a = Synth.new(\test).setn(\freqenv, Env([440, 880, 660], [1, 1], \exp).asArray)
+
+/*
+Then, do whatever you want in the language before creating the note,  
+and just send your envelope. Is this what you mean?
+
+Best,
+
+Josh
+*/
+
+
+
+Using Pen's String Methods
+============================================================
+Language: C
+Licence: Other
+Tags: gui
+
+// Using Pen's string methods:
+(
+w = GUI.window.new;
+v = GUI.userView.new(w, w.view.bounds).background_(Color.yellow).resize_(5);
+v.drawFunc = {
+	8.squared.do({ arg i; GUI.pen.stringAtPoint("monkey",
+		(v.bounds.width/8 * (i % 8))@(v.bounds.height/8 * (i div: 8))
+	) });
+};
+w.front;
+bench({v.drawFunc}).asFraction
+)
+
+
+
+
+Granular Playback
+============================================================
+Language: C
+Licence: Other
+Tags: patch
+
+// Here is a clearer example:
+
+(
+var winenv;
+
+b = Buffer.read(s, "sounds/a11wlk01-44_1.aiff");
+// a custom envelope
+winenv = Env([0, 1, 0], [0.5, 0.5], [8, -8]);
+z = Buffer.sendCollection(s, winenv.discretize, 1);
+
+SynthDef(\buf_grain_test, {arg gate = 1, amp = 1, sndbuf, envbuf;
+	var pan, env, freqdev, trigger, graindur, grainrate;
+	// use mouse x to control panning
+	pan = LFNoise1.kr(0.2);
+	env = EnvGen.kr(
+		Env([0, 1, 0], [1, 1], \sin, 1),
+		gate,
+		levelScale: amp,
+		doneAction: 2);
+	trigger = Impulse.ar(1); // 10 notes per second
+	graindur = TRand.ar(1.2, 1.0, trigger); // grains between 0.2 and 1.0 second
+	grainrate = BufDur.kr(sndbuf) / graindur;
+	Out.ar(0,
+		GrainBuf.ar(2, trigger, graindur.poll, sndbuf, grainrate,
+			0, 2, pan, envbuf) * env)
+	}).send(s);
+
+)
+
+// use built-in env
+x = Synth(\buf_grain_test, [\sndbuf, b, \envbuf, -1])
+
+// switch to the custom env
+x.set([\envbuf, z])
+x.set([\envbuf, -1]);
+
+x.set([\gate, 0]);
+
+/////////////////////
+
+// Ah... try this:
+
+(
+var winenv;
+
+b = Buffer.read(s, "sounds/a11wlk01-44_1.aiff");
+// a custom envelope
+winenv = Env([0, 1,1, 0], [0.01, 0.98, 0.01], [8, 0, -8]);
+z = Buffer.sendCollection(s, winenv.discretize, 1);
+
+SynthDef(\buf_grain_test, {arg gate = 1, amp = 1, sndbuf, envbuf;
+	var pan, env, freqdev, trigger, graindur, grainrate, playpos;
+	// use mouse x to control panning
+	pan = LFNoise1.kr(0.2);
+	env = EnvGen.kr(
+		Env([0, 1, 0], [1, 1], \sin, 1),
+		gate,
+		levelScale: amp,
+		doneAction: 2);
+	playpos = Line.kr(0, 1, BufDur.kr(sndbuf), doneAction: 2);
+	trigger = Impulse.ar(10); // 10 notes per second
+	graindur = TRand.ar(0.05, 0.1, trigger); // grains between 0.2 and 1.0 second
+	Out.ar(0,
+		GrainBuf.ar(2, trigger, graindur, sndbuf, 1,
+			playpos, 2, pan, envbuf) * env)
+	}).send(s);
+
+)
+
+// use built-in env
+x = Synth(\buf_grain_test, [\sndbuf, b, \envbuf, z])
+
+x.free;
+
+
+
+
+
+Order Of Effects In Pfx
+============================================================
+Language: C
+Licence: Other
+Tags: fx,pattern
+
+/*
+order of effects in Pfx 
+by miguel.negrao Nov 10, 2008; 04:29pm
+
+Hi list, 
+
+It appears that the order in the chain of the effects is the reverse of 
+what would be expected with Pfx. For example, from the help file: 
+*/
+
+( 
+var p, q, r, o; 
+p = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
+
+q = Pfx(p, \echo, \dtime, 0.2, \decay, 3); 
+
+r = Pfx(q, \distort, \pregain, 20, \amp, 0.25); 
+
+o = Pfx(r, \wah); 
+
+Pseq([p, q, r, o], 2).play; 
+) 
+        
+/*
+this sounds as 
+
+pattern->wah->distort->echo->out 
+
+which unless I'm missing something looks as the reverse of how things 
+work in supercollider. Why does this work this way ? 
+
+also, how would i do something like ? 
+
+pattern1-> effect1 -| 
+pattern2-> effect2 -| -> effect3 
+
+with the order of things switched I'm not sure how to do this... 
+
+Miguel Negrão 
+*/
+
+/*
+Re: order of effects in Pfx 
+by Julian Rohrhuber Nov 10, 2008; 04:41pm
+yes, this is (in)correct. 
+for separating the effects, you should wrap each in a Pbus. 
+*/
+
+
+
+
+
+q = Pbus(Pfx(...)); 
+
+etc. 
+I wonder if we should maybe do this automatically. 
+
+seq([p, q, r, o], 2).play; 
+>) 
+> 
+>this sounds as 
+> 
+>pattern->wah->distort->echo->out 
+> 
+>which unless I'm missing something looks as the 
+>reverse of how things work in supercollider. Why 
+>does this work this way ? 
+> 
+>also, how would i do something like ? 
+> 
+>pattern1-> effect1 -| 
+>pattern2-> effect2 -| -> effect3 
+> 
+>with the order of things switched I'm not sure how to do this... 
+> 
+>Miguel Negrão 
+> 
+>_______________________________________________ 
+>sc-users mailing list 
+> 
+>info (subscription, etc.): 
+>http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+>archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+>search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+... [show rest of quote]
+
+
+-- 
+
+
+
+
+
+. 
+
+_______________________________________________ 
+sc-users mailing list 
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+Re: order of effects in Pfx 
+by miguel.negrao Nov 10, 2008; 06:06pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+
+Julian Rohrhuber escreveu:
+
+>> Hi list, 
+>> 
+>> It appears that the order in the chain of the effects is the reverse 
+>> of what would be expected with Pfx. 
+> 
+> yes, this is (in)correct. 
+> for separating the effects, you should wrap each in a Pbus. 
+> 
+> q = Pbus(Pfx(...)); 
+> 
+> etc. 
+> I wonder if we should maybe do this automatically.
+... [show rest of quote]
+
+Wrapping in a Pbus did not change the order of the effects, the order is 
+  still reversed... 
+
+Miguel Negrão 
+
+> 
+>> For example, from the help file: 
+>> 
+>> ( 
+>> var p, q, r, o; 
+>> p = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
+>> 
+>> q = Pfx(p, \echo, \dtime, 0.2, \decay, 3); 
+>> 
+>> r = Pfx(q, \distort, \pregain, 20, \amp, 0.25); 
+>> 
+>> o = Pfx(r, \wah); 
+>> 
+>> Pseq([p, q, r, o], 2).play; 
+>> ) 
+>> 
+>> this sounds as 
+>> 
+>> pattern->wah->distort->echo->out 
+>> 
+>> which unless I'm missing something looks as the reverse of how things 
+>> work in supercollider. Why does this work this way ? 
+>> 
+>> also, how would i do something like ? 
+>> 
+>> pattern1-> effect1 -| 
+>> pattern2-> effect2 -| -> effect3 
+>> 
+>> with the order of things switched I'm not sure how to do this... 
+>> 
+>> Miguel Negrão 
+>> 
+>> _______________________________________________ 
+>> sc-users mailing list 
+>> 
+>> info (subscription, etc.): 
+>> http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+>> archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+>> search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+> 
+>
+... [show rest of quote]
+
+
+_______________________________________________ 
+sc-users mailing list 
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+Re: order of effects in Pfx 
+by James Harkins-2 Nov 10, 2008; 07:21pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+
+On Mon, Nov 10, 2008 at 11:29 AM, Miguel Negrao 
+<miguel.negrao@...> wrote: 
+> Hi list, 
+> 
+> It appears that the order in the chain of the effects is the reverse of what 
+> would be expected with Pfx. For example, from the help file: 
+
+This happens because the patterns evaluate from the outermost layer to 
+the innermost. 
+
+o adds \wah to the tail of the group. 
+r adds \distort to the tail -- that is, after \wah 
+q adds \echo to the tail, after \distort 
+
+I don't have a good fix in mind for this (but Julian might already be 
+working on it?). 
+
+hjh 
+
+-- 
+James Harkins /// dewdrop world 
+jamshark70@... 
+http://www.dewdrop-world.net
+
+"Come said the Muse, 
+Sing me a song no poet has yet chanted, 
+Sing me the universal."  -- Whitman 
+
+_______________________________________________ 
+sc-users mailing list 
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+Re: order of effects in Pfx 
+by miguel.negrao Nov 10, 2008; 07:37pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+
+James Harkins escreveu:
+
+> On Mon, Nov 10, 2008 at 11:29 AM, Miguel Negrao 
+> <miguel.negrao@...> wrote: 
+>> Hi list, 
+>> 
+>> It appears that the order in the chain of the effects is the reverse of what 
+>> would be expected with Pfx. For example, from the help file: 
+> 
+> This happens because the patterns evaluate from the outermost layer to 
+> the innermost. 
+> 
+> o adds \wah to the tail of the group. 
+> r adds \distort to the tail -- that is, after \wah 
+> q adds \echo to the tail, after \distort 
+> 
+> I don't have a good fix in mind for this (but Julian might already be 
+> working on it?). 
+> 
+> hjh 
+>
+... [show rest of quote]
+
+for chains where each fx goes into just one fx it's okay, I can just put 
+them in reverse, but how do I define something like 
+
+pattern1-> effect1 -| 
+pattern2-> effect2 -| -> effect3 
+
+with Pfx ? 
+
+btw, it would be a good idea to mention this issue in the help file. 
+
+thanks 
+Miguel Negrão 
+
+_______________________________________________ 
+sc-users mailing list 
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+Re: order of effects in Pfx 
+by James Harkins-2 Nov 10, 2008; 07:57pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+
+On Mon, Nov 10, 2008 at 2:37 PM, Miguel Negrao 
+<miguel.negrao@...> wrote: 
+> for chains where each fx goes into just one fx it's okay, I can just put 
+> them in reverse, but how do I define something like 
+> 
+> pattern1-> effect1 -| 
+> pattern2-> effect2 -| -> effect3 
+> 
+> with Pfx ? 
+
+Maybe like this -- you can control the node order yourself with groups. 
+
+fx3group = Group(s); 
+fx12group = Group.before(fx3group); 
+
+fxbuses = { Bus.audio(s, 2) } ! 3; 
+
+pfx1 = Pfx(pattern1, \fx1, \group, fx12group, \bus, fxbuses[0], ...); 
+pfx2 = Pfx(pattern1, \fx2, \group, fx12group, \bus, fxbuses[1], ...); 
+
+pfx3 = Pfx(Ppar([pfx1, pfx2]), \fx3, \group, fx3group, \bus, fxbuses[2], ...); 
+
+At least as a start... for myself, I use MixerChannel for this kind of 
+signal management. It's much easier imho. I've always felt Pfx was 
+trying to stick a square peg into a round hole. 
+
+m3 = MixerChannel(\m3, s, 2, 2); 
+
+m1 = MixerChannel(\m1, s, 2, 2, outbus: m3); 
+m2 = MixerChannel(\m2, s, 2, 2, outbus: m3); 
+
+fx1 = m1.playfx(\fx1, [... args ...]); 
+fx2 = m2.playfx(\fx2, [... args ...]); 
+fx3 = m3.playfx(\fx3, [... args ...]); 
+
+m1.play(pattern1); 
+m2.play(pattern2); 
+
+m1 and m2 are mixed together and sent to m3, where the combined signal 
+is processed by m3's effect. 
+
+> btw, it would be a good idea to mention this issue in the help file. 
+
+It would be better to fix it :) 
+hjh 
+
+
+-- 
+James Harkins /// dewdrop world 
+jamshark70@... 
+http://www.dewdrop-world.net
+
+"Come said the Muse, 
+Sing me a song no poet has yet chanted, 
+Sing me the universal."  -- Whitman 
+
+_______________________________________________ 
+sc-users mailing list 
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+Re: order of effects in Pfx 
+by Julian Rohrhuber Nov 10, 2008; 08:27pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+
+I cannot reproduce the problem. Here is a test: 
+
+
+( 
+SynthDef(\distort, { arg out=0, pregain=40, amp=0.2, gate=1; 
+        var env; 
+        env = Linen.kr(gate, 0.05, 1, 0.1, 2); 
+        XOut.ar(out, env, (In.ar(out, 2) * pregain).distort * amp); 
+}, [\ir, 0.1, 0.1, 0]).store; 
+
+SynthDef(\addbeeps, { arg out=0, gate=1; 
+        var env; 
+        env = Linen.kr(gate, 0.05, 1, 0.1, 2); 
+        XOut.ar(out, env, (In.ar(out, 2) + (LFPulse.kr(1, 0, 0.3) * 
+SinOsc.ar(1000) * 0.4) )); 
+}, [\ir, 0.1, 0.1, 0]).store; 
+) 
+
+( 
+var a; 
+a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
+a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3)); 
+a = Pbus(Pfx(a, \addbeeps)); 
+a.play; 
+) 
+
+( 
+var a; 
+a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
+a = Pbus(Pfx(a, \addbeeps)); 
+
+a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3)); 
+a.play; 
+) 
+
+-- 
+
+
+
+
+
+. 
+
+_______________________________________________ 
+sc-users mailing list 
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+Re: order of effects in Pfx 
+by miguel.negrao Nov 10, 2008; 08:43pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+
+Yes, you are right, I must have mixed up something. Wrapping in Pbus 
+does correct the order. 
+
+thanks ! 
+Miguel Negrão 
+
+Julian Rohrhuber escreveu:
+
+> I cannot reproduce the problem. Here is a test: 
+> 
+> 
+> ( 
+> SynthDef(\distort, { arg out=0, pregain=40, amp=0.2, gate=1; 
+>     var env; 
+>     env = Linen.kr(gate, 0.05, 1, 0.1, 2); 
+>     XOut.ar(out, env, (In.ar(out, 2) * pregain).distort * amp); 
+> }, [\ir, 0.1, 0.1, 0]).store; 
+> 
+> SynthDef(\addbeeps, { arg out=0, gate=1; 
+>     var env; 
+>     env = Linen.kr(gate, 0.05, 1, 0.1, 2); 
+>     XOut.ar(out, env, (In.ar(out, 2) + (LFPulse.kr(1, 0, 0.3) * 
+> SinOsc.ar(1000) * 0.4) )); 
+> }, [\ir, 0.1, 0.1, 0]).store; 
+> ) 
+> 
+> ( 
+> var a; 
+> a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
+> a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3)); 
+> a = Pbus(Pfx(a, \addbeeps)); 
+> a.play; 
+> ) 
+> 
+> ( 
+> var a; 
+> a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
+> a = Pbus(Pfx(a, \addbeeps)); 
+> 
+> a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3)); 
+> a.play; 
+> ) 
+>
+... [show rest of quote]
+
+
+_______________________________________________ 
+sc-users mailing list 
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+Re: order of effects in Pfx 
+by Julian Rohrhuber Nov 10, 2008; 08:45pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+
+> 
+>Maybe like this -- you can control the node order yourself with groups. 
+> 
+>fx3group = Group(s); 
+>fx12group = Group.before(fx3group); 
+> 
+>fxbuses = { Bus.audio(s, 2) } ! 3; 
+> 
+>pfx1 = Pfx(pattern1, \fx1, \group, fx12group, \bus, fxbuses[0], ...); 
+>pfx2 = Pfx(pattern1, \fx2, \group, fx12group, \bus, fxbuses[1], ...); 
+> 
+>pfx3 = Pfx(Ppar([pfx1, pfx2]), \fx3, \group, fx3group, \bus, fxbuses[2], ...);
+... [show rest of quote]
+
+in a sense, this solution contradicts the pattern paradigm. Patterns 
+should be always embeddable multiple times without interfering with 
+each other. For the above case, Pbus and Pgroup exist (which do this 
+parallelization). This is why I feel that Pfx should be automatically 
+wrapped in a Pbus. 
+
+On the other hand, it is a matter of perspective whether mutual 
+influence on the level of audio counts and should be avoided by all 
+menas - after all, sounds influence each other by addition, too. But 
+in the case of Pfx, I'd rather explicitly make streams interfer than 
+to have interferences by default. 
+
+
+-- 
+
+
+
+
+
+. 
+
+_______________________________________________ 
+sc-users mailing list 
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+
+
+
+« Return to forum
+LightInTheBox - Buy quality products at wholesale price!
+
+Free Forum Powered by Nabble
+Forum Help
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Creating Unique Variables in a GUI, Using Arg?
+============================================================
+Language: C
+Licence: Other
+Tags: gui
+
+/*
+Creating unique varibles in a GUI, using arg? 
+by Paul Jones Nov 10, 2008; 08:03pm
+
+Hello, 
+
+  I'm trying to make a gui that will load samples into a buffer, this I can do. But I would like to (without writing a massive page) make a gui that creates multiple paths and assigns them to different buffers, with unique variable names.   
+See ~s1. 
+
+I would like to be able to switch between samples quickly, simply using (~s1 ++ "i" ).bufnum, but I don't know how to implement this. I can use |i| to change other things like button pos and color, but not what is really essential here! 
+
+Thanks 
+
+   Paul 
+*/
+
+(var win , but , but2 ; //boot gui for sample loading 
+//~snares= List[]; 
+win = SCWindow.new("sample",Rect(200,200,200,200)); 
+win.view.background = (Color.new255(20,0,2)); 
+8.do{|i| 
+	but = SCButton(win,Rect(0,i*25,100,20)); 
+	but.states = [[
+		"snare "++(i+1),
+		Color.new255(i*6, 139-(i*12), 69+(i*5)),
+		Color.new255(60-(i*6), 10+(i*5) , 130 - (i*12))
+	]]; 
+	but.action = {
+		File.openDialog("", {arg path1;
+			~file1 = path1;
+			~s1 = Buffer.read(s,~file1); // it is ~s1 that needs to be unique for each button 
+			//~snares.add(~s1); 
+		}) 
+	} 
+}; 
+
+8.do{|i| 
+	but = SCButton(win,Rect(125,i*25,100,20)); 
+	but.states = [[
+		"hat "++(i+1),
+		Color.new255(48-(i*6), 43+(i*12), 109-(i*5)),
+		Color.new255(12+(i*6), 50-(i*5) , 34 + (i*12))
+	]]; 
+	but.action = { 
+		File.openDialog("", {arg path1;
+			~file1 = path1; 
+			~s2 = Buffer.read(s,~file1); 
+			//   ~snares.add(~s2); 
+		}) 
+	} 
+};win.front); 
+           
+/*
+Re: Creating unique varibles in a GUI, using arg? 
+by James Harkins-2 Nov 10, 2008; 08:07pm
+
+Don't put them in separate variables... put them in an array and 
+access the Buffers in the array by number. 
+*/
+
+// Which looks easier? 
+
+("s1" ++ index).asSymbol.envirGet 
+
+//or 
+
+~s1[index] 
+
+// hjh 
+
+/*
+Re: Creating unique varibles in a GUI, using arg? 
+by Paul Jones Nov 10, 2008; 09:08pm
+
+Ahh, got it. I was thinking this (but with list), but didn't realize I could use .put and arrange them this way. 
+
+here is code for anyone interested. 
+
+Thanks 
+
+  Paul 
+*/
+
+(
+var win , but , but2,but3,but4 ; //boot gui for sample loading 
+~snares= Array.newClear(8); 
+win = SCWindow.new("sample",Rect(200,200,250,200)); 
+win.view.background = (Color.new255(20,0,2)); 
+8.do{|i| 
+	but = SCButton(win,Rect(0,i*25,100,20)); 
+	but.states = [[
+		"snare "++(i+1),
+		Color.new255(i*6, 139-(i*12), 69+(i*5)),
+		Color.new255(60-(i*6), 10+(i*5) , 130 - (i*12))
+	]]; 
+	but.action = { 
+		File.openDialog("", {arg path1;
+			~file1 = path1; 
+			~s1 = Buffer.read(s,~file1); 
+			~snares.put(i,~s1); 
+		}) 
+	} 
+};
+win.front
+) 
+
+~snares[0]
+
+
+
+
+Dubstep Maker
+============================================================
+Language: C
+Licence: Other
+Tags: patch,pattern
+
+/*
+If anyone likes dubstep this could be useful, in dub step you often find poly rhythms, one after the other this will layer them effortlessly with some "sick" bass coming out. Some fine tuning needed, or just record it n make tunes from it. 
+
+Thanks to some drum synthesis that got posted not long ago. Slightly (but not much) changed ...  http://supercollider.jp/uploads/img/42.rtf
+
+P
+*/
+
+
+(SynthDef(\fm , 
+
+{  |cfreq = 55 , mfreq = 110 , at = 0.01 , sus=1 , rel = 0.01 ,lforate = 2 ,fmamt =100 , lfoamt =100 ,phase = 0.5 , envamt = 2 ,at2 = 0.5,sus2 = 0.5 ,rel2 = 0.5|
+  
+  var cosc , mosc , env , lfo , env2;
+
+env = EnvGen.ar(Env.new([10e-10,1,1,10e-10],[at,sus,rel]),doneAction:2);
+
+env2 = EnvGen.ar(Env.new([10e-10,1,0.5,10e-10],[at2,sus2,rel2]));
+
+lfo = SinOsc.ar(lforate,phase,lfoamt,lfoamt);
+
+mosc = SinOsc.ar(mfreq,0,1+(lfo)+(env2*envamt),0);
+
+cosc = SinOsc.ar(cfreq+(mosc*fmamt), 0 , env*0.5 , 0);
+
+Out.ar(0,Pan2.ar(cosc,0,0.5));
+
+}
+
+
+).send(s))
+
+
+    SynthDef("hat", {    
+        arg outBus=0, amp=0.3;
+        var env1, env2, out, oscs1, noise, n, n2;
+        
+        n = 5;
+        thisThread.randSeed = 4;
+        
+        env1 = EnvGen.ar(Env.new([0, 1.0, 0], [0.001, 0.2], [0, -12]));
+        env2 = EnvGen.ar(Env.new([0, 1.0, 0.05, 0], [0.002, 0.05, 0.03], [0, -4, -4]), doneAction:2);
+        
+        oscs1 = Mix.fill(n, {|i|
+            SinOsc.ar(
+                ( i.linlin(0, n-1, 42, 74) + rand2(4.0) ).midicps,
+                SinOsc.ar( (i.linlin(0, n-1, 78, 80) + rand2(4.0) ).midicps, 0.0, 12),
+                1/n
+            )
+        });
+        
+        oscs1 = BHiPass.ar(oscs1, 1000, 2, env1);
+        n2 = 8;
+        noise = WhiteNoise.ar;
+        noise = Mix.fill(n2, {|i|
+            var freq;
+            freq = (i.linlin(0, n-1, 40, 50) + rand2(4.0) ).midicps.reciprocal;
+            CombN.ar(noise, 0.04, freq, 0.1)
+        }) * (1/n) + noise;
+        noise = BPF.ar(noise, 6000, 0.9, 0.5, noise);
+        noise = BLowShelf.ar(noise, 3000, 0.5, -6);
+        noise = BHiPass.ar(noise, 1000, 1.5, env2);
+        
+        out = noise + oscs1;
+        out = out.softclip;
+        out = out * amp;
+        
+        Out.ar(outBus, out.dup);
+    }).send(s);
+         
+(SynthDef("kick", {    
+        arg outBus=0 , dec = 0.2 , lev = 0.5 , at = 0.01;
+        var env0, env1, env1m, out;
+        
+        env0 =  EnvGen.ar(Env.new([0.5, 1, 0.5, 0], [at, dec, 0.26], [-4, -2, -4]), doneAction:2);
+        env1 = EnvGen.ar(Env.new([110, 59, 33], [0.005, 0.09], [-4, -5]));
+        env1m = env1.midicps;
+        
+        out = LFPulse.ar(env1m, 0, 0.5, 1, -0.5);
+        out = out + WhiteNoise.ar(1);
+        out = LPF.ar(out, env1m*1.5, env0);
+        out = out + SinOsc.ar(env1m, 0.5, env0);
+        
+        out = out * lev;
+        out = out.clip2(0.8);
+        
+        Out.ar(outBus, out.dup);
+    }).send(s);)
+
+
+
+(
+
+
+Tdef(\dstep,
+
+~smeg = Pseed(22 , Pxrand([2,4,6,8,12,16,24,32],inf));
+
+~kick = ~smeg.asStream;
+
+~lfo = ~smeg.asStream;
+
+~vol = Pseq([0.7,0.2,0.6,0.3,0.75,0.1],inf);
+
+~dyn = ~vol.asStream;
+
+~hat = ~vol.asStream;
+
+~jiz = Pbrown(55,155,5,inf).asStream;
+{
+inf.do{|i|
+
+
+
+
+if (i%1 == 0 , {
+
+
+2.do {~fmamt = ~jiz.next;  ~lforate = ~lfo.next;Synth(\fm, [\fmamt ,~jiz, 
+                     \lfoamt , 3.6 , 
+                     \cfreq , 55, 
+                     \mfreq , [112,222].choose , 
+                     \lforate ,1/3.21*~lforate , 
+                     \sus, 3.1 ,
+                     \rel, 0.1, 
+                     \phase , 0.4])};
+                     thisThread.clock.sched(0,Routine
+                     {
+                     ~kickspeed = ~kick.next;
+                    
+                     
+                     2.do{~lve =~dyn.next;
+                     
+                    Synth(\kick, [\lev,0.8,
+                                      \at, 0.1.rand,
+                                      \dec, 0.32]); 
+                    
+                     1.6.wait}});
+                     thisThread.clock.sched(0 , Routine{32.do{Synth(\hat,[\amp,~hat.next/3]
+                                                                             );0.1.wait}}) } ,0); 
+                     
+                      3.20.wait;}
+}
+ ).play  )
+
+
+{SinOsc.ar(55 + SinOsc.ar(110,0,40),0,1)}.play
+
+/***********************************************************/
+
+	
+
+
+
+
+
+
+
+Tap Tempo
+============================================================
+Language: C
+Licence: Other
+Tags: patch,info
+
+// how's this?
+
+(
+w = GUI.window.new("Tempo", Rect(100, 600, 400, 400)).front;
+n = nil;
+
+u = {
+	n.isNil.if({n = Main.elapsedTime}, {
+		t = Main.elapsedTime;
+		r = 60 / (t - n);
+		n = t;
+		a.string_("Tempo is : "++r.round(0.01)++" BPM")
+		})
+		
+	};
+b = GUI.button.new(w, Rect(10, 10, 380, 180))
+	.states_([
+		["Press me, or the space bar", Color.black, Color.grey]])
+	.action_({u.value})
+	;
+		
+a = GUI.staticText.new(w, Rect(10, 200, 380, 180))
+	.string_("No tempo")
+	.font_(Font("Monaco", 36));
+	
+w.view.keyDownAction_({arg view, char;
+	(char == $ ).if({u.value})
+	})
+)
+
+// Josh
+
+/*
+On Jun 5, 2008, at 12:28 AM, Marinos Koutsomichalis wrote:
+
+I'm trying to code a tempo tab window, that will calculate the tempo
+when clicked. Maybe sb has already done so?
+If no, how can I measure the time that has passed bettween two succesive clicks?
+*/
+
+
+
+Akai Timestretch
+============================================================
+Language: C
+Licence: Other
+Tags: fx
+
+/* The SelectL helpfile in wslib (quarks) has a chunky old school akai timestretch example.
+*/
+
+
+
+Crossfade Class
+============================================================
+Language: C
+Licence: Other
+Tags: class
+
+/*
+This might be of use to someone: I made a crossfader for any number of 
+signals:
+*/
+
+{ CrossfadeN.ar([WhiteNoise.ar,SinOsc.ar,Saw.ar],MouseX.kr(-2,2)) }.play
+
+
+CrossfadeN {
+
+    *ar { arg inArray, x;
+        ^super.new.init(inArray,x);
+    }
+
+    init { arg inArray,x;
+
+        var n = inArray.size,
+            transPoints = Array.fill(n,{|i| i/(n-1)}),
+            transFunctions;
+
+        transFunctions = Array.fill(n-1,{|i| 
+(max(min(x,transPoints[i+1]),transPoints[i])-transPoints[i])/(transPoints[i+1]-transPoints[i]) 
+});       
+
+        ^(    (inArray[0]*(1-transFunctions[0])) +   
+            (inArray[n-1]*transFunctions[n-2])
+            + Mix.fill(n-2, { |i| 
+transFunctions[i]*(1-transFunctions[i+1])*inArray[i+1] }) )
+
+
+    }
+
+}
+
+/*
+Enjoy
+Miguel Negrão
+*/
+
+
+
+RecordBuf, GrainBuf
+============================================================
+Language: C
+Licence: Other
+Tags: buffer
+
+(
+SynthDef("recbuffer", {arg bufnum;
+	FreeSelfWhenDone.kr(RecordBuf.ar(AudioIn.ar(1), bufnum, loop: 0));
+}).send(s);
+	
+SynthDef("buffergrain", {arg bufnum, sndrate = 1, grate= 1, gfreq = 10, gdur = 0.1;
+    var pos, tr1, tr2;
+    tr1 = Impulse.kr(sndrate/BufDur.ir(bufnum));
+    pos = Phasor.ar(tr1, sndrate/BufFrames.ir(bufnum), 0, 1);
+    tr2 = Impulse.kr(gfreq);
+    Out.ar(0, GrainBuf.ar(2, tr2, gdur, bufnum, grate,  pos, 2, TRand.kr(-1,1, tr2), -1)); 
+}).send(s);
+
+r = Routine{ var bufdur = 3;
+   x.free;
+   b.free;
+   b = Buffer.alloc(s, bufdur*44100);
+   b.updateInfo({| buf | Synth("recbuffer", [\bufnum, buf])});
+   bufdur.yield;  
+   x = Synth("buffergrain", [\bufnum, b]);
+   };
+)
+	 
+
+r.reset; r.play; //this line to (re)record and grain right after
+
+// or this to re-record without stopping the grainer
+Synth("recbuffer", [\bufnum, b]);
+
+x.free; b.free;
+
+
+
+
+TabbedView
+============================================================
+Language: C
+Licence: Other
+Tags: gui
+
+/*
+my most concise syntax for modular code with tabbed views is the 
+following, btw:
+*/
+
+    v=TabbedView.newBasic(w,nil,[]);
+
+    ("tab0.rtf").load.value(v.add("tab0"));
+    ("tab1.rtf").load.value(v.add("tab1"));
+    ("tab2.rtf").load.value(v.add("tab2"));
+
+    where the content of the tab files is:
+
+
+    {arg w;
+        w.flow{arg w;
+        //your stuff here
+
+        }
+    }
+/*
+------
+
+cheers,
+jostM
+*/
+
+
+
+SynthDef.new
+============================================================
+Language: C
+Licence: Other
+Tags: info,synthdef
+
+/*
+From: Stephan Wittwer <s@wittwer.mu>
+Date: 21 September 2008 13:59:43 BDT
+To: sc-users@lists.bham.ac.uk
+Subject: [sc-users] Re: was: [sc-dev]  undefined synthdef
+Reply-To: sc-users@lists.bham.ac.uk
+
+
+Am 21.09.2008 um 14:17 schrieb Stephan Wittwer:
+
+Am 21.09.2008 um 12:16 schrieb urisala:
+
+Beware that I want to be able to pass some other wave types that do not
+conform to these 2 (maybe square wave, FM, etc), so I cannot just pass the uGen name as argument.
+
+As James H already pointed out, there is Meta_SynthDef:wrap
+
+It'is maybe a bit tricky to learn first, but It's perfect for creating
+many similar defs with common overall structure and arg names.
+
+
+Here a simple example, look how def "sin-FB" is created.
+*/
+
+
+s.boot;
+
+(
+~makeDef = { | name, func, lags |
+		// wrapper def
+	SynthDef.new(name, { |amp = 0.1, pan = 0, out = 0, gate = 1|
+		var eg, wrapped;
+		eg = EnvGen.kr(
+			Env.new([0, 1, 0], [0.05, 0.1], [4, -4], 1), gate, doneAction: 2
+		);
+		wrapped = SynthDef.wrap(func, lags, []); // no prepended args
+		Out.ar(out, Pan2.ar(wrapped, pan) * eg * amp);
+	}, [0.02, 0.01, nil, nil]).send(s);
+};
+)
+
+	
+(
+	// make a new def
+~makeDef.value("sin-FB", { |freq = 440, fdbk = 0.0|
+	SinOscFB.ar(freq, fdbk)
+}, [0.02, 0.01]);
+)
+
+	// play it
+y = Synth.new("sin-FB", ["freq", 220, "fdbk", 0.3], s);
+	
+	// test parameters
+	// line by line:
+
+y.set("fdbk", 1.1)
+y.set("pan", -0.7)
+y.set("amp", 0.05, "pan", 0, "fdbk", 2.0, "freq", 110)
+y.release(3.0)
+
+/*
+It allows each passed in ugenGraphFunc to introduce its own individual
+args and corresponding rates.
+Also the "outer template synth" can pass on args into the "inner
+individual" wrapped synth function.
+You don't need to duplicate code, if you would like to change the
+overall structure, you write it only once.
+*/
+
+
+
+ControlBus
+============================================================
+Language: C
+Licence: Other
+Tags: control
+
+/*
+From: "James Harkins" <jamshark70@gmail.com>
+Date: 22 September 2008 15:45:48 BDT
+To: sc-users@lists.bham.ac.uk
+Subject: Re: [sc-users] Using OscResponders with Tdef
+Reply-To: sc-users@lists.bham.ac.uk
+
+My preferred way to do this is to put the value on a control bus.
+Then, when you create the synth, map the argument to the control bus.
+*/
+
+myControlBus = Bus.control(s, 1);
+
+// when changing the value
+myControlBus.set(x/160);
+
+// when making the synth
+Synth("...", [theArgument: myControlBus.asMap])
+
+/*
+hjh
+*/
+
+
+
+
+Pbind Duration In Seconds
+============================================================
+Language: C
+Licence: Other
+Tags: pattern,info
+
+// if you multiply the duration in beats by
+
+Pfunc { thisThread.clock.tempo.reciprocal }
+
+// then you'll get time in seconds.
+
+// ~luke
+
+/////////////////////
+
+/*
+Or just divide, maybe a tiny bit simpler?
+
+I often use something like this:
+*/
+Pbind(
+	...
+	\dur, ****,
+	...,
+	\dur, Pkey(\dur) / Pfunc({ thisThread.clock.tempo })
+)
+
+/*
+That way the musical duration is separate from the mucking-about to convert to seconds.
+
+hjh
+*/
+
+
+
+Curves with Cocoa
+============================================================
+Language: C
+Licence: Other
+Tags: class,gui
+
+/*
+Wouter, (or anybody interested in it)
+
+here is a kinda Pen additions workaround i use to draw curves  
+(bezier)... untill a primitive solution is done
+(forget it if someone already did something like that.... i am not  
+aware of all quarks and stuffs already done)
+sc code pasted... take whatever you want from it if it can help:
+*/
+
+///// code begins PenAdditions_thelych for CocoaGUI
+
+PenStore {
+	classvar <>lastPosition;
+}
+
++ Pen {
+	
+	*prMoveTo {arg point;
+		_Pen_MoveTo
+		^this.primitiveFailed
+	}
+	
+	*prLineTo {arg point;
+		_Pen_LineTo
+		^this.primitiveFailed
+	}
+	
+	*moveTo {arg point;
+		PenStore.lastPosition=point.asPoint;
+		^this.prMoveTo(point);
+	}
+	
+	*lineTo { arg point;
+		PenStore.lastPosition=point.asPoint;
+		^this.prLineTo(point);
+	}
+	
+	/* c1, c2 are control points, c3 is final point.*/
+	*curveTo {
+		arg c3, c1, c2, resolution=20.0;
+		var i=0.0, b=0.0, coef0, coef1, coef2, coef3, sub=(1.0/resolution), c0=PenStore.lastPosition;
+		
+		Pen.lineTo(c0);
+
+		i = i + sub;
+		while( {i < 1.0}, {
+			b = (1-i);
+			coef0 = i*i*i;
+			coef1 = i*i*b*3;
+			coef2 = i*b*b*3;
+			coef3 = b*b*b;
+			
+			Pen.lineTo(
+				Point(
+					(c0.x * coef3) + (c1.x * coef2) + (c2.x * coef1) + (c3.x * coef0),
+					(c0.y * coef3) + (c1.y * coef2) + (c2.y * coef1) + (c3.y * coef0)
+				)
+			);
+			
+			i = i + sub;
+		});
+
+		Pen.lineTo(c3);
+		PenStore.lastPosition=c3;
+	}
+	
+	/* p1 is control point, p2 is final point */
+	*quadCurveTo {
+		arg p2, p1, resolution=20;
+		var i=0.0, b, c0, c1, c2, sub=(1.0/resolution), p0=PenStore.lastPosition;
+		
+		Pen.lineTo(p0);
+		i = i + sub;
+		
+		while( {i < 1.0}, {
+			b = (1.0 - i);
+			c0 = b.squared;
+			c1 = b*i*2;
+			c2 = i.squared;
+			
+			Pen.lineTo(
+				Point(
+					(p0.x * c0) + (p1.x * c1) + (p2.x * c2),
+					(p0.y * c0) + (p1.y * c1) + (p2.y * c2))				);
+			i = i + sub;
+		});
+		Pen.lineTo(p2);
+		PenStore.lastPosition=p2;
+	}
+}
+///// end sc code
+
+
+////An example with it
+
+(
+	
+	var ct, selected=1.neg;
+	ct = [20@100, 60@120, 85@50, 210@100];
+	w = SCWindow.new("Click on knots and drag - CurveTest", Rect(400,  
+400, 500, 500));
+	c = SCUserView(w,w.view.bounds).relativeOrigin_(false);
+	c.drawFunc = {
+		
+		ct.do {
+			|c|
+			Pen.fillColor_(Color.black);
+			Pen.fillRect(Rect(c.x-2, c.y-2, 4, 4));
+		};
+		Pen.strokeColor_(Color.black);
+		
+		Pen.moveTo(ct[0]);
+		//Pen.quadCurveTo(ct[3], ct[2]); // quadCurveTest
+		Pen.curveTo(ct[3], ct[1], ct[2]);
+		Pen.stroke;
+		
+	};
+	
+	c.mouseDownAction_( {
+		|v, x, y, mod|
+		ct.do {
+			|c,i|
+			if(Rect(c.x-2, c.y-2, 4, 4).contains(x@y),{selected=i});
+		};
+	});
+	
+	c.mouseMoveAction_ ({
+		|v, x, y, mod|
+		if(selected != -1, {
+			ct[selected] = c.mousePosition;
+			c.refresh;
+		});
+	});
+	
+	c.mouseUpAction_ ({
+		|v, x, y, mod|
+		selected = -1;
+	});
+	
+	w.front;
+)
+/*
+cheers,
+
+thelych
+*/
+
+
+
+Latch.ar to distort a signal
+============================================================
+Language: C
+Licence: Other
+Tags: fx
+
+/*
+From: Julian Rohrhuber <rohrhuber@uni-hamburg.de>
+Date: 22 September 2008 00:29:45 BDT
+To: sc-users@lists.bham.ac.uk
+Subject: Re: [sc-users] Latch
+Reply-To: sc-users@lists.bham.ac.uk
+*/
+
+// this could work:
+
+{ var signal, samp;
+	signal = SinOsc.ar(440);
+	samp = Dseq([signal], inf);
+	Duty.ar(SampleDur.ir * MouseX.kr(1, 1000, 1), 0, samp) * 0.1
+}.play;
+
+////////////////////////////////
+
+/*
+I am using Latch.ar to distort a signal, to lower it' s samplerate, as instructed from the mailing list archives..
+
+I am using this form:
+*/
+
+|sr|
+var signal;
+signal=.....;
+signal=Latch.ar(signal,Impulse(sr));
+Out.ar=.....
+
+/*
+and I pass values via a slider to sr in the range of Server.default.sampleRate and Server.default.sampleRate*0.01.
+
+1stly, It doesn't works when sr equals the Server' s Sampling rate,
+
+2ndly I get distortion always, and that' s mean that I do not actually downsample the signal... It should not be so distorted when sr=40000 for example..
+
+That' s not what I want, I want to gradually control the distrotion from none to the extreme ..
+
+3ndly , though I like the effect, this doesn' t sound like oversampling to my ears... Sth weird happens, I have downsample thousands of sounds and I am pretty familiar with the effect, it is not what I hear.
+
+Any ideas, or else any alternative ways to gradually distort a signal??
+*/
+
+
+
+A Nice Dub Delay
+============================================================
+Language: C
+Licence: Other
+Tags: fx
+
+/*
+a nice dub delay...  
+by boonier Jan 11, 2007; 10:53pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+Whats the key to writing a proper authentic-sounding dub delay? 
+
+i've written a very simple single delay line with feedback  & saturation, but I've got my ears set on something like the mda DubDelay. I has a lovely phasey character to it... 
+
+any ideas? 
+
+Re: a nice dub delay...  
+by unaudio Jan 11, 2007; 11:13pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+well there should be a filter in the feedback line.. i'm not sure what exactly is an authentic sounding dub delay, but for me properly set up filter in the feedback path sounds dub enough.
+
+On 1/12/07, boonier <smills@...> wrote:
+
+Whats the key to writing a proper authentic-sounding dub delay?
+
+i've written a very simple single delay line with feedback  & saturation,
+but I've got my ears set on something like the mda DubDelay. I has a lovely 
+phasey character to it...
+
+any ideas?
+
+
+--
+View this message in context: http://www.nabble.com/a-nice-dub-delay...-tf2962373.html#a8288324 
+Sent from the Supercollider - User mailing list archive at Nabble.com.
+
+_______________________________________________
+sc-users mailing list
+sc-users@...
+http://www.create.ucsb.edu/mailman/listinfo/sc-users
+
+
+
+-- 
+for my music go here: 
+http://www.sporadic-fault.co.nr 
+_______________________________________________ 
+sc-users mailing list 
+sc-users@... 
+http://www.create.ucsb.edu/mailman/listinfo/sc-users
+
+Re: a nice dub delay...  
+by Jan Trutzschler-2 Jan 12, 2007; 07:50am :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+the tape delay from the LocalIn helpfile might be a good starting   
+point ... 
+*/
+//from the help file ... 
+( 
+z = SynthDef("tape", { 
+        var local, in, amp; 
+        
+        in = AudioIn.ar([1,2]); 
+        
+        amp = Amplitude.kr(Mix.ar(in)); 
+        in = in * (amp > 0.02); // noise gate 
+        
+        local = LocalIn.ar(2); 
+        local = OnePole.ar(local, 0.4); 
+        local = OnePole.ar(local, -0.08); 
+        
+        local = Rotate2.ar(local[0], local[1], 0.2); 
+         	
+        local = DelayN.ar(local, 0.25, 0.25); 
+        
+        local = LeakDC.ar(local);	
+        local = ((local + in) * 1.25).softclip; 
+                
+        LocalOut.ar(local); 
+        
+        Out.ar(0, local * 0.1); 
+}).play; 
+) 
+/*
+ Re: a nice dub delay...  
+by Bobby Whelan-2 Jan 12, 2007; 06:33pm :: Rate this Message:    - Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+i dont know how useful this might be, in the summer a friend and I had a 
+gig as dub dj's, he played the records, and 
+I put delay on them using this patch, it has a tap-tempo control so you 
+can have the delay be a subdivision of the beat. 
+The delay input is gated with a .perc envelope, which (the slightly odd 
+part) is triggered from Pd, where I had a bonk~ object 
+looking for particular parts of the beat, eg the snare and the hihats. 
+The .perc envelope has a nice sound in this context, because you can add 
+delay to just these sounds. There is also a sampling part of the patch, 
+i cant remember whether it actually worked tho ;) 
+
+...it has a filter too, which is nothing special, use the T key to tap 
+the tempo, and the F key to switch the filter in/out. 
+
+(it requires BoxGrid) 
+
+http://www.soundingbody.co.uk/sc/synths/dubDelay.html
+*/
+//select all and execute as one
+//two delays with a single tap-tempo control (tap T Key)
+//delay is triggered by sending "n_set (nodeID) t_trig 1" to sc from pd
+//because pd has the bonk~ object which is rather useful with dub and 
+//delays :)
+// requires BoxGrid to be installed too
+
+//change Audio Input!!!
+//reading whole buffer, when only the recorded part should be read
+
+var win, but, grid, slid2, slid3, synth, synth2, clock, timeArray;
+var last = 10000, tempo = 1, tempoText, triggerLights, synthID1;
+var synthID2, but2, grid2, slid22, slid32, resp, filterMouse=0;
+var filterSynth, filterLevel, trackLevel, delayLevel1, delayLevel2, recSynths, sampLevels, canRecord, canPlay, sampLevelsArray, oldLengths;
+
+SynthDef(\shortTermMemory, { | t_trig, bufNum = 5, length = 4.0  |
+var gate, recordPeriod, in, delayed, recorder;
+
+gate = Env.new([0, 1, 0], [length, 0.0]);
+recordPeriod = EnvGen.kr( gate, t_trig )   >   0.0 ;
+
+in = AudioIn.ar(1);
+
+delayed = DelayN.ar(in, length, length) ;
+
+recorder = RecordBuf.ar(delayed, bufNum, run: recordPeriod, preLevel: 0.5);
+
+}).load(s);
+
+SynthDef(\bandPassFilter, { |toggle, filterLevel, trackLevel |
+var input, filter, logicX, logicY;
+logicX = Latch.kr(MouseX.kr(30, 10000), Impulse.kr(500, 0, toggle));
+logicY = Latch.kr(MouseY.kr(0, 1), Impulse.kr(500, 0, toggle));
+
+input = AudioIn.ar([1, 1]) * (trackLevel);
+filter = Resonz.ar(input, logicX, logicY, 10*filterLevel);
+Out.ar(0, filter+input)
+}).load(s);
+
+SynthDef(\dubDelay, { | del, feedBack, t_trig, length, inBus, outBus, amplitude |
+
+var loop, input, delayed, enwelope, trigger;
+
+enwelope = Env.perc(0.005, length);
+
+input = In.ar(inBus) * EnvGen.ar(enwelope, t_trig);
+
+loop = LocalIn.ar + input;
+
+delayed = DelayN.ar(loop, 1.0, del);
+
+LocalOut.ar(delayed * feedBack);
+
+trigger = SendTrig.kr(t_trig, 5, 5);
+
+Out.ar(outBus, delayed*amplitude);
+
+}).load(s);
+
+SynthDef(\playNewTempo, { | bufferNumber, newLength = 4.0, amp = 1.0, oldLength = 4.0 |
+var player, doneEnv, speedScale, lengthScale, envelope;
+speedScale = oldLength / newLength;
+lengthScale = newLength;
+player = PlayBuf.ar(1, [bufferNumber , bufferNumber ], speedScale);
+envelope = Env.new([0, 1, 0], [1, 1],'sine');
+doneEnv = EnvGen.ar(envelope, 1, amp,timeScale: lengthScale , doneAction: 2);
+Out.ar(0, player * doneEnv)
+}).load(s);
+
+
+timeArray = [0, 0, 0, 0];
+clock = SystemClock.new;
+	
+	
+synth = Synth(\dubDelay, [0, 1, 1, 0.5, 2, 0, 3, 0.4, 4, 0, 5, 0, 6, 0]);
+synthID1 = synth.nodeID;
+synth2 = Synth(\dubDelay, [0, 1, 1, 0.5, 2, 0, 3, 0.4, 4, 1, 5, 1, 6, 0]);
+synthID2 = synth2.nodeID;
+4.do{ arg i;
+Buffer.alloc(s, 222000, 1, bufnum: i+6);
+};
+
+recSynths = Array.fill(4, {arg i; Synth(\shortTermMemory, [0, 0, 1, 6+i, 2, 4.0])});
+
+filterSynth = Synth(\bandPassFilter, [0, 0, 1, 0, 2, 0 ]); 
+
+oldLengths = [0, 0, 0, 0];
+
+win = SCWindow("", Rect(200, 300, 775, 195)).front
+	.onClose_({ synth.free;
+	synth2.free;
+	4.do{ arg i;
+	recSynths.at(i).free;
+	};
+	 filterSynth.free;
+	 });
+win.view.keyDownAction_({ arg this, that; 
+	var diff;
+		if(that == $t, {
+		
+		diff = clock.seconds - last;
+		if(diff < 6.0, {
+		timeArray = timeArray.rotate(1);
+		timeArray.put(0, diff);
+		tempo = timeArray.mean;
+		});
+			last = clock.seconds;
+
+tempoText.string = (((tempo.reciprocal*600).round)/10).asString++" BPM";
+4.do{ arg i;
+recSynths.at(i).set(2, tempo) //keep recordings in time with current beat
+};
+		
+		});
+		if(that == $f, {
+		filterMouse = (filterMouse.neg+1); // toggle
+		filterSynth.set(\toggle, filterMouse);
+		});
+		
+	});
+
+but = SCButton(win, Rect(20, 20, 20, 20)).states = [["capture"]];
+but.action = { synth.set(\t_trig, 1) };
+grid = BoxGrid.new(win, bounds: Rect(20, 50, 300, 20), columns: 16, rows: 1);
+grid.nodeDownAction_({arg nodeloc; 
+	synth.set(\del, tempo/(nodeloc.at(0)+1));
+		grid.clearGrid;
+
+	grid.setState_(nodeloc.at(0), 0, 1);
+	
+});
+slid2 = SCSlider(win, Rect(20, 100, 300, 20))
+	.action = {arg a; synth.set(\feedBack, a.value-0.0001) };
+slid3 = SCSlider(win, Rect(50, 20, 270, 20))
+	.action = {arg a; synth.set(\length, a.value) };
+
+
+/////////////////////
+but2 = SCButton(win, Rect(450, 20, 20, 20)).states = [["capture"]];
+but2.action = { synth2.set(\t_trig, 1) };
+grid2 = BoxGrid.new(win, bounds: Rect(450, 50, 300, 20), columns: 16, rows: 1);
+grid2.nodeDownAction_({arg nodeloc; 
+	synth2.set(\del, tempo/(nodeloc.at(0)+1));
+		grid2.clearGrid;
+
+	grid2.setState_(nodeloc.at(0), 0, 1);
+	
+});
+slid22 = SCSlider(win, Rect(450, 100, 300, 20))
+	.action = {arg a; synth2.set(\feedBack, a.value-0.0001) };
+slid32 = SCSlider(win, Rect(480, 20, 270, 20))
+	.action = {arg a; synth2.set(\length, a.value) };
+////////////////////
+
+tempoText = SCStaticText(win, Rect(355, 10, 100, 20));
+tempoText.string = "BPM";
+
+canRecord = BoxGrid.new(win, bounds: Rect(290, 130, 200, 20), columns: 4, rows: 1).setFillColor_(Color.red);
+canPlay = BoxGrid.new(win, bounds: Rect(290, 155, 200, 20), columns: 4, rows: 1).setFillColor_(Color.green);
+
+triggerLights = BoxGrid.new(win, bounds: Rect(340, 50, 90, 70), columns: 2, rows: 1).setFillColor_(Color.red);
+
+resp = OSCresponder(s.addr,'/tr',{ arg time,responder,msg;
+	if(msg.at(3)==5, {
+if(msg.at(1)==synthID1, {
+2.do{ arg i;
+if(canRecord.getState(i, 0)==1, {
+{canRecord.setState_(i, 0, 0)}.defer; //switch off rec-light
+recSynths.at(i).set(0, 1); //record
+oldLengths.put(i, tempo);
+});
+if(canPlay.getState(i, 0)==1, {
+Synth(\playNewTempo, [\bufferNumber, i+6, \newLength, tempo, \amp, sampLevelsArray.at(i),\oldLength, oldLengths.at(i)]);
+});
+};
+
+	{triggerLights.setState_( 0, 0, 1)}.defer;
+	{triggerLights.setState_( 0, 0, 0)}.defer(0.3);
+		});
+if(msg.at(1)==synthID2, {
+2.do{ arg i;
+if(canRecord.getState(i+2, 0) .value==1, {
+{canRecord.setState_(i+2, 0, 0)}.defer; //switch off rec-light
+recSynths.at(i+2).set(0, 1); //record
+oldLengths.put(i+2, tempo);
+});
+if(canPlay.getState(i+2, 0)==1, {
+Synth(\playNewTempo, [\bufferNumber, i+8, \newLength, tempo, \amp, sampLevelsArray.at(i+2), \oldLength, oldLengths.at(i+2)]);
+});
+};
+	{triggerLights.setState_( 1, 0, 1)}.defer;
+	{triggerLights.setState_( 1, 0, 0)}.defer(0.3);
+		});
+
+});
+}).add;
+	("synthNodes: "++synthID1++" "++synthID2).asString.postln;
+	
+	filterLevel = SCSlider(win, Rect(20, 130, 50, 50))
+		.action = { arg a; filterSynth.set(\trackLevel, a.value) };
+	trackLevel = SCSlider(win, Rect(80, 130, 50, 50))
+		.action = { arg a; filterSynth.set(\filterLevel, a.value) };
+	delayLevel1 = SCSlider(win, Rect(140, 130, 50, 50))
+		.action = { arg a; synth.set(\amplitude, a.value) };
+	delayLevel2 = SCSlider(win, Rect(200, 130, 50, 50))
+			.action = { arg a; synth2.set(\amplitude, a.value) };
+
+
+sampLevelsArray = [0, 0, 0, 0];
+sampLevels = Array.fill(4, { arg i;
+SCSlider(win, Rect(530+(i*60), 130, 50, 50))
+	.action = {arg a; sampLevelsArray.put(i, a.value); };
+});
+//	SCDragSink(win, Rect(340, 130, 100, 30)); 
+	
+	
+//bobby
+
+
+
+
+
+Feedback
+============================================================
+Language: C
+Licence: Other
+Tags: fx,patch
+
+/*
+Hi Julian,
+
+I'm actually having a little trouble with the single sample feedback 
+example; I haven't been able to figure out how to put  audiorate 
+UGens inside its feedback loop. Demand rate UGens and multiplication, 
+addition etc yes,
+
+well, all audio rate ugens are processing blocks, so that you can not 
+effectively put them in the demand loop directly with both input and 
+output.
+
+But you can put the ugen in the Duty output and write it back onto the buffer:
+*/
+
+(
+{
+var x, y, rate, a, c, m, z;
+	rate = MouseX.kr(100, SampleRate.ir);
+	a = 1.1;
+	c = 0.13;
+	m = 1.0;
+	x = Dbufrd(b); // read from buffer
+	x = x * a + c % m;
+	z = Duty.ar(1 / rate, 0, Dbufwr(x, b));// write to buffer
+
+	// insert a delay and some amplitude modulation
+	z = LFSaw.ar(MouseY.kr(1, 10000, 1)) * z;
+	z = DelayL.ar(z, 1, 1);
+
+	z = Duty.ar(1 / rate, 0, Dbufwr(z, b));// write to buffer
+	z * 0.1;
+}.scope;
+)
+
+// mess around with the writing rates
+
+(
+{
+var x, y, rate, a, c, m, z;
+	rate = MouseX.kr(100, SampleRate.ir);
+	a = 1.1;
+	c = 0.13;
+	m = 1.0;
+	x = Dbufrd(b); // read from buffer
+	x = x * a + c % m;
+	z = Duty.ar(1 / rate, 0, Dbufwr(x, b));// write to buffer
+
+	// insert a delay and some amplitude modulation
+	z = LFSaw.ar(100) * z;
+	z = DelayL.ar(z, 1, 1);
+
+	z = Duty.ar(MouseY.kr(1, 300, 1) / rate, 0, Dbufwr(z, b));// write to buffer
+	z * 0.1;
+}.scope;
+)
+
+
+
+
+Tuning Pbind
+============================================================
+Language: C
+Licence: Other
+Tags: pattern
+
+/*
+On Apr 1, 2008, at 10:13 PM, James Harkins wrote:
+
+I may actually start using PbindProxy within chucklib objects 
+because I've often wanted to add and remove streams on the fly 
+(which is not possible in Pbind without replacing the whole Pbind).
+
+
+Hmm... just looked at the implementation. I take it back. PbindProxy 
+effectively *does* reset the whole Pbind whenever you change a 
+stream, which makes it a really effective shortcut for what you can 
+already do with changing the stream of an EventStreamPlayer.
+
+It resets it only the first time you add a new key.
+
+
+Chucklib supports something different - you can replace one/more 
+child streams without affecting any of the others.
+*/
+
+// To do that with jitlib, you would have to use PatternProxies in the Pbind.
+
+// you can initialize them:
+
+PbindProxy.new.set(\x, 0, \y, 0, \z, 0)
+// or in Pbindef:
+Pbindef(\test) .set(\x, 0, \y, 0, \z, 0)
+
+// then you can change them without a reset.
+
+
+
+
+TaskProxy GUI
+============================================================
+Language: C
+Licence: Other
+Tags: task,gui
+
+/*
+Alberto de Campo
+SC-Users Dec 16 2007
+
+Hi sven,
+
+ok, is this what you meant?
+*/
+
+(	// 4 tdefs
+Tdef(\a, { \a.postln });
+Tdef(\Abe, { \Abe.postln });
+Tdef(\bebe, { \bebe.postln });
+Tdef('01otto', { '01otto'.postln });
+
+	// a gui for all of them
+t = TdefAllGui.new();
+
+	// that gui listens to the keyboard:
+	// when the first letter matches with the tdefs name,
+	// start or stop that tdef.
+	// as long as all your tdefs start with different letters,
+	// this is unambiguous.
+
+t.win.view.keyDownAction_ { |view, char|
+	var tdefkey, tdef;
+	char.postcs;
+	tdefkey = Tdef.all.keys.asArray.sort.detect { |key| key.asString.first == char };
+	tdef = Tdef.all[tdefkey];
+	if (tdef.isPlaying) { tdef.stop } { tdef.play };
+};
+)
+
+/*
+best, a
+
+
+Am 16.12.2007 um 17:34 schrieb Alberto de Campo:
+
+Hi sven,
+
+looks like you have a pretty old version of this class.
+The current one is TaskProxyEditor, and does not have a
+btns variable.
+
+what should it do exactly?
+
+assining the buttons to keys (e.g. button0 -> key "0", button1 -> key "1", etc.)
+it´s fun to play it like this :)
+
+don´t know, if this makes sense ...
+
+cheers, sven
+*/
+
+
+
+Plotting Multiple Envelopes
+============================================================
+Language: C
+Licence: Other
+Tags: control,gui
+
+/*
+plotting multiple envelopes  
+by clifton-15 Mar 07, 2006; 01:11pm
+
+You can get editing aswell with stacked views with a envelopeview ontop 
+This is a 1st draft, thought you might be interested though. 
+*/
+
+( 
+        var w,ev,bounds; 
+        var envelopes,views; 
+        var randomEnv,plotEnv; 
+        var n = 10,indexInfo; 
+        var getEnvIndexAndBreakpoint; 
+        
+        w = SCWindow("",Rect(100,100,620,400)).front; 
+        
+        bounds = Rect(10,10,600,150); 
+        
+        randomEnv = { |n=8,lo=0,hi=1| 
+                Env( 
+                        { rrand(lo.asFloat,hi.asFloat) }!n, 
+                        normalizeSum({ 1.0.rand }!(n - 1)), 
+                        { [ \lin,\sin,\welch,6.0.rand2].choose }!(n - 1) 
+                ) 
+        }; 
+        
+        plotEnv =  { |env,ms| 
+                var n = 300, t = env.times.sum, step = t / n; 
+                var array = env.prAsArray; 
+                ms.value = { |i| array.envAt(step*i) }!n 
+        }; 
+        
+        envelopes = { randomEnv.(10.rand+2) }!n; 
+        
+        views = { SCMultiSliderView(w,bounds).thumbSize_(1).valueThumbSize_(0) 
+                .drawLines_(true).drawRects_(false).strokeColor_(Color.blue) }!n; 
+        
+        
+        ev = SCEnvelopeView(w,bounds).thumbSize_(4); 
+        ev.backColor = Color.white; 
+        
+        getEnvIndexAndBreakpoint = { |index| 
+                var counter = 0, i =0, next = indexInfo.first; 
+                while ( { counter + next <= index},{ 
+                        counter = counter + next; 
+                        next = indexInfo[i = i + 1]; 
+                }); 
+                [i.asInt,asInt(index-counter),counter,next] // index,breakpoint,offset,length 
+        }; 
+        
+        indexInfo = Array.new; 
+        ev.value = [ 
+                envelopes.collect({ |env,i| 
+                        indexInfo = indexInfo.grow(1).add(env.levels.size); 
+                        integrate([0.0]++env.times).asFloat 
+                }).flat, 
+                envelopes.collect({ |env| env.levels.asFloat }).flat, 
+        ]; 
+        
+        ev.action = { |v| 
+                var index,break,os,len,env,times; 
+                
+                #index,break,os,len = getEnvIndexAndBreakpoint.(v.index); 
+                
+                env = envelopes[index]; 
+                
+                times = v.value[0][os..os+len-1]; 
+                times[0] =0.0; 
+                times[len-1] =1.0; 
+                times = sort(times); 
+                
+                env.times = times[1..].differentiate; 
+                env.levels[break] = v.value[1][os+break]; 
+                envelopes[index] = env; 
+                plotEnv.(env,views[index]); 
+                
+                
+                if(os != 0,{ 
+                        times = v.value[0][0..os-1] ++ times 
+                }); 
+                times = times ++ v.value[0][os+len..]; 
+                
+                v.value = [ 
+                        times, 
+                        v.value[1] 
+                ]; 
+                
+        }; 
+                
+        views.do({ |v,i| 
+                plotEnv.(envelopes[i],v) 
+        }) 
+
+) 
+
+
+
+
+Lute Suite no. 4, Prelude (BWV 1006a)
+============================================================
+Language: C
+Licence: Other
+Tags: patch
+
+/* James McCartney <asynth@...> writes: 
+
+> On May 12, 2005, at 12:13 PM, Mario Lang wrote: 
+> 
+>> do we have a better way to say: 
+>> [0,1,2,3].mirror.collect([_,7]).flat 
+>> i.e., some way to interleave? 
+> 
+> [[0,1,2,3].mirror, 7].flop.flat 
+> 
+>> Pbind(\degree, Pseq([2,0,2,-1], 3), \gtranspose, 
+>> Pseq([0,0,0,-1], 3)), 
+>> Pbind(\degree, Pseq([2,0,2,-2], 3), \gtranspose, Pseq([1,0,1,0], 3)), 
+>> Pbind(\degree, Pseq([2,0,2,-3], 3), \gtranspose, Pseq([1,0,1,0], 3)), 
+> 
+> You can write accidentals as a deviation in cents from the scale 
+> degree. For example 2.1 is 2 sharp by 100 cents. 1.9 is 2 flat by 100 
+> cents. (With negatives it works the same but looks different -2.1 is 
+> 100 cents *flat* of -2 and -1.9 is 100 cents sharp of -2.) You can 
+> deviate by +/- 499 cents from any scale degree.
+... [show rest of quote]
+
+Thats pretty cool!  And simplifies my example quite a bit :-) 
+
+Note the 
+
+(2!9++(2.1!6)++(2!6)++(1!6)++(0!6)++(-1!3)).dup.add(0).rotate(2) 
+.add(0!3++(-1!3)++(-1.1!3)++(-2!3)++(-3..-6).stutter(6)).flop.flat 
+
+which generates 12 measures of notes! :-) 
+
+Now I have a burning question on my mind: How do I use the resulting 
+event stream for different things than just playing?  I'd like to 
+iterate over the whole Ppar and say, extract a midinote 
+or some such. Trying things like: 
+
+melody=melody.asStream.nextN(100, Event.default.copy.putAll((root:4, octave:5, dur:1/4))).collect{|e|e[\midinote].value} 
+
+generates an error regarding nil not implementing +...  What 
+am I missing here, how do I extract event data? 
+
+What I'd actually like to do is to be able to reuse the 
+Event stream for other things like, say, generate a guitar tab. 
+*/
+s.boot; 
+Tempo.bpm=96; 
+( // Lute Suite no. 4, Prelude (BWV 1006a) 
+  // 3/4 
+Ppar([ 
+        Pbind(\octave, 3, \degree, Pseq([Pn(0,15),2],1), \dur, 6), // bass 
+        Pseq([ // melody 
+                Pbind(\degree, Pseq([\_,7,6,7,\_,4,2,4,0,1,0,-1,0,\_,-3,-5,-3], 1), 
+                        \dur, Pseq([1/2,Pn(1/4,4),Pn(1/2,3),Pn(1/4,6),Pn(1/2,3)], 1)), 
+                Pbind(\octave, 4, \degree, 
+                        Pseq([(0..3).mirror1,4].flop.flat++[0]++(7..4)++(7..1), 2)), 
+                Pbind(\octave, 4, \degree,Pseq((0..10)++[8,9,11]++(7..14)++[12,13],1)), 
+                Pbind(\degree, Pseq( 
+                        ({|i|[[if(i==0){7}{2},if(i==0){3}{1},2,3,2,1],4].flop.flat ++ 
+                                [0]++(7..4)++[0]++[(5..3),0].flop.flat}!2).flat, 1)), 
+                Pbind(\degree,Pseq([[2,0,-1,0,1,-1,0,2,1,2,3,1],0].flop.flat,2)), 
+                Pbind(\degree, Pseq( 
+                        (2!9++(2.1!6)++(2!6)++(1!6)++(0!6)++(-1!3)).dup.add(0).rotate(2) 
+                        .add(0!3++(-1!3)++(-1.1!3)++(-2!3)++(-3!6)++(-4!6)++(-5!6)++(-6!6)) 
+                        .flop.flat, 1)), 
+                Pbind(\octave, 4, \degree, Pseq([ 
+                        0,1,Pseq([0,1,2,4],2),0,1, 
+                        2,3,Pseq([2,3,4,7],2),2,3, 
+                        4,5,Pseq([4,5,5.1,9],2),4,5], 1)) 
+        ], 1)], 1).play(TempoClock.default, Event.default.copy.putAll( 
+        (root:4, dur:1/4, octave:5))) 
+) 
+
+-- 
+CYa, 
+  Mario 
+
+
+
+
+List Loaded SynthDefs
+============================================================
+Language: C
+Licence: Other
+Tags: system,info
+
+/*
+Use .send(s) instead of .load(s)  -- send does not write the file.
+(Most of the help examples use .send by now, so it surprises me when
+someone is using .load routinely :)
+
+I don't think there is a way to query the server for synthdefs that
+are loaded, but if you store the synthdefs in the global SynthDescLib,
+then you will have a collection of synthdefs on the client side,
+alongi with information about control inputs etc.
+
+*/
+
+SynthDef(\xyz, {  }).store;  // writes the .scsyndef file and loads it into the library
+
+SynthDef(\xyz, {  }).memStore;  // sends the synthdef to registered servers and adds it to the library (no scsyndef file)
+
+SynthDescLib.global.browse;  // nifty gui
+
+SynthDescLib.global.synthDescs  // all SynthDef descriptor objects
+SynthDescLib.global.synthDescs.keys  // names of all synthdefs (unordered)
+
+// hjh
+
+//////////////////////////////////////////////////////////
+
+// Hmm... probably the only way I can think to do this is load the gloabal SynthDesc descriptions:
+
+a = SynthDescLib.global.read
+
+b = a.synthDescs.collect({arg i; i})
+
+c = []; // create an emtpy array;
+
+a.synthDescs.do({arg me; c = c.add( me.name ) })
+
+// thee array of names
+c;
+/*
+No problems that I've noticed.
+
+best, Josh
+*/
+
+
+
+
+SCSoundFileView Usage
+============================================================
+Language: C
+Licence: Other
+Tags: gui,buffer
+
+// SCSoundFileView
+
+// create a window with a SCSoundFileView
+(
+w = SCWindow.new("SCSoundFileView", Rect(200, 400, 500, 110)).front;
+a = SCSoundFileView.new(w, Rect(10,3, 480, 80));
+)
+
+// get a file
+(
+f = SoundFile.new;
+f.openRead("sounds/a11wlk01.wav");
+f.close;
+)
+
+a.soundfile = f; // assign the file to SCSoundFileView
+a.readWithTask(block:1); // read it now with a 1:1 resolution
+
+// or
+a.read(block: 1) // use SCSoundFileView's builtin file read
+
+// better...
+a.readWithTask(block: 64, showProgress: true);	// load with resolution of 64:1 samples
+										// and show a progress bar - default
+
+a.readWithTask(block: 1, showProgress: false);	// dont show a progress bar
+
+
+// colors
+a.waveColors = [Color.blue(alpha: 0.5)]; // multi channel files [chn1Color, chn2Color...]
+a.background = Color.new255(211, 211, 211);
+
+// grid 
+a.gridOn = true;
+a.gridColor = Color.blue(alpha:0.5)
+a.gridResolution = 0.2;
+
+// time cursor
+a.timeCursorColor = Color.red;
+a.timeCursorOn = true;
+a.timeCursorPosition = 2050;
+a.timeCursorPosition = 4000;
+a.timeCursorOn = false;
+
+// draw waveform
+a.drawsWaveForm = false;
+a.drawsWaveForm = true;
+
+// grid offset - nice when sound files have 'air' at the start and you want a grid at a known tempo.
+a.gridOffset = 500
+a.gridOffset = 7000
+a.gridOffset = 0
+
+// SCSoundFileView has 64 selections...
+a.currentSelection // defaults to selection 0
+a.setSelectionStart(0, 5250)
+a.setSelectionSize(0, 3200)
+a.setSelectionStart(0, 2000)
+
+// try setting a selection with the mouse on the view
+a.setEditableSelectionStart(0,true) // on by default 
+a.setEditableSelectionSize(0,true) // on by default
+
+// now lock selection start
+a.setEditableSelectionStart(0,false) // on by default - only 
+a.setEditableSelectionSize(0,true) // on by default
+
+// lock selection size
+a.setEditableSelectionStart(0,true) // on by default - only 
+a.setEditableSelectionSize(0,false) // on by default
+
+// back to normal
+a.setEditableSelectionStart(0,true)
+a.setEditableSelectionSize(0,true)
+
+// selection colors
+(
+a.setSelectionColor(0,Color.gray(alpha:0.7));
+a.setEditableSelectionStart(0,false); // selection 0 off
+a.setEditableSelectionSize(0,false); // freeze it
+a.setEditableSelectionStart(1,true); // now working on selection 1
+a.setEditableSelectionSize(1,true);
+a.setSelectionStart(1, 5250);
+a.setSelectionSize(1, 3200);
+)
+// back to selection 0
+(
+a.setEditableSelectionStart(1,false); // selection 0 off
+a.setEditableSelectionSize(1,false);
+a.setEditableSelectionStart(0,true); // now working on selection 1
+a.setEditableSelectionSize(0,true);
+)
+
+// dump selections
+a.selections.asCompileString
+
+// query selection ranges
+a.selectionStart(0)
+a.selectionSize(0)
+a.selectionStartTime(0)
+a.selectionDuration(0)
+a.selectionStart(1)
+a.selectionSize(1)
+
+// the data array
+a.dataNumSamples
+a.data
+// setting the data array
+//a.setData(array, block=64, startframe = 0, channels=1, samplerate=44100);
+
+// convenience methods and usage are shown on this small example
+(
+var file = "sounds/a11wlk01.wav";
+var zin, zout, lScroll, rScroll, block, selectionStart, selectionSize;
+
+block = 1; // resample factor - try 1 for small files
+zout = 1.1; zin = zout.reciprocal;
+rScroll = 0.01; lScroll = rScroll.neg;
+w = SCWindow.new("SCSoundFileView - " ++ file.basename, Rect(280,250,420,150)).front;
+l = FlowLayout.new(w.view.bounds);
+w.view.decorator = l;
+
+v = SCSoundFileView.new(w,400 @ 80).canFocus_(false).gridOn_(true).timeCursorOn_(true);
+e = SCSlider(w, 7 @ 80).action_({|slider| v.yZoom = slider.value * 0.95 + 0.5 });
+//d = SCSlider(w, Rect(10,190,600,7)).action_({|slider| v.scrollTo(slider.value) }); //simple scroll
+d = SC2DSlider(w, 400 @ 30) // scroll w/zoom x - felix!
+	.action_({|sl| 
+		var y;
+		v.zoomToFrac(y = sl.y * 0.95 + 0.05);
+		v.scrollTo(sl.x);
+	}).y_(1);
+
+SCStaticText.new(w, 80 @ 18).string_("selection start:").align_(\right);
+selectionStart = SCStaticText.new(w, 100 @ 18);
+SCStaticText.new(w, 30 @  18).string_("size:").align_(\right);
+selectionSize = SCStaticText.new(w, 100 @ 18);
+
+v.mouseUpAction = {
+	selectionStart.string = v.selectionStart(0);
+	selectionSize.string = v.selectionSize(0)
+};
+w.view.keyDownAction = { arg ascii, char;
+	case		
+		{char === $+} { v.zoom(zin) }		// zoom in
+		{char === $-} { v.zoom(zout) }		// zoom out
+		{char === $=} { v.zoomAllOut }		// view all - zoom all out
+		{char === $f} { v.zoomSelection(0) }	// fit selection to view
+		{char === $.} { v.scroll(rScroll) }	// scroll right ->
+		{char === $,} { v.scroll(lScroll) }	// scroll left <-
+		{char === $s} { v.scrollToStart }	// scroll to buffer start
+		{char === $e} { v.scrollToEnd }		// scroll to buffer end
+		{char === $a} { v.selectAll(0) }		// select all
+		{char === $n} { v.selectNone(0) };	// select none
+
+	d.x_(v.scrollPos);	// update scrollbar position
+	selectionStart.string = v.selectionStart(0);
+	selectionSize.string = v.selectionSize(0)
+};
+v.soundfile = SoundFile.new(file);
+
+v.readWithTask(block: block);
+)
+
+
+
+
+
+Looper
+============================================================
+Language: C
+Licence: Other
+Tags: patch,buffer
+
+/*
+maybe this helps: you see that it is tricky to update the loop region, i'm only allowing it to take place at a new loop begin (using latch)
+*/
+
+~protMakeDef = { arg defName, numChannels = 1;
+	SynthDef.new( defName, { arg out, aInBuf, rate = 1.0, startFrame = 0, numFrames;
+		var	lOffset, gate1, gate2, lLength, play1, play2, trig1, trig2, duration,
+			dlyDur, env, amp1, amp2, output, gateTrig1, gateTrig2;
+		
+		trig1	= LocalIn.kr( 1 ); // LFPulse.kr( freq: LocalIn.kr( 1 ).max( 0.1 ));
+		gateTrig1	= PulseDivider.kr( trig: trig1, div: 2, start: 1 );
+		gateTrig2	= PulseDivider.kr( trig: trig1, div: 2, start: 0 );
+		lOffset	= Latch.kr( in: startFrame, trig: trig1 );
+		lLength	= Latch.kr( in: numFrames, trig: trig1 );
+		duration	= lLength / (rate * SampleRate.ir) - 2;
+		gate1	= Trig1.kr( in: gateTrig1, dur: duration );
+		env		= Env.asr( 2, 1, 2, \lin );	// \sin
+		
+		play1	= PlayBuf.ar( numChannels: numChannels, bufnum: aInBuf, rate: rate, loop: 0,
+							trigger: gateTrig1, startPos: lOffset );
+		play2	= PlayBuf.ar( numChannels: numChannels, bufnum: aInBuf, rate: rate, loop: 0,
+							trigger: gateTrig2, startPos: lOffset );
+		amp1		= EnvGen.kr( env, gate1, 0.999 );  // 0.999 = bug fix !!!
+		amp2		= 1.0 - amp1.squared;
+		amp1		= 1.0 - amp1;
+		amp1		= 1.0 - amp1.squared;
+		output	= (play1 * amp1) + (play2 * amp2);
+
+		Out.ar( out, output );
+	
+		LocalOut.kr( Impulse.kr( 1.0 / duration.max( 0.1 )));
+	});
+};
+
+// boot server and create a buffer
+s.boot;
+~maxFrames = s.sampleRate.asInteger * 6;  // note: net duration is minus 2 seconds due to xfade
+~buf = Buffer.alloc( s, ~maxFrames );
+
+// create and send the synthdef
+~protMakeDef.( \testLoop ).send( s );
+
+// record some sound from the microphone
+(
+Updater({
+	RecordBuf.ar( SoundIn.ar( 0 ), ~buf.bufnum, loop: 0, doneAction: 2 ); 0;
+}.play.register, { arg obj, what; if( what === \n_end, { "Done Recording!".postln })});
+"Started recording...";
+)
+
+// play it back in a loop
+~looper = Synth( \testLoop, [ \aInBuf, ~buf.bufnum, \numFrames, ~maxFrames ]);
+
+// adjust the loop region
+(
+var w;
+w = Window( "Looper", Rect( 100, 100, 400, 430 ), resizable: false );
+Slider2D( w, Rect( 4, 4, 392, 392 )).x_( 0 ).y_( 1 )
+	.action_({ arg slid;
+		~looper.set( \startFrame, (slid.x * ~maxFrames).asInteger, \numFrames, (min( 1 - slid.x, slid.y ) * ~maxFrames).asInteger );
+	});
+Slider( w, Rect( 4, 396, 392, 24 )).value_( 0.5 )
+	.action_({ arg slid;
+		~looper.set( \rate, slid.value.linexp( 0, 1, 0.25, 4 ));
+	});
+w.front;
+)
+
+// clean up
+~looper.free;
+~buf.free;
+
+
+// ciao, -sciss-
+
+
+
+
+Add It Up!
+============================================================
+Language: C
+Licence: Other
+Tags: patch
+
+// Add it up!
+// nonprivate standing on the shoulders of andy baxter
+// 1 jan 2009
+
+// Formlet
+
+
+(
+var numHarm = 40, freqJitterDensity = 500; 
+
+SynthDef.new("additup1", 
+	{
+	arg freq = 440, amp = 1, out = 0,
+		freqJitterAmt = 0, harmMult = 1, harmOffset = 1, harmDecayPower = 1,
+		formFreqRatio = 1, formAttack = 0.005, formDecay = 0.003; 
+		
+		freq = MouseX.kr(30, 1600, 1); 
+		
+		Out.ar(out, Pan2.ar(
+		
+			Mix.fill(
+				numHarm,
+				{ 
+				arg index; 
+
+				Formlet.ar(
+					Impulse.ar(freq * Lag.ar(Dust2.ar( (freqJitterDensity + (freqJitterDensity * 0.2).rand2), freqJitterAmt, 1), 0.3), 1.0.rand), 
+					freq * formFreqRatio * (index * harmMult + harmOffset),
+					formAttack,
+					formDecay,
+	                		1/((index * harmMult + harmOffset) ** harmDecayPower) 
+	            	) 
+				} 
+			) * amp * 0.8,
+		0, 1)); 
+    } 
+    ).send(s); 
+) 
+
+
+(
+n = s.nextNodeID;
+s.sendMsg("/s_new", "additup1", n, 0, 0);
+)
+
+
+(
+//attack of the wasps
+
+s.sendMsg("/n_set", n, 
+	\amp, 1.6,	
+	\freqJitterAmt, 40, \harmMult, 3, \harmOffset, 2, \harmDecayPower, 0.7,
+	\formFreqRatio, 0.2, \formAttack, 0.003, \formDecay, 0.0002
+);
+
+)
+
+(
+// small airplane
+s.sendMsg("/n_set", n,
+	\amp, 0.6, 	
+	\freqJitterAmt, 4, \harmMult, 0.01, \harmOffset, 1.1, \harmDecayPower, 2,
+	\formFreqRatio, 4, \formAttack, 0.003, \formDecay, 0.02
+);
+
+)
+
+(
+// synthy
+s.sendMsg("/n_set", n, 	
+	\amp, 0.2,
+	\freqJitterAmt, 0, \harmMult, 1, \harmOffset, 1.1, \harmDecayPower, 0.8,
+	\formFreqRatio, 0.5, \formAttack, 0.0007, \formDecay, 0.2
+);
+
+)
+
+(
+// cubik
+s.sendMsg("/n_set", n, 	
+	\amp, 0.4,
+	\freqJitterAmt, 0.5, \harmMult, 0.8, \harmOffset, 1.1, \harmDecayPower, 0.5,
+	\formFreqRatio, 3.01, \formAttack, 0.07, \formDecay, 0.002
+);
+
+
+)
+
+s.sendMsg("/n_free", n);
+
+
+
+// Sines
+
+(
+
+var numHarm = 20, freqJitterDensity = 200; 
+
+SynthDef.new("additup2", 
+	{
+	arg freq = 223, amp = 1, out = 0,
+		freqJitterAmt = 0,
+		harmMult = 1, harmOffset = 1, harmDecayPower = 1; 
+		
+		freq = MouseX.kr(30, 1600, 1); 
+		
+		Out.ar(out, Pan2.ar(
+			Mix.fill(
+				numHarm,
+				{ 
+				arg index; 
+
+				SinOsc.ar(
+					
+					(freq * Lag.ar(Dust2.ar( (freqJitterDensity + (freqJitterDensity * 0.2).rand2), freqJitterAmt, 1), 0.3)) 
+					* (index * harmMult + harmOffset),
+					1.00.rand,
+	                		1/((index * harmMult + harmOffset) ** harmDecayPower) 
+	            	) 
+				} 
+			) * amp * 0.1,
+		0, 1)); 
+    } 
+    ).send(s); 
+
+) 
+
+(
+n = s.nextNodeID;
+s.sendMsg("/s_new", "additup2", n, 0, 0);
+)
+
+
+
+(
+// hollow joy
+
+s.sendMsg("/n_set", n, 
+	\amp, 1.2,	
+	\freqJitterAmt, 1.7, \harmMult, 1.4, \harmOffset, 1, \harmDecayPower, 1.3
+);
+
+)
+
+(
+// alien brook
+s.sendMsg("/n_set", n,
+	\amp, 4, 	
+	\freqJitterAmt, 400, \harmMult, 0.2, \harmOffset, 6, \harmDecayPower, 1
+);
+
+)
+
+(
+// hard nosed
+s.sendMsg("/n_set", n, 	
+	\amp, 0.5,
+	\freqJitterAmt, 0, \harmMult, 5, \harmOffset, 5, \harmDecayPower, 0.1
+);
+
+)
+
+(
+// whistling breeze
+s.sendMsg("/n_set", n, 	
+	\amp, 3,
+	\freqJitterAmt, 4, \harmMult, 0.1, \harmOffset, 7, \harmDecayPower, 1
+);
+
+
+)
+
+s.sendMsg("/n_free", n);
+
+
+
+Nice Gendy1
+============================================================
+Language: C
+Licence: Other
+Tags: patch,synthdef
+
+
+/********************************************************************/
+
+(
+{
+Pan2.ar(
+	CombN.ar(
+		Resonz.ar(
+			Gendy1.ar(
+				2, // ampdist
+				3, // durdist
+				minfreq: 1,
+				maxfreq: MouseX.kr(10,700),
+				durscale: 10,
+				initCPs: 10
+			),
+			MouseY.kr(50,1000), // freq
+			0.1 // rq
+		),
+		0.1, // maxdelaytime
+		0.1, // delaytime
+		5, // decaytime
+		0.6 // mul
+	),
+	0.0 // pan
+)
+}.play
+)
+
+/********************************************************************/
+
+//overkill
+(
+{
+var n;
+n=10;
+
+Mix.fill(n, {
+	var freq, numcps;
+	freq= rrand(130,160.3);
+	numcps= rrand(2,20);
+	Pan2.ar(
+		Gendy1.ar(
+			6.rand, // ampdist
+			6.rand, // durdist
+			1.0.rand, // adparam
+			1.0.rand, // ddparam
+			freq, // minfreq
+			freq, // maxfreq
+			1.0.rand, // ampscale
+			1.0.rand, // durscale
+			numcps, // initCPs
+			SinOsc.kr( // knum
+				exprand(0.02, 0.2),
+				0,
+				numcps/2,
+				numcps/2
+			),
+			0.5/(n.sqrt) // mul
+		),
+		1.0.rand2
+	)
+});
+}.play
+)
+
+/********************************************************************/
+
+//another traffic moment
+(
+{
+	var n;
+	n=10;
+	Resonz.ar(
+		Mix.fill(n, {
+			var freq, numcps;
+			freq= rrand(50,560.3);
+			numcps= rrand(2,20);
+			Pan2.ar(
+				Gendy1.ar(
+					6.rand,
+					6.rand,
+					1.0.rand,
+					1.0.rand,
+					freq,
+					freq,
+					1.0.rand,
+					1.0.rand,
+					numcps,
+					SinOsc.kr(
+						exprand(0.02,0.2),
+						0,
+						numcps/2,
+						numcps/2
+					),
+					0.5/(n.sqrt)
+				),
+				1.0.rand2
+			)
+}
+		),
+		MouseX.kr(100,2000),
+		MouseY.kr(0.01,1.0)
+	);
+}.play
+)
+
+/********************************************************************/
+
+
+
+
+
+Parameters From SynthDef
+============================================================
+Language: C
+Licence: Other
+Tags: info
+
+/*
+On Jun 9, 2008, at 6:54 AM, Josh Parmenter wrote:
+Do you man the argument names? From  a binary synthdef file? You can  
+do it with SynthDescs, but it is a little tricky...
+*/
+
+// From the helpfile:
+
+			SynthDescLib.global.read("synthdefs/default.scsyndef");
+			SynthDescLib.global.synthDescs.at(\default).controlNames.postln;
+
+// As for data types, it is always a number, or if Control.names is used  
+// (or an Array), then an array of numbers.
+
+//Or
+
+SynthDescLib.at(\default).controlNames
+
+//Also --
+
+SynthDescLib.read;		// gets all synthdefs in SynthDef.synthDefDir
+SynthDescLib.global.browse;	// show a GUI listing synthdefs in the library
+
+/*And you can put new synthdefs into SynthDescLib using .store or .memStore instead of (respectively) .load(s) or .send(s)
+
+hjh
+*/
+
+
+
+
+SCUserView, SCCompositeView
+============================================================
+Language: C
+Licence: Other
+Tags: gui
+
+/*
+Am 11.12.2007 um 15:58 schrieb Jan Trutzschler:
+
+Hi,
+i committed a number of changes to SCUserView, SCCompositeView and SCView.
+
+1. All views are now drawn in reversed order to the previous model, which means that the last added view is on the top layer.
+
+2. SCUserView has now the relative mouse-coordinates stored in SCUserView:mousePosition.
+
+3. SCUserView: var <>mouseBeginTrackFunc, <>mouseTrackFunc, <>mouseEndTrackFunc, <> keyDownFunc;
+are deprecated and should be replaced by:
+	mouseDownAction, mouseMoveAction, mouseUpAction and keyDownAction
+
+4. SCCompositeView places its children now relative to its own coordinates. You can turn off that behavior by setting:
+	SCCompositeView:relativeOrigin to false.
+
+
+
+Thought last point was worse (for me), but quite easy to fix in old code. Greetings and thanks!
+*/
+
+(
+/*
+layering horizontal multi-sliders
+transitional testing version
+
+(supposed to be compatible with older and newer cocoa SC-GUI-versions and current swing)
+
+	SC rev 6795 (before and after)
+<http://www.create.ucsb.edu/pipermail/sc-users/2007-December/038620.html>
+	SwingOSC 0.57 rev 18 (later hopefully changed, then easier)
+<http://www.create.ucsb.edu/pipermail/sc-devel/2007-December/002482.html>
+
+GUI.cocoa
+GUI.swing
+*/
+var keys = #[\red, \green, \other, \blue]; // order necessary
+
+var data = IdentityDictionary [
+	\red -> [0, 0.5, 0.866, 1.0],
+	\green -> (Signal.chebyFill(256, { 1.0.rand } ! 8) * 0.5 + 0.5) .as(Array),
+	\other -> Array.geom(22, 1, 0.001.pow(21.reciprocal)),
+	\blue -> Pbrown(0.28, 0.33, 1e-3, 231).collect({ |item|
+		0.98.coin.if { item }{ (item + 0.2.rand) }
+	}).asStream.all
+];
+
+var colors = IdentityDictionary [
+	\red -> { Color.red },
+	\green -> { Color(0, 0.9, 0) },
+	\other -> { Color(0.5, 0.55, 0.5) },
+	\blue -> { Color(0.2, 0.2, 1.0) }
+];
+
+var hElastic = true; // testing
+var vElastic = true; // testing
+	
+	// from here on "private"
+	
+var sortedKeys, activeKey, activate;
+var activeKeyLast, activeKeyFirst; // cocoa v/s swing
+var gui, win, dec, wvb, mainContainer; // parent of :
+var msvContainer, keySelectorsPlusContainer; // msvContainer removed and rebuilt
+var makeMSVcontainer, msvWidths, msvColor, makeMSVs;
+var keySelectorsPlus; // color buttons
+var infoButton; // appended to keySelectorsPlus
+var postRev6795 = { |view| // coca gui change December 2007
+	try { view.relativeOrigin = false; } { |error|
+		Post << error << Char.tab << "never mind" << Char.nl;
+	};
+};
+
+gui = GUI.current;	
+win = gui.window.new(
+	"layered horizontal multi sliders -- " ++ (gui.name),
+	Rect(128, 64, rrand(300.0, 500.0), 400)
+);
+wvb = win.view.bounds;
+
+win.view.decorator = dec = FlowLayout.new(wvb, 20 @ 20);
+
+	/// containers ///
+
+mainContainer = gui.compositeView.new(win, wvb.width - ( 2 * dec.margin.x ) @ 240);
+postRev6795.value(mainContainer);
+
+makeMSVcontainer = {
+	msvContainer = gui.compositeView.new(
+		mainContainer,
+		mainContainer.bounds.insetAll(0, 0, 0, mainContainer.bounds.height * 0.2 + 4)
+	);
+
+	msvContainer.resize = case
+		{ hElastic and: vElastic }{ 5 }{ hElastic }{ 2 }{ vElastic }{ 4 }{ 1 };
+		
+	msvContainer.background = Color.black;
+	postRev6795.value(msvContainer);
+};
+makeMSVcontainer.value; // init
+
+keySelectorsPlusContainer = gui.hLayoutView.new(
+	mainContainer,
+	mainContainer.bounds.insetAll(0, mainContainer.bounds.height * 0.8 + 0, 0, 0)
+);
+
+case { hElastic and: vElastic }{
+		mainContainer.resize = 5;
+		keySelectorsPlusContainer.resize = 8;
+//		keySelectorsPlusContainer.resize = 5;
+	}{ hElastic }{
+		mainContainer.resize = 2;
+		keySelectorsPlusContainer.resize = 2;
+	}
+	{ vElastic }{
+		mainContainer.resize = 4;
+		keySelectorsPlusContainer.resize = 7;
+	}{ 1 };
+
+	/////////////////
+
+
+msvColor = { |key, i|
+	var lowAlpha = 0.3;
+	if ( gui.id === \cocoa and: { i === (keys.size - 1) }  or: {
+		gui.id === \swing and: { i === 0 } } ){ colors[key].value }{
+		colors[key].value.alpha_(lowAlpha)
+	};
+};
+
+makeMSVs = {
+	sortedKeys.collect { |key, i| var color, datum, msv;
+		msv = gui.multiSliderView.new(msvContainer, msvContainer.bounds);
+		msv.value = data[key];
+		msv.fillColor = msvColor.value(key, i);
+		msv.strokeColor = Color.clear;
+		msv.elasticMode = 1; // automatic placement !
+		msv.indexThumbSize = msv.bounds.width / (msv.size + 1);
+		msv.resize = msvContainer.resize;
+		msv.mouseUpAction = { |view|
+			data[key] = view.value; // update data
+			("index : % \tcurrentvalue : %\n").postf(view.index, view.currentvalue);
+		};
+	};
+};
+
+sortedKeys = keys.copy; // init
+makeMSVs.value; // init
+
+
+keySelectorsPlus = (keys.copy.add(nil)).collect { |item, i|
+	var button;
+	button = gui.button.new(keySelectorsPlusContainer);
+	button.resize = 5; // auto fill (see plot)
+	button.states = [["", Color.black, colors[item].value]];
+		// if item is nil color is nil
+};
+infoButton = keySelectorsPlus.last;
+infoButton.states = [["print"]];
+
+	// buttons keySelectorsPlus actions
+	
+activate = { |key|
+	activeKey = key;
+	("\nactive key : %\n").postf(activeKey);
+};
+activeKeyLast = { // cocoa
+	sortedKeys.remove(activeKey);
+	sortedKeys.add(activeKey);
+};
+activeKeyFirst = {  // swing -- soon deprecated (?)
+	sortedKeys.remove(activeKey);
+	sortedKeys.addFirst(activeKey);
+};
+keySelectorsPlus.keep(keys.size).do { |each, i|
+	each.action = { |view|		
+		if (keys[i] != activeKey) {
+			activate.value(keys[i]);
+			case { gui.id === 'cocoa' }{ activeKeyLast.value; }{
+				gui.id === 'swing' }{ activeKeyFirst.value; };
+			msvContainer.remove;
+			makeMSVcontainer.value;
+			makeMSVs.value;
+		};
+	};
+};
+infoButton.action = { |view|
+	keys.do { |key, i|
+		Post << Char.nl << key << Char.tab << data[key] << Char.nl;
+	};
+};
+
+{
+		// testing later scope :
+	
+	var makeText, container;
+	container = win.view;
+
+	makeText = { |parent, bounds, string| var txt;
+		txt = gui.staticText.new(parent.asView, bounds);
+		txt.string = string.asString;
+		txt.align = \center;
+		txt.background = Color.grey;
+//		txt.resize = parent.resize; // ?
+		txt.resize = 7;
+	};	
+	makeText.value(container, 250 @ 20, "... testing widgets flowing after ...");
+	makeText.value(container, 120 @ 20, "hElastic : " ++ hElastic);
+	makeText.value(container, 120 @ 20, "vElastic : " ++ vElastic);
+
+} .value;
+
+win.front; "";
+)
+
+
+
+
+
+
+
+
+
+Cocoa Dialog
+============================================================
+Language: C
+Licence: Other
+Tags: gui,system,info
+
+/*
+there can be only one dialog open at a time, you will need to launch  
+a routine and wait for the first dialog to finish:
+*/
+
+(
+{ 2.do{arg i; var cond = Condition.new;
+defer({ CocoaDialog.getPaths({ arg paths;
+	paths.do({ arg p;
+	s.sendMsg(\b_allocRead, [a, b].at(i), p);
+	});
+	cond.test=true; cond.signal;
+},{
+	"cancelled".postln;
+	cond.test=true; cond.signal;
+});
+});
+cond.test=false; cond.wait;
+}
+}.fork( AppClock );
+)
+
+/*
+the "defer" is necessary because Condition-wait still breaks the  
+AppClock thread.
+
+ciao, -sciss-
+*/
+
+///////////////////////////////////////
+
+/*
+Am 21.05.2008 um 18:53 schrieb TomD:
+I would like to use CocoaDialog to open successively two sound  
+files like this for example :
+*/
+
+2.do{arg i;
+CocoaDialog.getPaths({ arg paths;
+	paths.do({ arg p;
+	s.sendMsg(\b_allocRead, [a, b].at(i), p);
+	})
+},{
+	"cancelled".postln;
+});
+}
+
+/*
+but it doesn't work, why ? Is there a way ? I've tried with  
+"wait" (eg "5.wait") put between two different CocoaDialogs but it  
+is constraining in time...
+*/
+
+
+
+Partch
+============================================================
+Language: C
+Licence: Other
+Tags: patch
+
+/*
+Here's a version that works.
+It produces four FAILURE /n_set Node not found messages when started, 
+but it produces audio as intended.
+*/
+
+(
+var fund, osc2freq, osc3freq, osc3tempfreq, osc4freq;
+var currentFundIndex, osc2index, osc3index, osc4index;
+var masterlist, consonancelist;
+var attack, decay, duration;
+
+var p1list, p2list, p3list, p4list, p5list, p6list, p7list, p8list, p9list, p10list;
+var p11list, p12list, p13list, p14list, p15list, p16list, p17list, p18list, p19list;
+var p20list, p21list, p22list, p23list, p24list, p25list, p26list, p27list, p28list;
+var p30list, p31list, p33list, p34list, p35list, p36list, p37list, p38list, p39list;
+var p40list, p41list, p42list, p43list, p44list;
+var sentfreq;
+
+~numChans=2;
+
+SynthDef("threeSines", { arg freq=220, harmMult1=17, harmMult2=10, vol1=0.05, vol2=0.05, vol3=0.05, gate=1, 
+attack=0.35, decay=0.35, p1=0, p2=0, p3=0, a1=0.037, a2=0.037, a3=0.037, lfo1=0.15, lfo2=0.15, lfo3=0.15, envMax=1.0, cutoff=1000; e=Env.new([0, envMax, 
+envMax*0.2, 0], [attack, attack, decay], 'sine', 2);
+					y=Env.new([0, envMax, envMax, 0], [0.1, 6.5, 0.1]);
+					o = //Pan2.ar(SinOsc.ar(freq, 0, SinOsc.kr(lfo1, 2pi.rand, 0.01, a1)), p1)
+						PanAz.ar(~numChans, SinOsc.ar(freq, 0, SinOsc.kr(lfo1, 2pi.rand, 0.01, a1)), p1, 1, 3)
+						+
+
+	//Pan2.ar(SinOsc.ar(freq*harmMult1, 0, SinOsc.kr(lfo2, 2pi.rand, 0.01, a2)), p2)
+						PanAz.ar(~numChans, 
+SinOsc.ar(freq*harmMult1, 0, SinOsc.kr(lfo2, 2pi.rand, 0.01, a2)), p2, 1, 3)
+						+
+
+	//Pan2.ar(SinOsc.ar(freq*harmMult2, 0, SinOsc.kr(lfo3, 2pi.rand, 0.01, a3)), p3);
+						PanAz.ar(~numChans, 
+SinOsc.ar(freq*harmMult2, 0, SinOsc.kr(lfo3, 2pi.rand, 0.01, a3)), p3, 1, 3);
+					p=RLPF.ar(o, cutoff, 0.2);
+					a=Impulse.ar(0, 0, envMax);
+					b=Decay2.ar(a, 0.05, 0.9);
+					c=Resonz.ar(b, freq, 0.001, 15);
+					d=AllpassL.ar(c, freq.reciprocal, freq.reciprocal, 3, 20);
+					f=Env.perc(0.1, 5.0);
+					x=d*EnvGen.ar(f);
+					/*
+					z=(Pan2.ar(DelayN.ar(d, 0.7, 0.7), p1)*EnvGen.ar(f))+
+					  (Pan2.ar(DelayN.ar(d, 1.4, 1.4), p2)*EnvGen.ar(f))+
+					  (Pan2.ar(DelayN.ar(d, 2.1, 2.1), p3)*EnvGen.ar(f));
+					*/
+					Out.ar(0, x+(0.35*p*EnvGen.ar(e, gate, doneAction: 2)))
+					}).load(s);
+
+~p1=1.round(1);			// 1/1
+~p2=1.0125.round(1.0125);	// 81/80
+~p3=1.03125.round(1.03125); // 33/32
+~p4=1.05.round(1.05);		// 21/20
+~p5=1.06667.round(1.06667);	// 16/15
+~p6=1.09091.round(1.09091); // 12/11
+~p7=1.1.round(1.1);		// 11/10
+~p8=1.11111.round(1.11111); // 10/9
+~p9=1.125.round(1.125);		// 9/8
+~p10=1.14286.round(1.14286);// 8/7
+~p11=1.16667.round(1.16667);// 7/6
+~p12=1.18519.round(1.18519);// 32/27
+~p13=1.2.round(1.2);		// 6/5
+~p14=1.22222.round(1.22222);// 11/9
+~p15=1.25.round(1.25);		// 5/4
+~p16=1.27273.round(1.27273);// 14/11
+~p17=1.28571.round(1.28571);// 9/7
+~p18=1.3125.round(1.3125);  // 21/16
+~p19=1.33333.round(1.33333);// 4/3
+~p20=1.35.round(1.35);		// 27/20
+~p21=1.375.round(1.375);	// 11/8
+~p22=1.4.round(1.4);		// 7/5
+~p23=1.42857.round(1.42857);// 10/7
+~p24=1.45455.round(1.45455);// 16/11
+~p25=1.48148.round(1.48148);// 40/27
+~p26=1.5.round(1.5);		// 3/2
+~p27=1.52381.round(1.52381);// 32/21
+~p28=1.55556.round(1.55556);// 14/9
+~p29=1.57143.round(1.57143);// 11/7
+~p30=1.6.round(1.6);		// 8/5
+~p31=1.63636.round(1.63636);// 18/11
+~p32=1.66667.round(1.66667);// 5/3
+~p33=1.6875.round(1.6875);	// 27/16
+~p34=1.71429.round(1.71429);// 12/7
+~p35=1.75.round(1.75);		// 7/4
+~p36=1.77778.round(1.77778);// 16/9
+~p37=1.8.round(1.8);		// 9/5
+~p38=1.81818.round(1.81818);// 20/11
+~p39=1.83333.round(1.83333);// 11/6
+~p40=1.875.round(1.875);	// 15/8
+~p41=1.90476.round(1.90476);// 40/21
+~p42=1.93939.round(1.93939);// 64/33
+~p43=1.97531.round(1.97531);// 160/81
+~p44=2.round(2);			// 2/1
+
+~fundlist=[~p1, ~p2, ~p3, ~p4, ~p5, ~p6, ~p7, ~p8, ~p9, ~p10, ~p11, 
+~p12, ~p13, ~p14, ~p15, ~p16, ~p17];
+~p1list=[~p18, ~p19, ~p20, ~p22, ~p24, ~p25, ~p26, ~p27, ~p28, ~p29, 
+~p30, ~p33, ~p43];
+
+
+~nlist=[2000, 2001, 2002, 2003];
+~currentnode=~nlist.choose;
+~lastnode=~currentnode;
+
+~partchBackdrop=Task({ var harmchoice;
+		decay=0.35;
+		fund=220;
+		p1list=[~p18, ~p19, ~p20, ~p22, ~p24, ~p25, ~p26, ~p27, ~p28, ~p29, ~p30, ~p33, ~p43];
+		p2list=[~p11, ~p12, ~p13, ~p16, ~p20, ~p23, ~p26, ~p27, ~p31, ~p33, ~p35, ~p40, ~p43, ~p44];
+		p3list=[~p16, ~p21, ~p26, ~p27, ~p28, ~p34];
+		p4list=[~p15, ~p18, ~p21, ~p22, ~p28, ~p29];
+		p5list=[~p16, ~p17, ~p18, ~p19, ~p22, ~p23, ~p29, ~p30];
+		p6list=[~p14, ~p16, ~p21, ~p22, ~p23, ~p24, ~p27, ~p30, ~p31, ~p38, ~p43];
+		p7list=[~p6, ~p16, ~p18, ~p19, ~p20, ~p21, ~p24, ~p25, ~p31, ~p32];
+		p8list=[~p7, ~p14, ~p16, ~p22, ~p25, ~p31, ~p32];
+		p9list=[~p18, ~p19, ~p20, ~p21, ~p22, ~p26, ~p29, ~p32, ~p33];
+		p10list=[~p16, ~p17, ~p18, ~p19, ~p20, ~p21, ~p22, ~p23, ~p27, ~p32, ~p33, ~p34, ~p35];
+		p11list=[~p20, ~p21, ~p22, ~p24, ~p28, ~p32, ~p34, ~p35, ~p36];
+		p12list=[~p19, ~p20, ~p21, ~p22, ~p25, ~p29, ~p33, ~p34, ~p35, ~p36];
+		p13list=[~p19, ~p21, ~p22, ~p23, ~p30, ~p33, ~p36, ~p37, ~p38];
+		p14list=[~p20, ~p21, ~p24, ~p27, ~p31, ~p37, ~p39];
+		p15list=[~p32, ~p35, ~p40];
+		p16list=[~p17, ~p23, ~p30, ~p32, ~p33, ~p41];
+		p17list=[~p23, ~p30, ~p40, ~p42];
+		p18list=[~p29, ~p35, ~p41, ~p42, ~p43];
+		p19list=[~p20, ~p32, ~p36, ~p43, ~p44];
+		p20list=[~p21, ~p33, ~p37, ~p43, ~p44];
+		p21list=[~p31, ~p38, ~p39];
+		p22list=[~p34, ~p35];
+		p23list=[~p32, ~p41];
+		p24list=[~p38, ~p41];
+		p25list=[~p38, ~p43];
+		p26list=[~p44, ~p37, ~p40];
+		p27list=[~p35, ~p37];
+		p28list=[~p38];
+		p30list=[~p36, ~p40, ~p42, ~p44];
+		p31list=[~p42];
+		p33list=[~p43];
+		p34list=[~p41];
+		p35list=[~p1, ~p6, ~p7, ~p17, ~p18, ~p22, ~p23, ~p24, ~p30];
+		p36list=[~p3, ~p4, ~p5, ~p8, ~p12, ~p18, ~p19, ~p20, ~p25];
+		p37list=[~p4, ~p5, ~p6, ~p7, ~p8, ~p9, ~p12, ~p13, ~p19, ~p20];
+		p38list=[~p4, ~p6, ~p9, ~p16, ~p20];
+		p39list=[~p3, ~p4, ~p5, ~p6, ~p7, ~p8, ~p9, ~p14, ~p20, ~p21];
+		p40list=[~p4, ~p5, ~p6, ~p7, ~p8, ~p9, ~p10, ~p15, ~p21, ~p22];
+		p41list=[~p6, ~p7, ~p8, ~p15, ~p23];
+		p42list=[~p10, ~p11, ~p23, ~p24];
+		p43list=[~p1, ~p24, ~p25];
+		p44list=p1list*0.5;
+
+		masterlist=[~p1, ~p2, ~p3, ~p4, ~p5, ~p6, ~p7, ~p8, ~p9, ~p10, ~p11, ~p12, ~p13, ~p14,
+             ~p15, ~p16, ~p17, ~p18, ~p19, ~p20, ~p21, ~p22, ~p23, ~p24, ~p25, ~p26,
+             ~p28, ~p29, ~p30, ~p31, ~p32, ~p33, ~p34, ~p35, ~p36, ~p37, ~p38, ~p39,
+             ~p40, ~p41, ~p42, ~p43, ~p44];
+
+          consonancelist=[ p1list, p2list, p3list, p4list, p5list, p6list, p7list,
+         		p8list, p9list, p10list, p11list, p12list, p13list, p14list,
+         		p15list, p16list, p17list, p18list, p19list, p20list, p21list,
+         		p22list, p23list, p24list, p25list, p26list, p27list, p28list,
+			p30list, p31list, p33list, p34list, p35list, p36list, p37list,
+			p38list, p39list, p40list, p41list, p42list, p43list, p44list ];
+
+		//harmchoice=#[17, 10, 11, 19, 13, 7];
+		harmchoice=#[5, 7, 11, 10, 17];
+		currentFundIndex=(~fundlist.size).rand;
+		osc2index=0;
+		osc2freq=0;
+		osc3freq=0;
+		osc3index=0;
+
+		inf.do({ arg i; var f, hm1, hm2, thisIndex, 
+nextIndex, p1, p2, p3, a1, a2, a3, f1, f2, f3, maxLev, percattack;
+				p1=1.0.rand2;
+				p2=1.0.rand2;
+				p3=1.0.rand2;
+				a1=rrand(0.4, 0.6);
+				a2=rrand(0.1, 0.2);
+				a3=rrand(0.1, 0.26);
+				hm1=harmchoice.choose;
+				hm2=harmchoice.choose;
+				f1=rrand(0.2, 0.5);
+				f2=rrand(0.2, 0.5);
+				f3=rrand(0.2, 0.5);
+				attack=exprand(0.45, 0.8);
+				//maxLev=rrand(0.3, 0.6);
+				percattack=0.1;
+
+				while ( { ~lastnode==~currentnode }, 
+{ ~currentnode=~nlist.choose;});
+				~lastnode=~currentnode;
+
+
+				// Choose a node (synth) to change this time through
+				if ( (i>3), {n=~currentnode; 
+maxLev=rrand(0.3, 0.6);},
+						   { if ( (i==0), 
+{n=2000;  maxLev=0.07; },
+						   
+		{ if ( (i==1), {n=2001; maxLev=0.07; },
+						   
+				      { if ( (i==2), {n=2002; 
+maxLev=0.07; }, {n=2003; maxLev=0.07; ~lastnode=2003;}
+						   
+				             ) }
+						   
+			)}
+						   
+		)}
+						   );
+				//n.postln;
+				//("current node:  "++~currentnode).postln;
+				//("last node:  "++~lastnode).postln; 
+(" ").postln;
+					  
+				if ( (n==2000),
+					{
+					if ( (currentFundIndex==0),
+						{ thisIndex=[
+								2, 2, 2, 2,
+								3, 3, 3,
+								4, 4,
+								5, 5,
+								6, 6,
+								7, 8, 
+9, 10, 11, 12, 13, 14, 15].choose; },
+						{ thisIndex=[
+								-1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+								2, 2, 2, 2,
+								3, 3, 3,
+								4, 4,
+								5, 5,
+								6, 
+6].choose; });
+
+
+	//("currentFundIndex="++currentFundIndex).postln;
+					//("thisIndex="++thisIndex).postln;
+					nextIndex=currentFundIndex+thisIndex;
+					if ( 
+(nextIndex>~fundlist.size), { nextIndex=(nextIndex%(~fundlist.size)) 
+});
+					//("nextIndex="++nextIndex).postln;
+					f=fund*(~fundlist.wrapAt(nextIndex));
+
+	currentFundIndex=masterlist.indexOf(~fundlist.wrapAt(nextIndex));
+
+	//("currentFundIndex="++currentFundIndex).postln;
+					s.sendMsg("/n_set", 2000, "gate", 0);
+			   		(decay+0.1).wait;
+					//nextIndex.postln;
+					//f.postln;
+					s.sendMsg("/s_new", 
+"threeSines", 2000, 1, 0,
+
+	"freq", f,
+
+	"a1", a1, "a2", a2, "a3", a3,
+
+	"lfo1", f1, "lfo2", f2, "lfo3", f3,
+
+	"harmMult1", hm1,
+
+	"harmMult2", hm2,
+
+	"p1", p1, "p2", p2, "p3", p3,
+				   	   		  
+	"attack", attack,
+				   	   		  
+	"envMax", maxLev,
+				   	   		  
+	"cutoff", rrand(f, f*2),
+				   	   		  
+	"percattack", percattack
+				   	   		 		);
+				   		   },
+				    {  if ( (n==2001),
+							{ 
+osc2index=consonancelist.at(currentFundIndex).size.rand;
+				   	   
+osc2freq=fund*(consonancelist.at(currentFundIndex).at(osc2index));
+				   	   
+s.sendMsg("/n_set", 2001, "gate", 0);
+				   	  		  (decay+0.1).wait;
+				   	   
+s.sendMsg("/s_new", "threeSines", 2001, 1, 0,
+				   	   
+				"freq", osc2freq,
+				   	   
+				"a1", a1, "a2", a2, "a3", a3,
+
+				"lfo1", f1, "lfo2", f2, "lfo3", f3,
+
+				"harmMult1", hm1,
+				   	   
+				"harmMult2", hm2,
+				   	   
+				"p1", p1, "p2", p2, "p3", p3,
+				   	   		  
+				"attack", attack,
+				   	   		  
+				"envMax", maxLev,
+				   	   		  
+	              "cutoff", rrand(osc2freq, osc2freq*2),
+				   	   		  
+	              "percattack", percattack
+				   	   		  
+				);
+				   	   		},
+				   	   		{ if ( (n==2002),
+				   	   		  
+	{ osc3index=consonancelist.at(osc2index).size.rand;
+				   	   		  
+
+osc3freq=osc2freq*(consonancelist.at(osc2index).at(osc3index));
+				   	   		  
+	  if ( (osc2index>34), { sentfreq=osc3freq*([0.5, 1].choose) 
+}, { sentfreq=osc3freq });
+				   	   		  
+	  s.sendMsg("/n_set", 2002, "gate", 0);
+				   	   		  
+	  (decay+0.1).wait;
+				   	   		  
+	  s.sendMsg("/s_new", "threeSines", 2002, 1, 0,
+				   	   		  
+				         "freq", sentfreq,
+				   	   		  
+				         "a1", a1, "a2", a2, "a3", a3,
+
+				         "lfo1", f1, "lfo2", f2, "lfo3", f3,
+
+				         "harmMult1", hm1,
+				   	   		  
+				         "harmMult2", hm2,
+				   	   		  
+				         "p1", p1, "p2", p2, "p3", p3,
+				   	   		  
+				         "attack", attack,
+				   	   		  
+				         "envMax", maxLev,
+				   	   		  
+	                       "cutoff", rrand(sentfreq, sentfreq*2),
+				   	   		  
+	                       "percattack", percattack
+				   	   		  
+			             );
+				   	   		 		},
+				   	   		  
+	{ osc4index=consonancelist.at(osc3index).size.rand;
+				   	   		  
+
+osc4freq=osc3freq*(consonancelist.at(osc3index).at(osc4index));
+				   	   		  
+	  osc4freq=osc4freq*([1, 0.5].choose);
+				   	   		  
+	  s.sendMsg("/n_set", 2003, "gate", 0);
+				   	   		  
+	  (decay+0.1).wait;
+				   	   		  
+	  s.sendMsg("/s_new", "threeSines", 2003, 1, 0,
+				   	   		  
+	                       "freq", osc4freq,
+				   	   		  
+	                       "a1", a1, "a2", a2, "a3", a3,
+				   	   		  
+	                       "lfo1", f1, "lfo2", f2, "lfo3", f3,
+				   	   		  
+	                       "harmMult1", hm1,
+				   	   		  
+	                       "harmMult2", hm2,
+				   	   		  
+	                       "p1", p1, "p2", p2, "p3", p3,
+				   	   		  
+	                       "attack", attack,
+				   	   		  
+				         "envMax", maxLev,
+				   	   		  
+	                       "cutoff", rrand(osc4freq, osc4freq*2),
+				   	   		  
+				         "percattack", percattack
+				   	   		  
+	                       );
+				   	   		 		  })
+				   	   		  });
+				   	   		  
+	   	  
+				   	  });
+					 if ( (i>3), { 
+duration=([1.0, 1.5, 2.0, 2.0, 2.0, 2.5, 3.0, 3.5, 4.0, 3.5, 
+3.5].choose)+attack },
+							    { 
+duration=0.03/*rrand(0.4, 0.6)*/});
+		   			  duration.wait;
+	})
+});
+)
+
+~partchBackdrop.play
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Audio & MIDI Settings
+============================================================
+Language: C
+Licence: Other
+Tags: control,midi,info
+
+// Within sc... after initializing MIDIClient --
+
+MIDIClient.init(numInPorts, numOutPorts)
+
+// -- then you can find out the midi sources and destinations using
+
+MIDIClient.sources
+MIDIClient.destinations
+
+/*
+Each MIDIEndPoint object has a uid, which is how the OS distinguishes
+where a message came from.
+
+If you use the crucial MIDI responders or the MIDI classes in my
+library - http://www.dewdrop-world.net/sc3/index.php#dewdroplib - it's
+easier because an index into the sources array is automatically
+translated into the right uid. That is, if you want to respond to the
+mod wheel on the first MIDI device in the list (index 0), you could
+use:
+*/
+
+c = CCResponder({ |src, chan, num, value| ... do something with
+'value' here... }, src: 0, num: 1);
+
+/*
+That automatically filters by device and controller number. You can
+also filter by MIDI channel number (0-15) and even specific values :)
+
+If you want to listen to a different device, use src: (other index).
+*/
+
+// In my library, the same responder would be:
+
+// device 0, all channels, mod-wheel
+c = BasicMIDIControl(\omni, 1, { |value, divisor, ccnum| ... do something with 'value' here... });
+// device 0, channel 0
+c = BasicMIDIControl(0, 1, { |value, divisor, ccnum| ... do something with 'value' here... });
+// device 1, all channels
+c = BasicMIDIControl([1, \omni], 1, { |value, divisor, ccnum| ... do something with 'value' here... });
+
+/*
+Hope that helps, at least as a start.
+hjh
+*/
+
+
+
+Record Buffer
+============================================================
+Language: C
+Licence: Other
+Tags: buffer,patch
+
+/*
+I can't remember who posted this quite a while back on the list (anyone recognizes?) but here's a way to do this.
+It's a bit of a cheat but usually workz in practice.
+The concept is simple - you record into one very large buffer. at the end of the recording, when you know how long it was, you allocate a new, smaller buffer, and copy the data there.
+*/
+(
+
+SynthDef(\recordnewbuf,{arg in=0, bufnum;  RecordBuf.ar( SoundIn.ar(in), bufnum); }).load(s);
+
+SynthDef("playback", { arg out=0,bufnum=0, rate=1, trigger=1, startPos=0, loop=0;
+    Out.ar(out,
+        Pan2.ar(PlayBuf.ar(1,bufnum, BufRateScale.kr(bufnum)*rate, trigger, BufFrames.kr(bufnum)*startPos, loop),0.0)
+    )
+}).load(s); 
+);
+
+~bigBuf=Buffer.alloc(s,44100*600,1); // a big 'temporary' 600 seconds buf - can be longer if needed
+~sched = BeatSched.new;
+
+(
+~sched.time = 0;
+~recsynth=Synth(\recordnewbuf,[\bufnum, ~bigBuf.bufnum]);  //record to the huge buffer
+)
+
+
+(   // stop record  
+~length = ~sched.time;
+~recsynth.free;   // free up the recorder
+~usedBuf = Buffer.alloc(s, 44100*~length, 1); //add a new empty buffer to the list
+~bigBuf.copyData(~usedBuf, 0, 0, 44100*~length);   //copy into it the stuff you just recorded
+)
+
+//and then you can listen to the last one you recorded:
+Synth(\playback, [\out, 0, \bufnum,~usedBuf.bufnum, \loop, 1]);
+
+
+// grtz,
+// tom
+
+
+
+
+Organising Files
+============================================================
+Source: sc-users@lists.bham.ac.uk
+Language: C
+Licence: Other
+Tags: system
+
+// Folder per composition.
+
+// use something like:
+
+(Document.current.dir +/+ "piece01.scd").loadDocument
+
+// from the main file in the directory.
+
+// Then you can easily shift the collection of files around on your system, 
+// without having to worry that you have to change the paths all the time.
+
+// sincerely,
+// Marije
+
+/************************************/
+
+// I've been using
+
+this.executeFile("path/file.sc")
+
+// for the same purpose . . . pros/cons?
+ 
+// Thanks,
+// micromoog
+
+/************************************/
+
+// use
+
+(globalPathVariable +/+ "myCodeScrap.scd").load
+
+// you may have some trouble with passing variables into the code.
+
+// for the reason, I tent do put the content of the file  in a function.
+// This also makes it more modular.
+
+//  then you would do:
+
+(Document.current.dir +/+ "myCodeScrap.scd").load.value(arg1, ...);
+
+// and the content of your file woultd be:
+
+{arg arg1, ...;
+
+.....
+
+
+}
+
+// jost
+
+/************************************/
+
+// I've been using i.e.:
+
+"synths.scd".loadRelative;
+
+// or better:
+
+["aFile.ext", "bFile.ext", cFile.ext"].do(_.loadRelative)
+
+// being all in the same Folder.
+
+// greets, juan.
+
+
+
+
+Getting One Channel Of A Buffer
+============================================================
+Source: sc-users@lists.bham.ac.uk
+Language: (null)
+Licence: Other
+Tags: buffer
+
+// one efficient way to figure out the number of channels of a soundfile, is to only read the header with the SoundFile class...
+(
+a= SoundFile.openRead("sounds/a11wlk01-44_1.aiff");
+if(a.notNil, {
+	a.numChannels.postln;
+	if(a.numChannels==1, {"you mono version here".postln}, {"stereo or more".postln});
+	a.close;
+}, {"file not found".error});
+)
+
+// and then close it
+
+// but that's not even needed if you use Buffer's readChannel method properly.
+
+//--read mono soundfile into mono buffer
+b= Buffer.readChannel(s, "sounds/a11wlk01-44_1.aiff", channels:[0])
+b.plot
+
+//--read 1st channel of stereo soundfile into a mono buffer
+c= Buffer.readChannel(s, "sounds/SinedPink.aiff", channels:[0])
+c.plot
+
+//--read 2nd channel of stereo soundfile into a mono buffer
+d= Buffer.readChannel(s, "sounds/SinedPink.aiff", channels:[1])
+d.plot
+
+b.free; c.free; d.free;
+
+// so a general way to load soundfiles with varying number of channels into a mono buffer is...
+b= Buffer.readChannel(s, "sounds/SinedPink.aiff", channels:[0])
+b.plot
+b.free
+
+// and a general way to load varying channel soundfiles into a stereo buffer is...
+(
+a= SoundFile.openRead("sounds/a11wlk01-44_1.aiff");
+if(a.notNil, {
+	b= Buffer.readChannel(s, a.path, channels:[0, 1%a.numChannels]);
+	a.close;
+}, {"file not found".error});
+)
+
+b.plot
+b.free
+
+// this will for stereo and more take the first 2 channels as normal.  for mono files it'll just duplicate the channel.
+
+_f
+
+
+
+
+An Easy Way To Control Synths (Using Conductor)
+============================================================
+Source: sc-users@lists.bham.ac.uk
+Language: C
+Licence: Other
+Tags: control,class,synthdef
+
+// yes, there are many ways.  i like Ron's quark Conductor for these tasks (install from Quarks.gui).
+
+//--set up some cvs and a synthdef
+(
+s.waitForBoot{
+~cvs= (
+	\freq: CV.new.sp(400, 20, 20000, 0, \exp),
+	\amp: CV.new.sp(0.5, 0, 1, 0, \lin),
+	\fmod: CV.new.sp(10, 0, 2000, 0, \lin),
+	\pan: CV.new.sp(0, -1, 1, 0, \lin)
+);
+SynthDef(\cvtest, {|out= 0, freq= 400, amp= 0.5, fmod= 10, pan= 0|
+	var src= SinOsc.ar(freq+LFPar.ar(freq*Rand(0, 1), 0, fmod), 0, amp);
+	Out.ar(out, Pan2.ar(src, pan));
+}).memStore;
+}
+)
+
+//--build a simple gui from ~cvs dictionary
+(
+var win= Window("cvtest", Rect(100, 200, 300, 400));
+win.view.decorator= FlowLayout(win.view.bounds);
+~cvs.keysValuesDo{|key, cv|
+	StaticText(win, Rect(0, 0, 50, 20)).string= key;
+	cv.connect(Slider(win, Rect(0, 0, 100, 20)));
+	cv.connect(NumberBox(win, Rect(0, 0, 50, 20)));
+	win.view.decorator.nextLine;
+};
+win.front;
+)
+
+//--create many synths from the same def, with the same controllers
+Synth.controls(\cvtest, [\freq, ~cvs[\freq], \amp, ~cvs[\amp], \fmod, ~cvs[\fmod], \pan, ~cvs[\pan]])
+Synth.controls(\cvtest, [\freq, ~cvs[\freq], \amp, ~cvs[\amp], \fmod, ~cvs[\fmod], \pan, ~cvs[\pan]])
+
+
+_f
+
+
+
+
+Pulse Wave, Acid Like...
+============================================================
+Source: pauljones_mds@yahoo.com
+Language: (null)
+Licence: Other
+Tags: synthdef
+
+// // Pulse wave, acid like... May help.
+
+Best P
+
+SynthDef(\acid , {|gate=1, out=0, at=0.1, dec=2, sus=2, rel=1, suslev=0.5, at2=0.01, dec2=0.7, sus2=2, rel2=2, suslev2=0.4, lfoRate=3, freq=55, ffreq=5000, rez=1, lfoFFreqMod=2000, envFFreqMod=2000, lfoRezMod=0.3, envRezMod=0, width=0.5, pan=0, lev=0.2, fx|
+	var env,env2,lfo,filt,osc;
+                   
+	env = EnvGen.kr(Env.new([0,1,suslev,suslev,0],[at,dec,sus,rel],[-4,-4,-4,-4]),gate,doneAction:2);
+                   
+	env2 = EnvGen.kr(Env.new([0,1,suslev2,suslev2,0],[at2,dec2,sus2,rel2],[-4,-4,-4,-4]),gate);
+                   
+	lfo = SinOsc.ar(lfoRate,0);
+                   
+	osc = Pulse.ar(freq,width)*env;
+                   
+	filt = MoogFF.ar(osc,(ffreq+(lfo*lfoFFreqMod)+(env2*envFFreqMod)).clip(20,20000),(rez+(lfo*lfoRezMod)+(env2*envRezMod)).clip(0.01,3.9)).softclip;
+                   
+	Out.ar(out,Pan2.ar(filt,pan,lev));
+                   
+	Out.ar(fx,Pan2.ar(filt,0,lev));
+                   
+}).send(s); 
+
+
+
+
+Feedback
+============================================================
+Source: nathanielvirgo@gmail.com
+Language: C
+Licence: Other
+Tags: fx,control
+
+/* A few tips that I use when working creatively with feedback:
+
+If you want to avoid blowing up, you need something in the signal chain that limits the level when it starts to get too loud.  There are lots of possibilities for this - Limiter.ar is one, and so is distortion using .tanh, .clip, .softclip or .distort, or you could use Compander.ar.  With one of these in place you'll be free to experiment without worrying about the sound blowing up.  You can set the gain higher than one - with a distortion in the sound will get more distorted every time it goes through the loop instead of louder.
+
+If you don't want to hear a high-pitched tone of 689 Hz, put a delay in the feedback loop as well.  It can be a short delay of a few milliseconds to get a lower-pitched tone, or a longer one of a few seconds or more to get an evolving loop of sound.  You can use Limiter.ar as a delay and a limiter at the same time.
+
+Low pass filters work well with distortions, because the distortion adds high frequencies and the filter takes them away again, leading to an evolving sound.
+
+A LeakDC or a high-pass filter is usually worth trying as well, esecially if a DC offset tends to build up.
+
+If you use filters, expecially resonant ones, it helps to continually change the cutoff, otherwise it tends to converge onto an annoying distorted sine wave.
+
+Depending on what's in the feedback loop it will probably need something to start the sound off, so I often add a small amount of white noise.  Or you can set the feedback loop up to act as a delay effect on another sound that evolves as it decays, like the tape delays often used in dub music.
+
+Allpass filters will cause a reverb-like dispersion to build up.  FreqShift is a fun UGen to play with in feedback loops, especially with small amounts of shift.
+
+Always try adjusting the gain, it usually has quite a big effect.  
+
+Other than that - experiment - put different effects in the loop and see what happens.  It's a great way to waste time :)
+
+Nathaniel
+*/
+
+
+
+Releasing Envelopes As Arrays
+============================================================
+Source: spleef.sc@gmail.com
+Language: C
+Licence: Other
+Tags: synthdef,control
+
+// try this...
+
+SynthDef( \dustCrackle, { arg amp, freq, t_gate;
+       var env, envctl, playEnv, in, playMe;
+       env = Env.newClear( 5 );
+       envctl = Control.names( [\env ] ).kr( env.asArray );
+       playEnv = EnvGen.kr( envctl, t_gate );
+       in = Mix.new( [ Dust.ar( ( freq * 3 ), 0.9 ), Crackle.ar( freq, 0.3 ) ] ) * playEnv;
+       playMe = in * amp;
+       Out.ar( 0, playMe.dup );
+       }).memStore;
+
+
+      x = Synth( \dustCrackle, [ \t_gate, 1, \freq, 2, \amp, 0.9, \env, Env([ 0, 1 ], [ 3 ], \sin ) ] );
+
+    x.setn(\env, Env( [ 1, 0 ], [ 5 ], \sin ), \t_gate, 1);
+
+
+/*
+Best,
+Hjalte
+
+
+2009/8/27 casey anderson <casey.thomas.anderson@gmail.com>
+hi all,
+
+ive been playing around with using envelopes .asArray, in order to
+allow for more fluid envelope switching on the fly, and had one quick
+question regarding a smooth way to free the synth after the envelope
+has been executed in the event that i have, after much playing and
+envelope switching, faded the amp (via an envelope) to 0 for the last
+time. i am doing the following, currently, but suspect that there is a
+better way to do this, and was wondering if anyone had a nicer way of
+achieving the below:
+*/
+SynthDef( \dustCrackle, { arg amp, freq, t_gate;
+       var env, envctl, playEnv, in, playMe;
+       env = Env.newClear( 5 );
+       envctl = Control.names( [\env ] ).kr( env.asArray );
+       playEnv = EnvGen.kr( envctl, t_gate );
+       in = Mix.new( [ Dust.ar( ( freq * 3 ), 0.9 ), Crackle.ar( freq, 0.3 )
+] ) * playEnv;
+       playMe = in * amp;
+       Out.ar( [ 0, 1 ], playMe );
+       //Pause.kr( gate1, 1002 );
+       }).memStore;
+
+//other long sustain, no looping
+//long sustain two
+(
+s.bind{
+       e = Env([ 0, 1 ], [ 3 ], \sin );
+       x = Synth( \dustCrackle, [ \t_gate, 1, \freq, 2, \amp, 0.9 ] );
+       x.setn( \env, e.asArray );
+       };
+)
+
+//with Routine, can fade out env and then release...
+(
+r = Routine {
+e = Env( [ 1, 0 ], [ 5 ], \sin );
+x.setn( \env, e.asArray );
+x.set( \t_gate, 1 );
+5.wait;
+x.free;
+}
+)
+
+r.play;
+
+/*
+seems to me there should be a way to do the above without the routine,
+im just not quite sure how i would do that. if anyone has any ideas,
+id appreciate any input. this way works, but as i have it now, it
+seems like i will need a separate routine for each synth, which seems
+very cluttered and unnecessary (however im not sure how else i could
+do this).
+
+casey
+*/
+
+
+
+unixCmd and stderr
+============================================================
+Source: blackrain.sc@gmail.com
+Language: C
+Licence: Other
+Tags: system
+
+// Hi,
+
+// redirect stderr should do it:
+
+"ls -la /bogus".unixCmd({ "shell cmd done".postln; })
+
+"ls -la /bogus 2>&1".unixCmd({ "shell cmd done".postln; })
+
+
+// cheers,
+// x
+/*******************************************************************************/
+/*
+On Mon, Aug 31, 2009 at 5:05 AM, Nathaniel
+Virgo<nathanielvirgo@gmail.com> wrote:
+Hi
+
+I was just wondering if there is (or could be) any way of getting at the
+output a unix command sends to STDERR when invoking it with String:unixCmd.
+I was trying to debug some shell interaction earlier and getting at the
+error output would have helped a lot.
+
+(in my case, running a php script from the shell worked but running it with
+unixCmd failed.  It turned out to be because I have two versions of php
+installed and a different one was being invoked when running the command
+from within SC - but because I couldn't see the errors it took a while to
+track that down)
+
+Nathaniel
+*/
+
+
+
+GRM Comb Filter
+============================================================
+Source: kernel
+Language: C
+Licence: Other
+Tags: patch,fx
+
+/*
+Hi,
+
+Recent discussion of the GRM Delay plugin reminded of a simple GRM
+style comb filter bank I made a few years ago.  Sure, it lacks the
+fancy preset morphing and super slider stuff but I thought it might be
+useful.  I Can't remember how close to the original it is now.  There
+is a simple impulse test sound for quick testing but maybe more
+interesting input yields more interesting output.  Input is fed via a
+bus.
+
+kernel
+*/
+
+// parrallel comb filters implemented as effect return
+
+// send the synth defs
+(
+(
+SynthDef("ImpulseTest", {|bus = 3|
+	
+	Out.ar(bus, [Impulse.ar(SinOsc.kr(0.23).range(0.5,23), 0.5)]);
+	
+}).send(s);
+);
+
+(
+SynthDef("CombUnit",{| d1 = 0.001, d2 = 0.001, d3 = 0.001, d4 = 0.001, d5 = 0.001,
+					t1 = 1, t2 = 1, t3 = 1, t4 = 1, t5 = 1,
+					f1 = 20000, f2 = 20000, f3 = 20000, f4 = 20000, f5 = 20000,
+					vol = 1, inBus = 3, outBus = 0|
+					
+	var in, out, c1, c2, c3, c4, c5;
+
+	in = In.ar(inBus, 1);
+
+	c1 = LPF.ar(CombC.ar(in, 1, d1, t1), f1);
+	c2 = LPF.ar(CombC.ar(in, 1, d2, t2), f2);
+	c3 = LPF.ar(CombC.ar(in, 1, d3, t3), f3);
+	c4 = LPF.ar(CombC.ar(in, 1, d4, t4), f4);
+	c5 = LPF.ar(CombC.ar(in, 1, d5, t5), f5);
+	
+	out = (c1 + c2 + c3 + c4 + c5) * 0.2;
+	
+	Out.ar([outBus, outBus + 1], out * vol);
+
+}).send(s);
+);
+)
+
+
+
+// create the synth
+(
+	var grp, node, testNode, wComb, testRunning = 0, inputBus = 3;
+	
+	s.sendMsg("s_new", "CombUnit", node = s.nextNodeID, 1, 1);
+	// s.sendMsg("g_new",grp = s.nextNodeID,1,1); // create group @ tail of default node
+	
+	wComb = SCWindow("C O M A", Rect(100, 300, 720, 220))
+		.onClose_({
+			if(testRunning == 1, s.sendMsg("n_free", testNode));
+			s.sendMsg("n_free", node);
+		})
+		.front;
+	
+	// input bus
+	SCNumberBox(wComb, Rect(10, 10, 30, 20))
+		.value_(3)
+		.action_({|v|
+			inputBus = v.value;
+			s.sendMsg("n_set", node, "inBus", inputBus);
+			if(testRunning == 0, s.sendMsg("n_set", testNode, "bus", inputBus));
+		});
+	
+	SCStaticText(wComb, Rect(45, 10, 100, 20))
+		.string_("Input Bus");
+	
+	// output bus
+	SCNumberBox(wComb, Rect(150, 10, 30, 20))
+		.value_(0)
+		.action_({|v| s.sendMsg("n_set", node, "outBus", v.value)});
+	
+	SCStaticText(wComb, Rect(185, 10, 100, 20))
+		.string_("Output Bus");
+	
+	// audio test
+	SCButton(wComb, Rect(300, 10, 100, 20))
+		.states_([
+			["Start Test", Color.green, Color.black],
+			["Stop Test", Color.red, Color.black]
+		])
+		.action_({
+			if(testRunning == 0, {
+				s.sendMsg("s_new", "ImpulseTest", testNode = s.nextNodeID, 0, 1, "bus", inputBus);
+				testRunning = 1;
+			},{
+				s.sendMsg("n_free", testNode);
+				testRunning = 0;
+			});
+		});
+	
+	// comb frequencies
+	SCStaticText(wComb, Rect(10, 40, 100, 20)).string_("Comb Frequencies");
+	5.do{|i|
+		var box;
+		
+		box = SCNumberBox(wComb, Rect(10, 60 + (i * 25), 40, 20))
+			.value_(950);
+			
+		SCStaticText(wComb, Rect(55, 60 + (i * 25), 15, 20)).string_("Hz");
+		
+		SCSlider(wComb, Rect(80, 60 +  (i * 25), 130, 20))
+			.value_(0.5)
+			.action_({|v| var time, freq;
+				freq = [1, 20000, 6].asSpec.map(v.value);
+				time = 1.0 / freq;
+				s.sendMsg("n_set", node, i, time);
+				box.value_(freq.asInteger);
+			})
+	};
+	
+	// resonances
+	SCStaticText(wComb, Rect(250, 40, 100, 20)).string_("Resonances");
+	5.do{|i|
+		var box;
+		
+		box = SCNumberBox(wComb, Rect(250, 60 + (i * 25), 30, 20))
+			.value_(50);
+			
+		SCStaticText(wComb, Rect(285, 60 + (i * 25), 15, 20)).string_("%");
+		
+		SCSlider(wComb, Rect(300, 60 + (i * 25), 150, 20))
+			.value_(0.5)
+			.action_({|v|
+				s.sendMsg("n_set", node, i+5, [0, 9, 4].asSpec.map(v.value));
+				box.value_(v.value * 100);
+			});
+	};
+	
+	// low pass frequencies
+	SCStaticText(wComb, Rect(555, 40, 100, 20)).string_("Low Pass Frequencies");
+	5.do{|i|
+		var box;
+		
+		box = SCNumberBox(wComb, Rect(490, 60 + (i * 25), 40, 20)).value_(20000);
+		SCStaticText(wComb, Rect(535, 60 + (i * 25), 15, 20)).string_("Hz");
+		
+		SCSlider(wComb, Rect(555, 60 + (i * 25), 150, 20))
+			.value_(1)
+			.action_({ |v| var freq;
+				freq = [20, 20000, \exp].asSpec.map(v.value);
+				s.sendMsg("n_set", node, i+10, freq);
+				box.value_(freq);
+			});
+	};
+	
+	// volume control
+	SCStaticText(wComb, Rect(10, 190, 70, 20)).string_("Volume");
+	SCSlider(wComb, Rect(80, 190, 625, 20))
+		.value_(1)
+		.action_({|v| s.sendMsg("n_set", node, "vol", [0, 1, 4].asSpec.map(v.value))});
+)
+
+
+
+
+FM Swear Box
+============================================================
+Source: pauljones_mds@yahoo.com
+Language: C
+Licence: Other
+Tags: patch,FFT
+
+/*
+I wrote this for a mate who plays didge, sounds ok with didge, but better if
+one shouts abuse at it.
+
+Hope someone has a use for it. 
+
+  XxX P
+*/
+(
+SynthDef(\barry , { arg freq,modFreq,modAmt,ind1 = 2.0,ind2 =
+1.0,sens=1,rate=0.05;
+
+	var osc,osc2,env,pitch,hasPitch,input,harm,amp;
+
+	input = AudioIn.ar(1);
+
+	# pitch , hasPitch = Pitch.kr(input);
+
+	pitch = Lag3.kr(pitch,rate); 
+
+	amp = Amplitude.ar(input);
+
+	harm = FFT({LocalBuf(2048,1)}.dup,input);
+
+	harm = SpecCentroid.kr(harm);
+
+	harm = Lag3.kr(harm,rate);
+
+	osc = SinOsc.ar(pitch*ind1,0,amp);
+
+	osc = SinOsc.ar(pitch*ind2+(osc*(harm*sens)),0,1);
+
+	osc2 = SinOsc.ar(pitch+(osc*(harm/2)*sens));
+
+	osc2 = CombC.ar(osc2,2,2/pitch,2);
+
+	Out.ar(0,Pan2.ar(osc2,0,amp))
+
+}).send(s))
+
+(
+// couldnt be arsed to label the sliders or any crap like that, they are,
+// Slider 1 FM amt, Slider 2 lag speed for pitch bend or not, slider 3 fm index
+// 1, slider 4 fm index 2. 
+
+
+~win =SCWindow.new("didge", Rect(100,100,300,300/1.6142));
+~slide = 4.collect{|i| SCSlider(~win,Rect(10,10+(i*35),280,30))};
+~but = SCButton(~win, Rect(10,160,50,20)).states_([["start"],["stop"]])
+.action_({|num| case{num.value==0}{~bob = Synth(\barry)}
+                   {num.value==1}{~bob.free}});
+~slide[0].action_({|val| ~bob.set(\sens,val.value*2)});
+~slide[1].action_({|val| ~bob.set(\rate,val.value/2)});
+~slide[2].action_({|val| ~bob.set(\ind1,val.value*4)});
+~slide[3].action_({|val| ~bob.set(\ind2,val.value*4)});
+
+~win.front
+)
+
+
+
+
+Simplicity
+============================================================
+Source: ljputnam@umail.ucsb.edu
+Language: C
+Licence: Other
+Tags: patch
+
+play{
+	SinOsc.ar(
+		OnePole.ar(
+			Mix(
+				LFSaw.ar(
+					[1,0.99],
+					[0,0.6],
+					2e3,
+					2e3
+				).trunc([400, 600])*[1,-1]
+			),
+			0.98
+		)
+	).dup*0.1;
+}
+
+Try other numbers in the brackets for more variations.
+--
+
+
+
+Show/hide views
+============================================================
+Source: sc-users
+Language: C
+Licence: Other
+Tags: gui
+
+( 
+
+~win = SCWindow.new("Drum Composer",Rect(100,200,1000,500)); 
+~win.view.background = Color.new255(32,178,170); 
+
+~patbuts = 64.collect { |i| 
+        var vpos, button; 
+        vpos = 50 + (i div: 16 * 25); 
+        button = Button.new(~win,Rect( 11+((i%16)*65),vpos,65,20)) 
+                .states_([["Pattern " ++ i]]) 
+                .action_({ ~patwins[i].front }); 
+}; 
+~win.front; 
+
+~patwins = 64.collect { |poo| 
+        var patwin, mainSl, sliders, showNSliders; 
+
+        patwin = Window.new("Pattern " ++ poo, Rect(0,400,982,400)); 
+
+        mainSl = Slider.new(patwin,Rect(0,10,50,50)) 
+                .step_(1/32) 
+                .action_({ |view| 
+                        showNSliders.value( 
+[1,32,'lin',1,0].asSpec.map(view.value)); 
+                }); 
+        sliders = 32.collect { |o| Slider.new(patwin, 
+Rect(10+(o*25),200,20,40))  }; 
+
+        showNSliders = { |n| 
+                sliders.do { |sl, i| sl.visible_(i < n) }; 
+        }; 
+        showNSliders.value(1); 
+        patwin; 
+}; 
+) 
+
+
+
+
+Saturation
+============================================================
+Source: sc-users
+Language: C
+Licence: Other
+Tags: fx,patch
+
+/*
+Some javascript/style in this post has been disabled (why?)
+This is also a nice time for me to share a simple yet beautiful distortion algorithm I found some time ago at musicdsp list, hope someone finds it useful:
+*/
+
+/*
+Waveshaper
+
+References : Posted by Partice Tarrabia and Bram de Jong
+
+Notes :
+amount should be in [-1..1[ Plot it and stand back in astonishment! ;)
+
+Code :
+x = input in [-1..1]
+y = output
+k = 2*amount/(1-amount);
+
+f(x) = (1+k)*x/(1+k*abs(x))
+http://www.musicdsp.org/archive.php?classid=4#203
+*/
+
+(
+{
+	var x = SinOsc.ar(220, 0, 0.8);
+	var amount = MouseX.kr(-1, 1);
+	var k = 2 * amount / (1 - amount);
+	(1 + k) * x / (1 + (k * x.abs));
+}.scope
+	
+)
+
+//a bit of filtering and tweaking, you get a decent guitar amp...
+
+(
+{
+	var in, amount, amCoef;
+	in = HPF.ar(SoundIn.ar(0), 400)*5;
+	amount = 0.99;
+	amCoef= 2*amount/(1-amount);
+	MidEQ.ar(LPF.ar((1+amCoef)*in/(1+(amCoef*in.abs)), [3800, 3900])*0.5, 120, 0.7, 8);
+}.play;
+)
+
+
+// Batuhan
+
+
+
+SuperCollider - 27 Feb 10, 08:09 PM
+============================================================
+Source: SuperCollider
+Language: (null)
+Licence: (null)
+
+5.exprand
+
+
+

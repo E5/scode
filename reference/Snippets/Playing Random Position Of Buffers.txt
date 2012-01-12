@@ -1,0 +1,44 @@
+/*
+Here is a skeleton of something I made to do just that.
+
+You must load the sample with the gui before booting the synth.
+
+This design is easy to expand on.
+
+Hope it's good for you
+
+P
+*/
+
+(var win , but ; //boot gui for sample loading
+
+win = SCWindow.new("sample",Rect(200,200,200,200));
+but = SCButton(win,Rect(0,0,100,40));
+but.states = [["file 1"]];
+but.action = {  File.openDialog("", {arg path1; ~file1 = path1;
+                                           ~s1=Buffer.read(s,~file1); 
+                                           ~s11=BBCutBuffer(~file1)})};
+                                           win.front)
+( SynthDef ( "buf" , {
+|at,dec,pos|
+var ampEnv,buf;
+
+  ampEnv = EnvGen.ar(Env.perc(at,dec,1,0),1,doneAction:2);
+
+  buf = PlayBuf.ar(1,~s1.bufnum,1,1,pos).clip(0.5,-0.5);
+
+ Out.ar(0,Pan2.ar(buf,0,ampEnv)).clip(0.8,-0.8);
+
+   }).send(s))
+
+   (Tdef(\bufplay , { inf.do {
+
+   ~samplePosition = ~s1.numFrames.rand;
+
+     Synth("buf",[          
+                                         \sample,~s1.bufnum,                                                   
+                                         \pos,~s1.numFrames.rand,
+                                         \at,0.01,
+                                         \dec,0.5,
+
+     ]);0.5.wait}}).play)

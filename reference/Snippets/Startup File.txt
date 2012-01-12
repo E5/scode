@@ -1,0 +1,151 @@
+Startup File
+============================================================
+
+/*************************************************************************************************/
+
+// listener stuff
+
+//the listener a.k.a. posting window - text and background colour
+//(the listener changes after opening a file ...)
+Document.listener.background_(Color.new255(50, 60, 70, 245));
+Document.listener.stringColor_(Color.new255(245, 255, 255, 145));
+//Document.listener.title="listener";
+//Document.listener.font_(Font("Monaco", 9), -1);
+//{Document.listener.bounds_(Rect(396, 41, 626, 481))}.defer(0.5);
+
+/*************************************************************************************************/
+
+// new document stuff
+
+//Document.initAction_({|doc|
+////	var selStart, selSize;
+//	
+//	Document.listener.background_(Color.new255(50, 60, 70, 245));
+//	Document.listener.stringColor_(Color.new255(245, 255, 255, 145));
+//	Document.listener.title="listener";
+//	// open docs in same position
+//	doc.bounds_(Rect(309, 116, 711, 630));
+//
+////	selStart= doc.selectionStart;
+////	selSize= doc.selectionSize;
+////	doc.selectRange(0, 0); // mm
+//
+//	// change font
+//
+////	doc.font_(Font("ProFont", 9), -1);
+////	doc.stringColor_(Color.new255(10, 10, 10));
+//
+//	// or use this line if only on new empty docs
+////	if(doc.string.size==0) {doc.font_(Font("ProFont", 9), -1)};
+//
+////	doc.syntaxColorize;
+////	doc.removeUndo;
+////	doc.selectRange(selStart, selSize);
+////	doc.background_(Color.new255(230, 230, 230/*, 255 245*/));
+//
+//});
+
+/*************************************************************************************************/
+
+// overload killer - posted to sc-users by Felix Sat, 18 Sep 2004
+
+// the only way it can get caught is if the cpu jumps so fast that 
+// the server never gets a chance to send out an osc status message. 
+// I find that above 60% is generally a problem, your mileage may vary.
+
+Updater(Server.default, {|server, what|
+	if(server.avgCPU > 70, { server.freeAll });
+});
+
+/**************************************************************************************************/
+
+// enable autocompletion for all new docs
+
+//Document.initAction_({ |doc|
+//	doc.autoComplete;
+//});
+//
+//// enable autocompletion for old docs, except the post window
+//
+//Document.allDocuments.do({ |doc|
+//	doc.isListener.not.if({ doc.autoComplete });
+//});
+
+/**************************************************************************************************/
+
+// use crucial server gui instead of regular server window for speed
+
+//f = MultiPageLayout("Servers", Rect(1, 1, 345, 77));
+//
+//[Server.local, Server.internal].do({|s|
+//	s.window.close;
+//	s.gui(f);
+//	f.view.decorator.nextLine;
+//});
+//
+//f.background_(Color(0.39, 0.39, 0.39, 0.78));
+//f.window.alpha_(0.9);
+//f.front;
+
+/*************************************************************************************************/
+
+// Save doc positions
+// posted by Julian Rohrhuber <rohrhuber@uni-hamburg.de>
+// to sc-users on 20 September 2005
+
+if(Archive.global.at(\docPositions).isNil){
+	Archive.global.put(\docPositions, IdentityDictionary.new);
+};
+
+
+Document.initAction_{|doc|
+	var arch, pos, cursor;
+	#pos, cursor = Archive.global.at(\docPositions).at(doc.path.asSymbol).asArray;
+
+	if(pos.notNil){{doc.bounds = pos}.defer(0.1)};
+	if(cursor.notNil and: { doc.path.endsWith(".sc").not }){{doc.selectRange(cursor)}.defer(0.1)};
+
+	doc.onClose_{|doc| if(doc.path.notNil) {
+		Archive.global.at(\docPositions).put(doc.path.asSymbol, [doc.bounds, doc.selectionStart])
+	}
+	}
+};
+
+/*************************************************************************************************/
+
+// set Server memory size
+
+s.options.memSize_(32768);
+
+/*************************************************************************************************/
+
+// Load a file to remind me what I'm MEANT to be doing
+
+//Document.open("/Volumes/Audio OS/Users/jimwhelan/Documents/SuperCollider/Must Do These.rtf");
+
+/*************************************************************************************************/
+
+// This is my Crucial stuff
+
+Instr.dir= "/Users/Shared/Documents/SuperCollider/jpw_instr";
+
+//Sample.soundFilePath = "/Applications/SC3/sounds/";
+//Sample.soundsDir = "/Applications/SC3/sounds/";
+
+/*************************************************************************************************/
+
+// Dewdrop & ChuckLib stuff
+
+//Server.set.do({ |srv| srv.addDependant(MixerChannel) });
+//Server.set.do({ |srv| srv.addDependant(MixerChannel) });
+//(AbstractChuckArray.directory ++ "startup*.rtf").loadPaths;
+
+/*************************************************************************************************/
+
+// backups every move you make
+AutoBackup.start;
+
+/*************************************************************************************************/
+
+// boot the local server
+Server.local.boot; 

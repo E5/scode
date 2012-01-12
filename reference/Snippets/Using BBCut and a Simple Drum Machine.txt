@@ -1,0 +1,84 @@
+/*
+Using BBCut and a Simple Drum Machine
+
+I've had this code for ages but I forgot about it. 
+It's my simple drum machine again, but this time put through BBCut, the beat slicing library. I've got to admit, it doesn't sound too good yet, but the principle's there. 
+
+Also it's yet another experiment with formatting, I'll find a something that works one day.
+*/
+
+s.boot
+
+(
+SynthDef(\drums, {|out = 0, bassLevel = 0, 
+snareLevel = 0, hatLevel = 0, tomLevel = 0,
+ pan1 = 0, pan2 = 0, pan3 = 0, pan4 = 0|
+
+    var  env1, env2, env3, bass, snare, hat, tom, bassOut, snareOut,
+    hatOut, tomOut, mixer; 
+    env1 = EnvGen.kr(Env.perc(0.001, 0.2, 1, -4), 1, doneAction:2);
+    env2 = EnvGen.kr(Env.perc(0.002, 0.3, 1, -2), 1, doneAction:2);
+    env3 = EnvGen.kr(Env.perc(0.001, 0.1, 1, -5), 1, doneAction:2);    
+    bass = SinOsc.ar(80) + Crackle.ar(1, 0.5);
+    bassOut = Pan2.ar(bass*env1, pan1, bassLevel);
+    
+    snare = SinOsc.ar(40) - WhiteNoise.ar(0.5, 0.5);
+    snareOut = Pan2.ar(snare*env1, pan2, snareLevel);    
+    
+    hat = Klank.ar(`[ [ 6563, 9875 ],
+               [ 0.61, 0.55046827363918 ],
+               [ 0.0024, 0.0036 ] ], PinkNoise.ar(1));    
+    hatOut = Pan2.ar(hat*env2, pan2, hatLevel);    
+    
+    tom =  SinOsc.ar(440); 
+    tomOut = Pan2.ar(tom*env3, pan4, tomLevel);    
+    
+    mixer = (bassOut + snareOut) + (hatOut + tomOut); 
+    
+    
+    Out.ar(out, mixer);
+    
+    }).store
+    
+    )
+    
+TempoClock.default.tempo_(3);
+
+(
+var buf, clock, bbcutgroup;
+~synthbus = Bus.audio(s,2);
+~synthgroup= Group.head(Node.basicNew(s,1));
+
+    a = Pseq  ([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+    b = Pseq  ([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0]);
+    c = Pseq  ([0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0]);
+    d = Pseq  ([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1]);    
+
+p = Pbind(
+       \instrument, \drums,
+       \dur, 0.2,
+       \bassLevel,  Pseq ([a], inf), 
+       \snareLevel, Pseq ([b], inf),
+       \hatLevel,   Pseq ([c], inf),       
+       \tomLevel,   Pseq ([d], inf),
+       \group, ~synthgroup,
+       \out, ~synthbus
+).play;
+
+clock= ExternalClock(TempoClock.default);
+
+bbcutgroup= Group.after(~synthgroup);
+
+Routine.run({
+buf= BBCutBuffer.alloc(s,44100,2);
+s.sync; //this forces a wait for the Buffer to be allocated
+BBCut2(CutGroup(CutStream1(~synthbus.index, buf, 0.75, 0.01, 0.5,
+-4),bbcutgroup, numChannels:2), SQPusher1.new).play(clock);
+});
+clock.play;
+)
+~synthbus.free;
+
+/*
+The code is not to hard to follow I hope, it's adapted from the BBcut help file with help from Dan once again. The only tough bits are the groups and nodes stuff, which to be honest I don't fully understand myself. Maybe I'll post about them in more detail if I ever fathom it.
+*/

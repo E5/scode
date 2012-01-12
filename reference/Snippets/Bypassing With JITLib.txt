@@ -1,0 +1,62 @@
+Bypassing With JITLib
+============================================================
+
+/*
+Julian Rohrhuber
+SC-Users Dec 16, 2007
+*/
+
+~filt={Formlet.ar(~hat.ar,[1000,1002],0.3,0.2) }
+
+~filthat = { |mix= -1| XFade2.ar(~filt.ar, ~hat.ar, mix) }
+
+~filthat.play; // don't play ~filt or ~hat.
+
+// or e.g. make yourself a little convenience function:
+
+q = ();
+q.mix = {|q, in, func| XFade2.ar(in, func.(in), Control.names(\mix).kr(1)) };
+
+~filt={ q.mix(~hat.ar, { |in| Formlet.ar(in,[1000,1002],0.3,0.2) } }
+
+/*
+Hi everyone,
+
+I would like to know how it's possible to bypass filters under ProxySpace env.
+Here is an example, so that's easier to explain :
+*/
+
+~hat.ar(2);
+~hat.play;
+~hat.fadeTime=10;
+~hat=0;
+
+~hat={|t_trig=1| EnvGen.kr(Env.perc(0.02,0.01,2), t_trig *PinkNoise.ar(1!2)}
+
+(
+Tdef(\hat,
+   {|e|
+   e=Pseq([0.5,0.125,0.125,0.25],inf).asStream;
+   inf.do{
+   ~hat.set(\t_trig,1);
+   e.next.wait;
+}
+})
+)
+
+Tdef(\hat).play;
+
+~filt.ar(2);
+~filt.play;
+~filt.fadeTime=2;
+
+~filt={Formlet.ar(~hat.ar,[1000,1002],0.3,0.2)}
+~filt=0;
+
+/*
+I got a synth, called ~hat,  and I would like that, when I turn the filter on, I don't hear the plain ~hat anymore, but the filtered one only. I may had other questions, but I would like to solve this issue first ...
+
+Cheers
+
+Sylvain
+*/

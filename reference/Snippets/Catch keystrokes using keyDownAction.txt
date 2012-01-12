@@ -1,0 +1,107 @@
+/*
+i'm not sure which technique you want to use.  either the sclang side keyDownAction (works with windows, views), or the scserver KeyState ugen which only checks the state of a single key.
+*/
+
+(
+var w = SCWindow.new("I catch keystrokes using keyDownAction");
+var num= NumberBox(w, Rect(10, 10, 50, 20));
+var txt= StaticText(w, Rect(10, 40, 10, 20));
+w.view.keyDownAction = { arg view, char, modifiers, unicode, keycode;
+	num.value= unicode;
+	txt.string= char;
+};
+w.front;
+)
+
+
+
+(
+s.waitForBoot{
+	var w = SCWindow.new("I check 'j' keystroke using KeyState");
+	var num= NumberBox(w, Rect(10, 10, 50, 20));
+	var o= OSCresponder(s.addr, \tr, {|t, r, m|
+		{num.value= m[3]}.defer;
+	}).add;
+	w.front;
+	{
+		var state= KeyState.kr(38, 0, 0.1);		//38 is key 'j', 0.1 is lagtime
+		SendTrig.kr(Impulse.kr(10), 0, state);
+		SinOsc.ar(800, 0, state);
+	}.play;
+}
+)
+
+/*
+to track more keys using KeyStates quickly gets complicated.  here's an example that uses the keys asdfghjkl and display their states in separate numberboxes.
+*/
+
+(
+s.waitForBoot{
+	var w = SCWindow.new("I check many keystrokes using KeyState");
+	var keys= #[0, 1, 2, 3, 5, 4, 38, 40, 37];	//asdfghjkl
+	var num= keys.collect{|k, i|
+		NumberBox(w, Rect(10, i*30+10, 50, 20));
+	};
+	var o= OSCresponder(s.addr, \tr, {|t, r, m|
+		{m[3..].do{|x, i| num[i].value= x}}.defer;
+	}).add;
+	w.front;
+	{
+		var states= KeyState.kr(keys, 0, 0.1);
+		SendReply.kr(Impulse.kr(10), \tr, states);
+		Mix(SinOsc.ar((keys+60).midicps.postln, 0, states));
+	}.play;
+}
+)
+
+/*
+hope these examples helps,
+_f
+*/
+
+// 25 sep 2011 kl. 20.29 skrev Ivan Naranjo:
+
+// From the KeyState help file:
+
+s.boot;
+
+(
+
+w = SCWindow.new("I catch keystrokes");
+
+w.view.keyDownAction = { arg view, char, modifiers, unicode, keycode;  [char, keycode].postln; };
+
+w.front;
+
+)
+
+// then execute this and then press the 'j' key
+
+(
+
+w.front; // something safe to type on
+
+{ SinOsc.ar(800, 0, KeyState.kr(38, 0, 0.1)) }.play;
+
+)
+
+
+/*
+Would it be possible to display the keys pressed on the SCWindow?
+
+Any easy solution?
+
+
+
+thanks! 
+
+
+-- 
+www.ivan-naranjo.com
+www.pygmyjerboa.info
+*/
+
+// #|
+//    fredrikolofsson.com     musicalfieldsforever.com
+// |#
+

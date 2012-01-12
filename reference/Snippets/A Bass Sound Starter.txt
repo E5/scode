@@ -1,0 +1,16 @@
+(
+// A Bass sound starter
+{
+	var freq=100;
+//	var freq=SampleRate.ir/512;
+	var saw = LFSaw.ar(freq).range(-1,1);
+	var sig = saw.wrap(0,1) * 2 - 1;
+	sig = sqrt(1 - sig.squared) * saw.sign;
+	sig= MoogFF.ar(
+		sig,
+		(SinOsc.kr(0.2) + SinOsc.kr(3.3)).range(80, 10000),
+		0.5
+	);
+	sig !2
+}.play;
+)
