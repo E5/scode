@@ -17,16 +17,31 @@ to a snippet.
 *******************************************************************************/
 
 var	tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
-	currentTag, currentSnippet, updateTagButtons, snippetAddTag;
+	currentTag, currentSnippet, updateTagButtons, snippetAddTag, snippetHeader,
+	saveAll, archivePath, archive;
 
-k= ();
+archivePath= Document.current.dir ++ "/archiveTest.scarc";
 
-k.tags= Set[\gui, \synthdef, \control];
-k.snippets= [];
+if(File.exists(archivePath), {
+		"TRUE".postln;
+		archivePath.postln;
+//		archive= ZArchive.read(archivePath);
+//		k= archive;
+	},{
+		k= ();
+		
+		k.tags= Set[\gui, \synthdef, \control];
+		k.snippets= [];
+	});
+
+//k= ();
+//
+//k.tags= Set[\gui, \synthdef, \control];
+//k.snippets= [];
 
 currentTag= 0;
 
-w= Window("scode", Rect(318, 325, 750, 560)).front;
+w= Window("scode", Rect(318, 325, 750, 640)).front;
 w.addFlowLayout(10@10, 10@10);
 
 tagList= ListView(w, 130@220)
@@ -121,6 +136,28 @@ addSnippet= SmoothButton(w, 20@20)
 	.radius_(0)
 	.border_(1);
 
+snippetHeader= CompositeView(w, 730@50)
+	.background_(Color.grey(0.9));
+snippetHeader.addFlowLayout(10@10, 10@10);
+
+SmoothButton(snippetHeader, 710@20)
+	.states_([[ \none, Color.white, Color.clear ] ])
+	.action_{|me| }
+	.focusColor_(Color.white)
+//	.focusColor_(Color.clear)
+	.radius_(0)
+	.border_(0)
+	.enabled_(true);
+
+snippetHeader.decorator.reset;
+
+StaticText(snippetHeader, 610@20)
+	.string_("XxX")
+//	.background_(Color.red)
+	.font_(Font( Font.defaultSansFace, 16 ).boldVariant);
+
+w.view.decorator.shift(0, -9);
+
 snippet= TextView(w, 730@250)
 	.action_{|me|
 //		me.value.postln;
@@ -128,11 +165,17 @@ snippet= TextView(w, 730@250)
 	.hasVerticalScroller_(true)
 	.hasHorizontalScroller_(true)
 	.autohidesScrollers_(true)
-	.enabled_(false);
-
-//snippet.mouseUpAction_{|it, x, y, modifiers, buttonNumber, clickCount, pos|
-//	[t.string, x, y, modifiers, buttonNumber, clickCount, pos].postln;
-//};
+	.enabled_(false)
+	.mouseUpAction_({|me, x, y, modifiers, buttonNumber, clickCount, pos|
+		if (me.string == "empty snippet", {
+				me.string= "";
+				me.stringColor_(Color.black);
+				me.font_(Font(Font.defaultMonoFace, 9));
+			},{
+				me.syntaxColorize;
+			});
+		[me.string, x, y, modifiers, buttonNumber, clickCount, pos].postln;
+	});
 
 w.view.decorator.nextLine;
 
@@ -176,4 +219,15 @@ updateTagButtons= {|snippet|
 	
 };
 
+w.view.decorator.nextLine;
+
+saveAll= SmoothButton(w, 100@20)
+			.states_([ [ "Save All..."/*, Color.white, Color.black.alpha_(0.25)*/ ] ])
+			.action_{|me|
+				archive= ZArchive.write(archivePath);
+				archive.writeItem(k);
+				archive.writeClose;
+			}
+			.focusColor_(Color.clear)
+			.border_(1);
 )
