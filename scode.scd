@@ -39,19 +39,19 @@ w.addFlowLayout(10@10, 10@10);
 tagList= ListView(w, 130@220)
 	.action_{|me|
 		currentTag= me.value;
-		switch(me.value,
-			0, {deleteTag.enabled= false;},
-			1, {deleteTag.enabled= true;},
-			2, {deleteTag.enabled= true;},
-			3, {deleteTag.enabled= true;}
-		
-		);
+//		switch(me.value,
+//			0, {deleteTag.enabled= false;},
+//			1, {deleteTag.enabled= true;},
+//			2, {deleteTag.enabled= true;},
+//			3, {deleteTag.enabled= true;}
+//		);
 	}
 	.items_(["= ALL ="] ++ k.tags.asArray.sort);
 
 snippetList= ListView(w, 590@220)
 	.action_{|me|
 		currentSnippet= me.value;
+		snippet.string= k.snippets[currentSnippet].snippet;
 };
 
 w.view.decorator.nextLine;
@@ -64,14 +64,15 @@ addTag= SmoothButton(w, 20@20)
 			"new tag", // default
 			"please enter your new tag", // question
 			{ |newTag| // action
-				k.tags= k.tags.add(newTag.asSymbol);
+				k.tags= k.tags.add(newTag/*.asSymbol*/);
 				tagList.items_(["= ALL ="] ++ k.tags.asArray.sort);
 			}
 		);
 	}
 	.focusColor_(Color.clear)
 	.radius_(0)
-	.border_(1);
+	.border_(1)
+	.enabled_(false);
 
 deleteTag= SmoothButton(w, 20@20)
 	.states_([
@@ -111,13 +112,13 @@ addSnippet= SmoothButton(w, 20@20)
 				// update the snippetList
 				snippetList.items= snippetList.items.add(
 					k.snippets[currentSnippet].title);
-				snippet.string_("empty snippet");
 				snippet.font_(Font("HelveticaNeue-Italic", 14));
 				snippet.stringColor_(Color.grey);
-//				k.snippets[currentSnippet].snippet= "empty snippet";
-//				snippet.string_(k.snippets[currentSnippet].snippet);
+				k.snippets[currentSnippet].snippet= "empty snippet";
+				snippet.string_(k.snippets[currentSnippet].snippet);
 				// enable the text editor
 				snippet.enabled_(true);
+//				snippet.string_("empty snippet");
 				// enable the snippet's Add Tag button
 				snippetAddTag.enabled_(true);
 				
@@ -128,27 +129,27 @@ addSnippet= SmoothButton(w, 20@20)
 	.radius_(0)
 	.border_(1);
 
-snippetHeader= CompositeView(w, 730@50)
-	.background_(Color.grey(0.9));
-snippetHeader.addFlowLayout(10@10, 10@10);
-
-SmoothButton(snippetHeader, 710@20)
-	.states_([[ \none, Color.white, Color.clear ] ])
-	.action_{|me| }
-	.focusColor_(Color.white)
-//	.focusColor_(Color.clear)
-	.radius_(0)
-	.border_(0)
-	.enabled_(true);
-
-snippetHeader.decorator.reset;
-
-StaticText(snippetHeader, 610@20)
-	.string_("XxX")
-//	.background_(Color.red)
-	.font_(Font( Font.defaultSansFace, 16 ).boldVariant);
-
-w.view.decorator.shift(0, -9);
+//snippetHeader= CompositeView(w, 730@50)
+//	.background_(Color.grey(0.9));
+//snippetHeader.addFlowLayout(10@10, 10@10);
+//
+//SmoothButton(snippetHeader, 710@20)
+//	.states_([[ \none, Color.white, Color.clear ] ])
+//	.action_{|me| }
+//	.focusColor_(Color.white)
+////	.focusColor_(Color.clear)
+//	.radius_(0)
+//	.border_(0)
+//	.enabled_(true);
+//
+//snippetHeader.decorator.reset;
+//
+//StaticText(snippetHeader, 610@20)
+//	.string_("XxX")
+////	.background_(Color.red)
+//	.font_(Font( Font.defaultSansFace, 16 ).boldVariant);
+//
+//w.view.decorator.shift(0, -9);
 
 snippet= TextView(w, 730@250)
 	.action_{|me|
@@ -165,8 +166,9 @@ snippet= TextView(w, 730@250)
 				me.font_(Font(Font.defaultMonoFace, 9));
 			},{
 				me.syntaxColorize;
+				k.snippets[currentSnippet].snippet_(me.string);
 			});
-		[me.string, x, y, modifiers, buttonNumber, clickCount, pos].postln;
+//		[me.string, x, y, modifiers, buttonNumber, clickCount, pos].postln;
 	});
 
 w.view.decorator.nextLine;
@@ -179,7 +181,7 @@ snippetAddTag= SmoothButton(w, 60@20)
 			"new tag", // default
 			"please enter your new tag", // question
 			{ |newTag| // action
-				k.snippets[currentSnippet].tags.add(newTag.asSymbol);
+				k.snippets[currentSnippet].tags.add(newTag/*.asSymbol*/);
 				updateTagButtons.value(currentSnippet);
 			}
 		);
@@ -202,8 +204,9 @@ updateTagButtons= {|snippet|
 	appliedTags= Array.fill(k.snippets[snippet].tags.size, {|i|
 		SmoothButton(w, 60@20)
 			.states_([
-				[ k.snippets[snippet].tags.asArray[i].asString, Color.black, Color.clear ], 
-				[ k.snippets[snippet].tags.asArray[i].asString, Color.white, Color.black.alpha_(0.25) ] ])
+				[k.snippets[snippet].tags.asArray[i], Color.black, Color.clear ], 
+				[k.snippets[snippet].tags.asArray[i], Color.white, Color.black.alpha_(0.25)]
+			])
 			.action_{|me| }
 			.focusColor_(Color.clear)
 			.border_(1);
@@ -214,7 +217,7 @@ updateTagButtons= {|snippet|
 w.view.decorator.nextLine;
 
 saveAll= SmoothButton(w, 100@20)
-			.states_([ [ "Save All..."/*, Color.white, Color.black.alpha_(0.25)*/ ] ])
+			.states_([ [ "Save All..." ] ])
 			.action_{|me|
 				archive= ZArchive.write(archivePath);
 				archive.writeItem(k);
