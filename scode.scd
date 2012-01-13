@@ -23,21 +23,13 @@ var	tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
 archivePath= Document.current.dir ++ "/archiveTest.scarc";
 
 if(File.exists(archivePath), {
-//		"TRUE".postln;
-//		archivePath.postln;
 		archive= ZArchive.read(archivePath);
 		k= archive.readItem(Event);
 	},{
 		k= ();
-		
-		k.tags= Set[\gui, \synthdef, \control];
+		k.tags= Set[];
 		k.snippets= [];
 	});
-
-//k= ();
-//
-//k.tags= Set[\gui, \synthdef, \control];
-//k.snippets= [];
 
 currentTag= 0;
 
