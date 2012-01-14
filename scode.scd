@@ -52,6 +52,7 @@ snippetList= ListView(w, 590@220)
 	.action_{|me|
 		currentSnippet= me.value;
 		snippet.string= k.snippets[currentSnippet].snippet;
+		updateTagButtons.value(currentSnippet);
 };
 
 w.view.decorator.nextLine;
