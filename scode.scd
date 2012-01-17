@@ -20,11 +20,12 @@ var	tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
 	currentTag, currentSnippet, updateTagButtons, snippetAddTag, snippetHeader,
 	saveAll, archivePath, archive;
 
-archivePath= Document.current.dir ++ "/archiveTest.scarc";
+archivePath= (Document.current.dir ++ "/archiveTest.scarc").standardizePath;
 
 if(File.exists(archivePath), {
 		archive= ZArchive.read(archivePath);
 		k= archive.readItem(Event);
+		"Archive exists.".postln;
 	},{
 		k= ();
 		k.tags= Set[];
@@ -53,7 +54,8 @@ snippetList= ListView(w, 590@220)
 		currentSnippet= me.value;
 		snippet.string= k.snippets[currentSnippet].snippet;
 		updateTagButtons.value(currentSnippet);
-};
+	}
+	.items_(k.snippets.collect({|item, i| item.title}).sort);
 
 w.view.decorator.nextLine;
 
@@ -111,8 +113,10 @@ addSnippet= SmoothButton(w, 20@20)
 				// make space for Tags
 				k.snippets[currentSnippet].tags= Set[];
 				// update the snippetList
-				snippetList.items= snippetList.items.add(
-					k.snippets[currentSnippet].title);
+				snippetList.items= k.snippets.collect({|item, i| item.title}).sort;
+//				snippetList.items= snippetList.items.add(
+//					k.snippets[currentSnippet].title);
+				snippetList.value= currentSnippet;
 				snippet.font_(Font("HelveticaNeue-Italic", 14));
 				snippet.stringColor_(Color.grey);
 				k.snippets[currentSnippet].snippet= "empty snippet";
@@ -160,6 +164,7 @@ snippet= TextView(w, 730@250)
 	.hasHorizontalScroller_(true)
 	.autohidesScrollers_(true)
 	.enabled_(false)
+	.usesTabToFocusNextView_(false)
 	.mouseUpAction_({|me, x, y, modifiers, buttonNumber, clickCount, pos|
 		if (me.string == "empty snippet", {
 				me.string= "";
