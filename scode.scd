@@ -20,6 +20,8 @@ var	tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
 	currentTag, currentSnippet, updateTagButtons, snippetAddTag, snippetHeader,
 	saveAll, archivePath, archive;
 
+GUI.cocoa;
+
 archivePath= (Document.current.dir ++ "/archiveTest.scarc").standardizePath;
 
 if(File.exists(archivePath), {

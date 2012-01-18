@@ -22,32 +22,32 @@ win = SCWindow.new("sample",Rect(200,200,200,200));
 but = SCButton(win,Rect(0,0,100,40));
 but.states = [["file 1"]];
 but.action = {  File.openDialog("", {arg path1; ~file1 = path1;
-                                           ~s1=Buffer.read(s,~file1); 
-                                           ~s11=BBCutBuffer(~file1)})};
-                                           win.front)
+										~s1=Buffer.read(s,~file1);
+										~s11=BBCutBuffer(~file1)})};
+										win.front)
 ( SynthDef ( "buf" , {
 |at,dec,pos|
 var ampEnv,buf;
 
-  ampEnv = EnvGen.ar(Env.perc(at,dec,1,0),1,doneAction:2);
+ampEnv = EnvGen.ar(Env.perc(at,dec,1,0),1,doneAction:2);
 
-  buf = PlayBuf.ar(1,~s1.bufnum,1,1,pos).clip(0.5,-0.5);
+buf = PlayBuf.ar(1,~s1.bufnum,1,1,pos).clip(0.5,-0.5);
 
- Out.ar(0,Pan2.ar(buf,0,ampEnv)).clip(0.8,-0.8);
+Out.ar(0,Pan2.ar(buf,0,ampEnv)).clip(0.8,-0.8);
 
-   }).send(s))
+}).send(s))
 
-   (Tdef(\bufplay , { inf.do {
+(Tdef(\bufplay , { inf.do {
 
-   ~samplePosition = ~s1.numFrames.rand;
+~samplePosition = ~s1.numFrames.rand;
 
-     Synth("buf",[          
-                                         \sample,~s1.bufnum,                                                   
-                                         \pos,~s1.numFrames.rand,
-                                         \at,0.01,
-                                         \dec,0.5,
+	Synth("buf",[
+										\sample,~s1.bufnum,
+										\pos,~s1.numFrames.rand,
+										\at,0.01,
+										\dec,0.5,
 
-     ]);0.5.wait}}).play)
+	]);0.5.wait}}).play)
 
 
 
@@ -87,8 +87,8 @@ Tags: patch,pattern
 /*
 Using BBCut and a Simple Drum Machine
 
-I've had this code for ages but I forgot about it. 
-It's my simple drum machine again, but this time put through BBCut, the beat slicing library. I've got to admit, it doesn't sound too good yet, but the principle's there. 
+I've had this code for ages but I forgot about it.
+It's my simple drum machine again, but this time put through BBCut, the beat slicing library. I've got to admit, it doesn't sound too good yet, but the principle's there.
 
 Also it's yet another experiment with formatting, I'll find a something that works one day.
 */
@@ -96,38 +96,38 @@ Also it's yet another experiment with formatting, I'll find a something that wor
 s.boot
 
 (
-SynthDef(\drums, {|out = 0, bassLevel = 0, 
+SynthDef(\drums, {|out = 0, bassLevel = 0,
 snareLevel = 0, hatLevel = 0, tomLevel = 0,
- pan1 = 0, pan2 = 0, pan3 = 0, pan4 = 0|
+pan1 = 0, pan2 = 0, pan3 = 0, pan4 = 0|
 
-    var  env1, env2, env3, bass, snare, hat, tom, bassOut, snareOut,
-    hatOut, tomOut, mixer; 
-    env1 = EnvGen.kr(Env.perc(0.001, 0.2, 1, -4), 1, doneAction:2);
-    env2 = EnvGen.kr(Env.perc(0.002, 0.3, 1, -2), 1, doneAction:2);
-    env3 = EnvGen.kr(Env.perc(0.001, 0.1, 1, -5), 1, doneAction:2);    
-    bass = SinOsc.ar(80) + Crackle.ar(1, 0.5);
-    bassOut = Pan2.ar(bass*env1, pan1, bassLevel);
-    
-    snare = SinOsc.ar(40) - WhiteNoise.ar(0.5, 0.5);
-    snareOut = Pan2.ar(snare*env1, pan2, snareLevel);    
-    
-    hat = Klank.ar(`[ [ 6563, 9875 ],
-               [ 0.61, 0.55046827363918 ],
-               [ 0.0024, 0.0036 ] ], PinkNoise.ar(1));    
-    hatOut = Pan2.ar(hat*env2, pan2, hatLevel);    
-    
-    tom =  SinOsc.ar(440); 
-    tomOut = Pan2.ar(tom*env3, pan4, tomLevel);    
-    
-    mixer = (bassOut + snareOut) + (hatOut + tomOut); 
-    
-    
-    Out.ar(out, mixer);
-    
-    }).store
-    
-    )
-    
+	var  env1, env2, env3, bass, snare, hat, tom, bassOut, snareOut,
+	hatOut, tomOut, mixer;
+	env1 = EnvGen.kr(Env.perc(0.001, 0.2, 1, -4), 1, doneAction:2);
+	env2 = EnvGen.kr(Env.perc(0.002, 0.3, 1, -2), 1, doneAction:2);
+	env3 = EnvGen.kr(Env.perc(0.001, 0.1, 1, -5), 1, doneAction:2);
+	bass = SinOsc.ar(80) + Crackle.ar(1, 0.5);
+	bassOut = Pan2.ar(bass*env1, pan1, bassLevel);
+
+	snare = SinOsc.ar(40) - WhiteNoise.ar(0.5, 0.5);
+	snareOut = Pan2.ar(snare*env1, pan2, snareLevel);
+
+	hat = Klank.ar(`[ [ 6563, 9875 ],
+			[ 0.61, 0.55046827363918 ],
+			[ 0.0024, 0.0036 ] ], PinkNoise.ar(1));
+	hatOut = Pan2.ar(hat*env2, pan2, hatLevel);
+
+	tom =  SinOsc.ar(440);
+	tomOut = Pan2.ar(tom*env3, pan4, tomLevel);
+
+	mixer = (bassOut + snareOut) + (hatOut + tomOut);
+
+
+	Out.ar(out, mixer);
+
+	}).store
+
+	)
+
 TempoClock.default.tempo_(3);
 
 (
@@ -135,20 +135,20 @@ var buf, clock, bbcutgroup;
 ~synthbus = Bus.audio(s,2);
 ~synthgroup= Group.head(Node.basicNew(s,1));
 
-    a = Pseq  ([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
-    b = Pseq  ([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0]);
-    c = Pseq  ([0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0]);
-    d = Pseq  ([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1]);    
+	a = Pseq  ([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+	b = Pseq  ([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0]);
+	c = Pseq  ([0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0]);
+	d = Pseq  ([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1]);
 
 p = Pbind(
-       \instrument, \drums,
-       \dur, 0.2,
-       \bassLevel,  Pseq ([a], inf), 
-       \snareLevel, Pseq ([b], inf),
-       \hatLevel,   Pseq ([c], inf),       
-       \tomLevel,   Pseq ([d], inf),
-       \group, ~synthgroup,
-       \out, ~synthbus
+	\instrument, \drums,
+	\dur, 0.2,
+	\bassLevel,  Pseq ([a], inf),
+	\snareLevel, Pseq ([b], inf),
+	\hatLevel,   Pseq ([c], inf),
+	\tomLevel,   Pseq ([d], inf),
+	\group, ~synthgroup,
+	\out, ~synthbus
 ).play;
 
 clock= ExternalClock(TempoClock.default);
@@ -179,159 +179,159 @@ Tags: synthdef
 
 // SOS Drum SynthDefs
 
-// Renick Bell	– drum synthdefs enclosed
+// Renick Bell	 drum synthdefs enclosed
 
-// Here are some synthdefs I made based on Gordon Reid's Synth Secrets 
-// series in Sound On Sound: a kick, a snare, a cymbal, and a tom. The 
-// cymbal isn't quite what I'd like, but the snare sounds decent, I 
-// think. Suggestions for improvement are welcome. 
+// Here are some synthdefs I made based on Gordon Reid's Synth Secrets
+// series in Sound On Sound: a kick, a snare, a cymbal, and a tom. The
+// cymbal isn't quite what I'd like, but the snare sounds decent, I
+// think. Suggestions for improvement are welcome.
 
-// Renick 
+// Renick
 
-///////////////////////////////////////////////////////////////////// 
-//SOSdrums 
-( 
-SynthDef(\SOSkick, 
-// recipe basically from Gordon Reid 
+/////////////////////////////////////////////////////////////////////
+//SOSdrums
+(
+SynthDef(\SOSkick,
+// recipe basically from Gordon Reid
 // http://www.soundonsound.com/sos/jan02/articles/synthsecrets0102.asp
-// programmed by Renick Bell, renick_at_gmail.com 
-// increase mod_freq and mod_index for interesting electronic percussion 
-        { arg out = 0, freq = 50, mod_freq = 5, mod_index = 5, 
-        decay = 0.4, amp = 0.8, 
-        beater_noise_level = 0.025; 
-        var pitch_contour, drum_osc, drum_lpf, drum_env; 
-        var beater_source, beater_hpf, beater_lpf, lpf_cutoff_contour, beater_env; 
-        var kick_mix; 
-        pitch_contour = Line.kr(freq*2, freq, 0.02); 
-        drum_osc = PMOsc.ar(	pitch_contour, 
-                                mod_freq, 
-                                mod_index/1.3, 
-                                mul: 1, 
-                                add: 0); 
-        drum_lpf = LPF.ar(in: drum_osc, freq: 1000, mul: 1, add: 0); 
-        drum_env = drum_lpf * EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2); 
-        beater_source = WhiteNoise.ar(beater_noise_level); 
-        beater_hpf = HPF.ar(in: beater_source, freq: 500, mul: 1, add: 0); 
-        lpf_cutoff_contour = Line.kr(6000, 500, 0.03); 
-        beater_lpf = LPF.ar(in: beater_hpf, freq: lpf_cutoff_contour, mul: 1, add: 0); 
-        beater_env = beater_lpf * EnvGen.ar(Env.perc, 1.0, doneAction: 2); 
-        kick_mix = Mix.new([drum_env, beater_env]) * 2 * amp; 
-        Out.ar(out, [kick_mix, kick_mix]) 
-        } 
-        ).store 
-) 
-( 
-SynthDef(\SOSsnare, 
-// recipe basically from Gordon Reid 
+// programmed by Renick Bell, renick_at_gmail.com
+// increase mod_freq and mod_index for interesting electronic percussion
+		{ arg out = 0, freq = 50, mod_freq = 5, mod_index = 5,
+		decay = 0.4, amp = 0.8,
+		beater_noise_level = 0.025;
+		var pitch_contour, drum_osc, drum_lpf, drum_env;
+		var beater_source, beater_hpf, beater_lpf, lpf_cutoff_contour, beater_env;
+		var kick_mix;
+		pitch_contour = Line.kr(freq*2, freq, 0.02);
+		drum_osc = PMOsc.ar(	pitch_contour,
+								mod_freq,
+								mod_index/1.3,
+								mul: 1,
+								add: 0);
+		drum_lpf = LPF.ar(in: drum_osc, freq: 1000, mul: 1, add: 0);
+		drum_env = drum_lpf * EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2);
+		beater_source = WhiteNoise.ar(beater_noise_level);
+		beater_hpf = HPF.ar(in: beater_source, freq: 500, mul: 1, add: 0);
+		lpf_cutoff_contour = Line.kr(6000, 500, 0.03);
+		beater_lpf = LPF.ar(in: beater_hpf, freq: lpf_cutoff_contour, mul: 1, add: 0);
+		beater_env = beater_lpf * EnvGen.ar(Env.perc, 1.0, doneAction: 2);
+		kick_mix = Mix.new([drum_env, beater_env]) * 2 * amp;
+		Out.ar(out, [kick_mix, kick_mix])
+		}
+		).store
+)
+(
+SynthDef(\SOSsnare,
+// recipe basically from Gordon Reid
 // http://www.soundonsound.com/sos/Mar02/articles/synthsecrets0302.asp
-// programmed by Renick Bell, renick_at_gmail.com 
-        {arg out = 0, decay = 0.1, drum_mode_level = 0.25, 
-        snare_level = 40, snare_tightness = 1000, 
-        freq = 405, amp = 0.8; 
-        var drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc, drum_mode_mix, 
-drum_mode_env; 
-        var snare_noise, snare_brf_1, snare_brf_2, snare_brf_3, snare_brf_4, 
-snare_reson; 
-        var snare_env; 
-        var snare_drum_mix; 
+// programmed by Renick Bell, renick_at_gmail.com
+		{arg out = 0, decay = 0.1, drum_mode_level = 0.25,
+		snare_level = 40, snare_tightness = 1000,
+		freq = 405, amp = 0.8;
+		var drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc, drum_mode_mix,
+drum_mode_env;
+		var snare_noise, snare_brf_1, snare_brf_2, snare_brf_3, snare_brf_4,
+snare_reson;
+		var snare_env;
+		var snare_drum_mix;
 
-        drum_mode_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2); 
-        drum_mode_sin_1 = SinOsc.ar(freq*0.53, 0, drum_mode_env * 0.5); 
-        drum_mode_sin_2 = SinOsc.ar(freq, 0, drum_mode_env * 0.5); 
-        drum_mode_pmosc = PMOsc.ar(	Saw.ar(freq*0.85), 
-                                        184, 
-                                        0.5/1.3, 
-                                        mul: drum_mode_env*5, 
-                                        add: 0); 
-        drum_mode_mix = Mix.new([drum_mode_sin_1, drum_mode_sin_2, 
-drum_mode_pmosc]) * drum_mode_level; 
+		drum_mode_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2);
+		drum_mode_sin_1 = SinOsc.ar(freq*0.53, 0, drum_mode_env * 0.5);
+		drum_mode_sin_2 = SinOsc.ar(freq, 0, drum_mode_env * 0.5);
+		drum_mode_pmosc = PMOsc.ar(	Saw.ar(freq*0.85),
+										184,
+										0.5/1.3,
+										mul: drum_mode_env*5,
+										add: 0);
+		drum_mode_mix = Mix.new([drum_mode_sin_1, drum_mode_sin_2,
+drum_mode_pmosc]) * drum_mode_level;
 
-// choose either noise source below 
-//	snare_noise = Crackle.ar(2.01, 1); 
-        snare_noise = LFNoise0.ar(20000, 0.1); 
-        snare_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2); 
-        snare_brf_1 = BRF.ar(in: snare_noise, freq: 8000, mul: 0.5, rq: 0.1); 
-        snare_brf_2 = BRF.ar(in: snare_brf_1, freq: 5000, mul: 0.5, rq: 0.1); 
-        snare_brf_3 = BRF.ar(in: snare_brf_2, freq: 3600, mul: 0.5, rq: 0.1); 
-        snare_brf_4 = BRF.ar(in: snare_brf_3, freq: 2000, mul: snare_env, rq: 0.0001); 
-        snare_reson = Resonz.ar(snare_brf_4, snare_tightness, mul: snare_level) ; 
-        snare_drum_mix = Mix.new([drum_mode_mix, snare_reson]) * 5 * amp; 
-        Out.ar(out, [snare_drum_mix, snare_drum_mix]) 
-        } 
-).store 
-) 
+// choose either noise source below
+//	snare_noise = Crackle.ar(2.01, 1);
+		snare_noise = LFNoise0.ar(20000, 0.1);
+		snare_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2);
+		snare_brf_1 = BRF.ar(in: snare_noise, freq: 8000, mul: 0.5, rq: 0.1);
+		snare_brf_2 = BRF.ar(in: snare_brf_1, freq: 5000, mul: 0.5, rq: 0.1);
+		snare_brf_3 = BRF.ar(in: snare_brf_2, freq: 3600, mul: 0.5, rq: 0.1);
+		snare_brf_4 = BRF.ar(in: snare_brf_3, freq: 2000, mul: snare_env, rq: 0.0001);
+		snare_reson = Resonz.ar(snare_brf_4, snare_tightness, mul: snare_level) ;
+		snare_drum_mix = Mix.new([drum_mode_mix, snare_reson]) * 5 * amp;
+		Out.ar(out, [snare_drum_mix, snare_drum_mix])
+		}
+).store
+)
 
-( 
-SynthDef(\SOShats, 
-// recipe basically from Gordon Reid 
+(
+SynthDef(\SOShats,
+// recipe basically from Gordon Reid
 // http://www.soundonsound.com/sos/Jun02/articles/synthsecrets0602.asp
-// programmed by Renick Bell, renick_at_gmail.com 
-        {arg out = 0, freq = 6000, dur = 0.1, amp = 0.8; 
-        var root_cymbal, root_cymbal_square, root_cymbal_pmosc; 
-        var initial_bpf_contour, initial_bpf, initial_env; 
-        var body_hpf, body_env; 
-        var cymbal_mix; 
-        
-        root_cymbal_square = Pulse.ar(freq, 0.5, mul: 1); 
-        root_cymbal_pmosc = PMOsc.ar(root_cymbal_square, 
-                                        [freq*1.34, freq*2.405, freq*3.09, freq*1.309], 
-                                        [310/1.3, 26/0.5, 11/3.4, 0.72772], 
-                                        mul: 1, 
-                                        add: 0); 
-        root_cymbal = Mix.new(root_cymbal_pmosc); 
+// programmed by Renick Bell, renick_at_gmail.com
+		{arg out = 0, freq = 6000, dur = 0.1, amp = 0.8;
+		var root_cymbal, root_cymbal_square, root_cymbal_pmosc;
+		var initial_bpf_contour, initial_bpf, initial_env;
+		var body_hpf, body_env;
+		var cymbal_mix;
 
-        initial_bpf_contour = Line.kr(15000, 9000, 0.1); 
-        initial_env = EnvGen.ar(Env.perc(0.005, 0.1), 1.0); 
-        initial_bpf = BPF.ar(root_cymbal, initial_bpf_contour, mul:initial_env); 
-        
-        body_env = EnvGen.ar(Env.perc(0.005, dur, 1, -2), 1.0, doneAction: 2); 
-        body_hpf = HPF.ar(in: root_cymbal, freq: Line.kr(9000, 12000, dur), 
-mul: body_env, add: 0); 
+		root_cymbal_square = Pulse.ar(freq, 0.5, mul: 1);
+		root_cymbal_pmosc = PMOsc.ar(root_cymbal_square,
+										[freq*1.34, freq*2.405, freq*3.09, freq*1.309],
+										[310/1.3, 26/0.5, 11/3.4, 0.72772],
+										mul: 1,
+										add: 0);
+		root_cymbal = Mix.new(root_cymbal_pmosc);
 
-        cymbal_mix = Mix.new([initial_bpf, body_hpf]) * amp; 
-        Out.ar(out, [cymbal_mix, cymbal_mix]) 
-        }).store 
-) 
+		initial_bpf_contour = Line.kr(15000, 9000, 0.1);
+		initial_env = EnvGen.ar(Env.perc(0.005, 0.1), 1.0);
+		initial_bpf = BPF.ar(root_cymbal, initial_bpf_contour, mul:initial_env);
 
-( 
-SynthDef(\SOStom, 
-// recipe basically from Gordon Reid 
+		body_env = EnvGen.ar(Env.perc(0.005, dur, 1, -2), 1.0, doneAction: 2);
+		body_hpf = HPF.ar(in: root_cymbal, freq: Line.kr(9000, 12000, dur),
+mul: body_env, add: 0);
+
+		cymbal_mix = Mix.new([initial_bpf, body_hpf]) * amp;
+		Out.ar(out, [cymbal_mix, cymbal_mix])
+		}).store
+)
+
+(
+SynthDef(\SOStom,
+// recipe basically from Gordon Reid
 // http://www.soundonsound.com/sos/Mar02/articles/synthsecrets0302.asp
-// programmed by Renick Bell, renick_at_gmail.com 
-        {arg out = 0, decay = 0.4, drum_mode_level = 0.25, 
-        freq = 90, drum_timbre = 1.0, amp = 0.8; 
-        var drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc, drum_mode_mix, 
-drum_mode_env; 
-        var stick_noise, stick_env; 
-        var drum_reson, tom_mix; 
+// programmed by Renick Bell, renick_at_gmail.com
+		{arg out = 0, decay = 0.4, drum_mode_level = 0.25,
+		freq = 90, drum_timbre = 1.0, amp = 0.8;
+		var drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc, drum_mode_mix,
+drum_mode_env;
+		var stick_noise, stick_env;
+		var drum_reson, tom_mix;
 
-        drum_mode_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2); 
-        drum_mode_sin_1 = SinOsc.ar(freq*0.8, 0, drum_mode_env * 0.5); 
-        drum_mode_sin_2 = SinOsc.ar(freq, 0, drum_mode_env * 0.5); 
-        drum_mode_pmosc = PMOsc.ar(	Saw.ar(freq*0.9), 
-                                                                freq*0.85, 
-                                                                drum_timbre/1.3, 
-                                                                mul: drum_mode_env*5, 
-                                                                add: 0); 
-        drum_mode_mix = Mix.new([drum_mode_sin_1, drum_mode_sin_2, 
-drum_mode_pmosc]) * drum_mode_level; 
-        
-        stick_noise = Crackle.ar(2.01, 1); 
-        stick_env = EnvGen.ar(Env.perc(0.005, 0.01), 1.0) * 3; 
-        
-        tom_mix = Mix.new([drum_mode_mix, stick_env]) * 2 * amp; 
-        Out.ar(out, [tom_mix, tom_mix]) 
-        } 
-).store 
-); 
+		drum_mode_env = EnvGen.ar(Env.perc(0.005, decay), 1.0, doneAction: 2);
+		drum_mode_sin_1 = SinOsc.ar(freq*0.8, 0, drum_mode_env * 0.5);
+		drum_mode_sin_2 = SinOsc.ar(freq, 0, drum_mode_env * 0.5);
+		drum_mode_pmosc = PMOsc.ar(	Saw.ar(freq*0.9),
+																freq*0.85,
+																drum_timbre/1.3,
+																mul: drum_mode_env*5,
+																add: 0);
+		drum_mode_mix = Mix.new([drum_mode_sin_1, drum_mode_sin_2,
+drum_mode_pmosc]) * drum_mode_level;
+
+		stick_noise = Crackle.ar(2.01, 1);
+		stick_env = EnvGen.ar(Env.perc(0.005, 0.01), 1.0) * 3;
+
+		tom_mix = Mix.new([drum_mode_mix, stick_env]) * 2 * amp;
+		Out.ar(out, [tom_mix, tom_mix])
+		}
+).store
+);
 
 
--- 
-Renick Bell 
+--
+Renick Bell
 http://www.the3rd2nd.com
-_______________________________________________ 
-sc-users mailing list 
-sc-users@... 
+_______________________________________________
+sc-users mailing list
+sc-users@...
 http://www.create.ucsb.edu/mailman/listinfo/sc-users
 
 
@@ -367,7 +367,7 @@ i = Instr([\test, \miditest], {
 v = Voicer(10, i, [\env, Env.adsr(0.01, 0.2, 0.75, 0.1), \rq, `0.2]);
 
 k = VoicerMIDISocket(0, v);
-k.addControl(1, \ffreq, 1000, \freq);   // filt. cutoff by mw
+k.addControl(1, \ffreq, 1000, \freq);  // filt. cutoff by mw
 
 // Then add a control to the socket using \pb it as the controller number. This is mapped to the pitch bend input and the number given as the "spec" to the addControl method is interpreted as the number of semitones up or down to bend.
 
@@ -426,11 +426,11 @@ Here is an example, so that's easier to explain :
 
 (
 Tdef(\hat,
-   {|e|
-   e=Pseq([0.5,0.125,0.125,0.25],inf).asStream;
-   inf.do{
-   ~hat.set(\t_trig,1);
-   e.next.wait;
+{|e|
+e=Pseq([0.5,0.125,0.125,0.25],inf).asStream;
+inf.do{
+~hat.set(\t_trig,1);
+e.next.wait;
 }
 })
 )
@@ -508,8 +508,8 @@ Document.listener.stringColor_(Color.new255(245, 255, 255, 145));
 
 // overload killer - posted to sc-users by Felix Sat, 18 Sep 2004
 
-// the only way it can get caught is if the cpu jumps so fast that 
-// the server never gets a chance to send out an osc status message. 
+// the only way it can get caught is if the cpu jumps so fast that
+// the server never gets a chance to send out an osc status message.
 // I find that above 60% is generally a problem, your mileage may vary.
 
 Updater(Server.default, {|server, what|
@@ -607,7 +607,7 @@ AutoBackup.start;
 /*************************************************************************************************/
 
 // boot the local server
-Server.local.boot; 
+Server.local.boot;
 
 
 
@@ -663,21 +663,21 @@ b = Buffer.alloc(s, 88200);
 
 (
 SynthDef(\revDelay, {|buf1 = 1, rate = 1|
-       var recorder1, input, player1, crossovertrigs, crossoverbumps, filt;
-       input = AudioIn.ar(1);
+	var recorder1, input, player1, crossovertrigs, crossoverbumps, filt;
+	input = AudioIn.ar(1);
 
 // Note the phase
 crossovertrigs = Impulse.ar(BufDur.kr(buf1).reciprocal * 2, 0.05);
 crossoverbumps = EnvGen.ar(Env.perc(0.05, 0.05, 2, curve: 'sine'),
 crossovertrigs);
 
-       recorder1 = RecordBuf.ar(input, buf1, 0, 1, 0, 1, 1);
-       player1 = PlayBuf.ar(1, buf1, -1, 1, 0, 1);
+	recorder1 = RecordBuf.ar(input, buf1, 0, 1, 0, 1, 1);
+	player1 = PlayBuf.ar(1, buf1, -1, 1, 0, 1);
 
 filt = XFade2.ar(player1, LPF.ar(player1, 1000), -1 + crossoverbumps);
 
-       Out.ar(0, (filt * 0.02).dup);
-       }).send(s);
+	Out.ar(0, (filt * 0.02).dup);
+	}).send(s);
 )
 
 ~revDelay = Synth(\revDelay, [\buf1, b]);
@@ -697,7 +697,7 @@ Tags: fx
 //select all and execute as one
 //two delays with a single tap-tempo control (tap T Key)
 //delay is triggered by sending "n_set (nodeID) t_trig 1" to sc from pd
-//because pd has the bonk~ object which is rather useful with dub and 
+//because pd has the bonk~ object which is rather useful with dub and
 //delays :)
 // requires BoxGrid to be installed too
 
@@ -778,7 +778,7 @@ Buffer.alloc(s, 222000, 1, bufnum: i+6);
 
 recSynths = Array.fill(4, {arg i; Synth(\shortTermMemory, [0, 0, 1, 6+i, 2, 4.0])});
 
-filterSynth = Synth(\bandPassFilter, [0, 0, 1, 0, 2, 0 ]); 
+filterSynth = Synth(\bandPassFilter, [0, 0, 1, 0, 2, 0 ]);
 
 oldLengths = [0, 0, 0, 0];
 
@@ -790,7 +790,7 @@ win = SCWindow("", Rect(200, 300, 775, 195)).front
 	};
 	 filterSynth.free;
 	 });
-win.view.keyDownAction_({ arg this, that; 
+win.view.keyDownAction_({ arg this, that;
 	var diff;
 		if(that == $t, {
 		
@@ -818,7 +818,7 @@ recSynths.at(i).set(2, tempo) //keep recordings in time with current beat
 but = SCButton(win, Rect(20, 20, 20, 20)).states = [["capture"]];
 but.action = { synth.set(\t_trig, 1) };
 grid = BoxGrid.new(win, bounds: Rect(20, 50, 300, 20), columns: 16, rows: 1);
-grid.nodeDownAction_({arg nodeloc; 
+grid.nodeDownAction_({arg nodeloc;
 	synth.set(\del, tempo/(nodeloc.at(0)+1));
 		grid.clearGrid;
 
@@ -835,7 +835,7 @@ slid3 = SCSlider(win, Rect(50, 20, 270, 20))
 but2 = SCButton(win, Rect(450, 20, 20, 20)).states = [["capture"]];
 but2.action = { synth2.set(\t_trig, 1) };
 grid2 = BoxGrid.new(win, bounds: Rect(450, 50, 300, 20), columns: 16, rows: 1);
-grid2.nodeDownAction_({arg nodeloc; 
+grid2.nodeDownAction_({arg nodeloc;
 	synth2.set(\del, tempo/(nodeloc.at(0)+1));
 		grid2.clearGrid;
 
@@ -907,7 +907,7 @@ sampLevels = Array.fill(4, { arg i;
 SCSlider(win, Rect(530+(i*60), 130, 50, 50))
 	.action = {arg a; sampLevelsArray.put(i, a.value); };
 });
-//	SCDragSink(win, Rect(340, 130, 100, 30)); 
+//	SCDragSink(win, Rect(340, 130, 100, 30));
 	
 	
 //bobby
@@ -929,12 +929,12 @@ Reply-To: sc-users@lists.bham.ac.uk
 
 On Sep 21, 2008, at 12:59 PM, nescivi wrote:
 
-On the upside, the scel editor has some things I miss greatly when working in 
-the OSX editor... like autocompletion when looking for a certain method... in 
-scel I can just do C-c C-h, type a letter with which I think a topic should 
-start and press <TAB> to see the possible options... Same for looking for 
+On the upside, the scel editor has some things I miss greatly when working in
+the OSX editor... like autocompletion when looking for a certain method... in
+scel I can just do C-c C-h, type a letter with which I think a topic should
+start and press <TAB> to see the possible options... Same for looking for
 class definitions or methods (C-c :, C-c ; respectively).
-I like this much better than having to type the whole word and then find 
+I like this much better than having to type the whole word and then find
 help...
 
 OSX has something similar - http://supercollider.svn.sourceforge.net/viewvc/supercollider/trunk/build/Help/GUI/DocumentAutoCompletion.html
@@ -974,7 +974,7 @@ Reply-To: sc-users@lists.bham.ac.uk
 
 one way is to use a routine like below.*/
 
-/*RUN*/ 
+/*RUN*/
 
 /*
 ..at the top of a document automatically executes the code when the document is opened.
@@ -1033,7 +1033,7 @@ Its much easier than I thought.
 
 My personal class work is in a quark called 'felix' that is obviously not checked into the public repository.
 
-I want to keep it in a local svn, but since the whole quarks folder is checked out from sourceforge svn,  I don't want this subfolder to get confused.
+I want to keep it in a local svn, but since the whole quarks folder is checked out from sourceforge svn, I don't want this subfolder to get confused.
 
 Here is how I solved this:
 
@@ -1072,7 +1072,7 @@ ln -s ~/Documents/SC3docs/felix felix
 So now Quarks is installing/uninstalling a symlink to a symlink to a folder in my documents folder that is under svn control.
 
 Note there is a felix.quark file in DIRECTORY
-If you wanted to do several personal quarks you could either make several symlinks or you could put them all in one folder and make one symlink.  Either way you would still need several quark files in DIRECTORY
+If you wanted to do several personal quarks you could either make several symlinks or you could put them all in one folder and make one symlink. Either way you would still need several quark files in DIRECTORY
 
 So this is nice because you svn is a time machine, and you can tag your own work.
 For any snapshot that is supposed to work I will still have to record the sc svn revision and the quarks revision.
@@ -1090,8 +1090,8 @@ this means that I now have
 ~/sc/Extensions
 ~/sc/SCClassLibrary
 
-which is all of the currently active classes for SC.  
-Inside Extensions there is Extensions/quarks and I can install and uninstall quarks and always the ~/sc folder contains everything that is currently installed.  This means that I can run TextMate and open that directory as a single project.
+which is all of the currently active classes for SC.
+Inside Extensions there is Extensions/quarks and I can install and uninstall quarks and always the ~/sc folder contains everything that is currently installed. This means that I can run TextMate and open that directory as a single project.
 
 -cx
 */
@@ -1127,18 +1127,18 @@ slider.value_(levSpec.unmap(0.0));
 
 
 but=GUI.button.new(w,Rect(30, 10, 40, 40)).states_([
-            ["run", Color.black, Color.new255(210,235,235)],
-            ["stop", Color.white, Color.new255(210,35,35)]
-         ]).action={ if (but.value==1, {r.reset; r.play;},{r.stop})};
+			["run", Color.black, Color.new255(210,235,235)],
+			["stop", Color.white, Color.new255(210,35,35)]
+		]).action={ if (but.value==1, {r.reset; r.play;},{r.stop})};
 
 
 
 SynthDef(\bloop, { |freq=1000, lev=1, dur=0.5, outBus=0|
 		var env, osc, out;
-		env=EnvGen.kr(Env.perc(0.01, 0.99,1, -2), levelScale: 0.6,  
+		env=EnvGen.kr(Env.perc(0.01, 0.99,1, -2), levelScale: 0.6,
 timeScale: dur*1.2, doneAction: 2);
-	     osc=SinOsc.ar(freq);
-	     out=Out.ar(outBus, env*osc*lev);
+	 	osc=SinOsc.ar(freq);
+	 	out=Out.ar(outBus, env*osc*lev);
 }).send(s);
 
 
@@ -1170,8 +1170,8 @@ Tags: gui,pattern,patch
 /*Hi all,
 
 I have been playing with a pretty simple sampler sequencer that uses a Pdef and a Gui.
-Its fairly straight forward to modify the Pdef from the GUI but does anyone know if its possible to 
-send messages back into the GUI from the pattern. 
+Its fairly straight forward to modify the Pdef from the GUI but does anyone know if its possible to
+send messages back into the GUI from the pattern.
 
 Iwant to have some visual feedback so that I know where I am in the sequence. But because I am doing
 strange things with the Pdef tempo I think it would be best if the messages came from inside the Pdef itself, but
@@ -1239,7 +1239,7 @@ Pdef(\loop1).play(quant:0);
 var d,b2, at_knobs, at_knob,dec_knobs, dec_knob,vol_slider, vol_sliders, sam_sliders, sam_slider, top,mid,bot, cs,attack,length,decay;
 
 
-d=SCWindow("lathe groove - bodger edition/standard", Rect(10,520,470,400),resizable:false); 
+d=SCWindow("lathe groove - bodger edition/standard", Rect(10,520,470,400),resizable:false);
 
 // the sliders
 
@@ -1248,7 +1248,7 @@ vol_sliders = Array.fill(8, {arg i;
 	.value_(1)
 	.background_(Color.new255(120, 120, 120))
 	.action_({[vol_sliders[i].value].postln;
-	Pdef(\loop1).envir.voluArray[0]=vol_sliders[i].value}); 
+	Pdef(\loop1).envir.voluArray[0]=vol_sliders[i].value});
 	});
 
 
@@ -1256,18 +1256,18 @@ sam_sliders = Array.fill(8, {arg i;
 	sam_slider = SCSlider(d,Rect(((50 * i)+45),130,20,70))
 	.background_(Color.new255(120, 120, 120))
 	.step_(0.1).action_({[sam_sliders[i].value].postln;
-	Pdef(\loop1).envir.startingArray[0]=sam_sliders[i].value*(441000)}); 
+	Pdef(\loop1).envir.startingArray[0]=sam_sliders[i].value*(441000)});
 	});
 	
 at_knobs = Array.fill(8, {arg i;
 	at_knob = Knob(d,Rect(((50 * i)+40),235,30,30)).canFocus_(false)
-	.action_({[at_knobs[i].value].postln; 
+	.action_({[at_knobs[i].value].postln;
 	Pdef(\loop1).envir.attackArray[i]=at_knobs[i].value});
 	};);
 
 dec_knobs = Array.fill(8, {arg i;
 	dec_knob = Knob(d,Rect(((50 * i)+40),290,30,30)).canFocus_(false)
-	.action_({[dec_knobs[i].value].postln; 
+	.action_({[dec_knobs[i].value].postln;
 	Pdef(\loop1).envir.decayArray[i]=dec_knobs[i].value});
 	};);
 	
@@ -1298,7 +1298,7 @@ decay.string = "decay";
 	c.action = { arg butt;};
 	
 	~b = ~b.add(c);
-	}; 
+	};
 )
 
 ///////////////
@@ -1357,7 +1357,7 @@ Pdef(\loop1).play(quant:0);
 /*
 Please excuse my impatience.... want to get back to those sounds.
 
-This is more like it  (it prints hello) but I am still not sure if its what you meant. Or the 
+This is more like it  (it prints hello) but I am still not sure if its what you meant. Or the
 right way to do things.
 
 Cheers
@@ -1460,7 +1460,7 @@ Pdef(\loop1, { |voluArray, startingArray, attackArray, decayArray, functioncalle
 
 A function in the Pdef like this works fine
 
-Pdef(\loop1).set(\functioncalled, {x = x + 1; x.postln}); 
+Pdef(\loop1).set(\functioncalled, {x = x + 1; x.postln});
 
 x can be set before the Pdef has started and it can be changed at any time while the pattern is running.
 
@@ -1540,7 +1540,7 @@ x = 1;
 var d,b2, at_knobs, at_knob,dec_knobs, dec_knob,vol_slider, vol_sliders, sam_sliders, sam_slider, top,mid,bot, cs,attack,length,decay;
 
 
-d=SCWindow("lathe groove - bodger edition/standard", Rect(10,520,470,400),resizable:false); 
+d=SCWindow("lathe groove - bodger edition/standard", Rect(10,520,470,400),resizable:false);
 
 // the sliders
 
@@ -1549,7 +1549,7 @@ vol_sliders = Array.fill(8, {arg i;
 	.value_(1)
 	.background_(Color.new255(120, 120, 120))
 	.action_({[vol_sliders[i].value].postln;
-	Pdef(\loop1).envir.voluArray[i]=vol_sliders[i].value}); 
+	Pdef(\loop1).envir.voluArray[i]=vol_sliders[i].value});
 	});
 
 
@@ -1557,18 +1557,18 @@ sam_sliders = Array.fill(8, {arg i;
 	sam_slider = SCSlider(d,Rect(((50 * i)+45),130,20,70))
 	.background_(Color.new255(120, 120, 120))
 	.step_(0.1).action_({[sam_sliders[i].value].postln;
-	Pdef(\loop1).envir.startingArray[i]=sam_sliders[i].value*(441000)}); 
+	Pdef(\loop1).envir.startingArray[i]=sam_sliders[i].value*(441000)});
 	});
 	
 at_knobs = Array.fill(8, {arg i;
 	at_knob = Knob(d,Rect(((50 * i)+40),235,30,30)).canFocus_(false)
-	.action_({[at_knobs[i].value].postln; 
+	.action_({[at_knobs[i].value].postln;
 	Pdef(\loop1).envir.attackArray[i]=at_knobs[i].value});
 	};);
 
 dec_knobs = Array.fill(8, {arg i;
 	dec_knob = Knob(d,Rect(((50 * i)+40),290,30,30)).canFocus_(false)
-	.action_({[dec_knobs[i].value].postln; 
+	.action_({[dec_knobs[i].value].postln;
 	Pdef(\loop1).envir.decayArray[i]=dec_knobs[i].value});
 	};);
 	
@@ -1599,7 +1599,7 @@ k = Array.new(8);
 	c.action = { arg butt;};
 	
 	k = k.add(c);
-	}; 
+	};
 )
 
 // This works fine outside of the Pdef but not in it
@@ -1638,7 +1638,7 @@ Simon
 var d,b2, at_knobs, at_knob,dec_knobs, dec_knob,vol_slider, vol_sliders, sam_sliders, sam_slider, top,mid,bot, cs,attack,length,decay;
 
 
-d=SCWindow("simple Pdef - Gui sequencer sampler", Rect(10,520,470,400),resizable:false); 
+d=SCWindow("simple Pdef - Gui sequencer sampler", Rect(10,520,470,400),resizable:false);
 
 // the sliders
 
@@ -1647,7 +1647,7 @@ vol_sliders = Array.fill(8, {arg i;
 	.value_(1)
 	.background_(Color.new255(120, 120, 120))
 	.action_({[vol_sliders[i].value].postln;
-	Pdef(\loop1).envir.voluArray[i]=vol_sliders[i].value}); 
+	Pdef(\loop1).envir.voluArray[i]=vol_sliders[i].value});
 	});
 
 
@@ -1655,18 +1655,18 @@ sam_sliders = Array.fill(8, {arg i;
 	sam_slider = SCSlider(d,Rect(((50 * i)+45),130,20,70))
 	.background_(Color.new255(120, 120, 120))
 	.step_(0.1).action_({[sam_sliders[i].value].postln;
-	Pdef(\loop1).envir.startingArray[i]=sam_sliders[i].value*(441000)}); 
+	Pdef(\loop1).envir.startingArray[i]=sam_sliders[i].value*(441000)});
 	});
 	
 at_knobs = Array.fill(8, {arg i;
 	at_knob = Knob(d,Rect(((50 * i)+40),235,30,30)).canFocus_(false)
-	.action_({[at_knobs[i].value].postln; 
+	.action_({[at_knobs[i].value].postln;
 	Pdef(\loop1).envir.attackArray[i]=at_knobs[i].value});
 	};);
 
 dec_knobs = Array.fill(8, {arg i;
 	dec_knob = Knob(d,Rect(((50 * i)+40),290,30,30)).canFocus_(false)
-	.action_({[dec_knobs[i].value].postln; 
+	.action_({[dec_knobs[i].value].postln;
 	Pdef(\loop1).envir.decayArray[i]=dec_knobs[i].value});
 	};);
 	
@@ -1697,7 +1697,7 @@ k = Array.new(8);
 	c.action = { arg butt;};
 	
 	k = k.add(c);
-	}; 
+	};
 
 
 
@@ -1722,7 +1722,7 @@ Pdef(\loop1).set(\startingArray, [0,0,0,0,0,0,0,0]);
 Pdef(\loop1).set(\attackArray, [0,0,0,0,0,0,0,0]);
 Pdef(\loop1).set(\decayArray, [0,0,0,0,0,0,0,0]);
 Pdef(\loop1).set(\functioncalled, {defer {k[x].value = 1;
-						x= x+1; 
+						x= x+1;
 						if(x >= 2, {y=x-2});
 						k[y].value = 0;
 						if(x == 8,{x = 0;});
@@ -1808,7 +1808,7 @@ is firing. So, if desired, you can directly use the "chain" value to
 trigger something (e.g. resetting a Phasor, or some kind of analysis
 process).
 
-    ffthasfired = (chain >= 0);
+	ffthasfired = (chain >= 0);
 
 Hope this helps
 Dan
@@ -1817,9 +1817,9 @@ Dan
 /////////////////
 
 /*
-2008/9/20, volker böhm <vboehm@gmx.ch>:
+2008/9/20, volker bhm <vboehm@gmx.ch>:
 
- On 19 Sep 2008, at 18:13, volker böhm wrote:
+On 19 Sep 2008, at 18:13, volker bhm wrote:
 
 hello,
 i'm trying to sync the reading of a buffer to an FFT process. don't know
@@ -1834,11 +1834,11 @@ w.sine2([10,20,30,40,50,60,70], 1.0/[1,2,3,4,5,6,7], true, false, true);
 
 (
 SynthDef("test", {
-       var in, chain, out;
-       in = BufRd.ar(1, w.bufnum, Phasor.ar(0, 1, 0, 2048), 1, 1);
-       chain = FFT(b.bufnum, in);
-       out = IFFT(chain);
-       Out.ar(0, out);
+	var in, chain, out;
+	in = BufRd.ar(1, w.bufnum, Phasor.ar(0, 1, 0, 2048), 1, 1);
+	chain = FFT(b.bufnum, in);
+	out = IFFT(chain);
+	Out.ar(0, out);
 }).play(s);
 )
 
@@ -1846,35 +1846,35 @@ SynthDef("test", {
 //  it seems the code above should be fine for what i need.
 // if i do this:
 
- b = Buffer.alloc(s, 2048, 1);
- w = Buffer.alloc(s, 2048, 1);
- w.sine2([10,20,30,40,50,60,70], 1.0/[1,2,3,4,5,6,7], true, false, true);
+b = Buffer.alloc(s, 2048, 1);
+w = Buffer.alloc(s, 2048, 1);
+w.sine2([10,20,30,40,50,60,70], 1.0/[1,2,3,4,5,6,7], true, false, true);
 
- (
- SynthDef("test", {
-        var in, chain, out;
-        in = BufRd.ar(1, w.bufnum, Phasor.ar(0, 1, 0, 2048), 1, 1);
-        chain = FFT(b.bufnum, in);
- }).play(s);
- )
+(
+SynthDef("test", {
+		var in, chain, out;
+		in = BufRd.ar(1, w.bufnum, Phasor.ar(0, 1, 0, 2048), 1, 1);
+		chain = FFT(b.bufnum, in);
+}).play(s);
+)
 
 // checking the real part of the local FFT buffer with this:
 
- (
- b.getn(0, 200, { arg buf;
-                var z, x;
-                z = buf.clump(2).flop;
-                x = Complex(z[0], z[1]);
-                { [ z[0], z[1], x.magnitude ].flop.flat.plot(numChannels: 3)}.defer;
-        });
- )
+(
+b.getn(0, 200, { arg buf;
+				var z, x;
+				z = buf.clump(2).flop;
+				x = Complex(z[0], z[1]);
+				{ [ z[0], z[1], x.magnitude ].flop.flat.plot(numChannels: 3)}.defer;
+		});
+)
 
 // shows that it's near zero. so i conclude that the reading of the buffer and the FFT are in sync.
 
 /*
- regards,
+regards,
 
- volker.
+volker.
 */
 
 
@@ -1886,202 +1886,202 @@ Licence: Other
 Tags: jitlib,class,control,bbcut
 
 /*
-Re: JIT, bbcut  
-by Fredrik Olofsson Mar 10, 2006; 11:46am 
+Re: JIT, bbcut
+by Fredrik Olofsson Mar 10, 2006; 11:46am
 
-afraid jitlib+bbcut are not too compatible these days.  i've use bbcut 
-version 1 with jitlib quite a bit before, but i can't really recommend 
-this.  still, if you're not doing anything too complicated, version 1 
-will work.  check out jitlib support folder in bbcut 1.3.1 
-and here's a required hack + example... 
+afraid jitlib+bbcut are not too compatible these days.  i've use bbcut
+version 1 with jitlib quite a bit before, but i can't really recommend
+this.  still, if you're not doing anything too complicated, version 1
+will work.  check out jitlib support folder in bbcut 1.3.1
+and here's a required hack + example...
 */
-s.boot 
-p= ProxySpace.push(s) 
-c= p.makeTempoClock(2.3).clock 
-~mix.play 
-f= SF3.new("break", 8); 
-g= SF3.new("break", 8); 
+s.boot
+p= ProxySpace.push(s)
+c= p.makeTempoClock(2.3).clock
+~mix.play
+f= SF3.new("break", 8);
+g= SF3.new("break", 8);
 
-( 
-~b1= BBCut(BBCutSynthSF(f), SQPusher1(0.1), c); 
-~b2= BBCut(BBCutSynthSF(g), WarpCutProc1({0.1.rrand(0.3)}), c); 
-) 
+(
+~b1= BBCut(BBCutSynthSF(f), SQPusher1(0.1), c);
+~b2= BBCut(BBCutSynthSF(g), WarpCutProc1({0.1.rrand(0.3)}), c);
+)
 
-~mix= ~b1+~b2	 //start output sound 
-~mix.fadeTime_(4)	//crossfade time 
-~mix= ~b2	 //mute b1 
-~mix= ~b1 
-~mix= ~b1+~b2 
+~mix= ~b1+~b2	 //start output sound
+~mix.fadeTime_(4)	//crossfade time
+~mix= ~b2	 //mute b1
+~mix= ~b1
+~mix= ~b1+~b2
 
 
-// save following as extBBCutControl.sc 
+// save following as extBBCutControl.sc
 
-+ BBCutControl { 
-        
-        playToBundle {|bundle, args, target| 
-                bundle.addMessage(this, \play); 
-                ^source.bbcgarray[0].group.nodeID 
-        } 
-        stopToBundle { arg bundle; 
-                bundle.addMessage(this, \stop); 
-        } 
-        freeToBundle { arg bundle, fadeTime; 
-                if(fadeTime.isNil) { 
-                        bundle.addmessage(this, \free) 
-                }{ 
-                        bundle.sched(fadeTime, { source.free }) 
-                } 
-        } 
-} 
++ BBCutControl {
+
+		playToBundle {|bundle, args, target|
+				bundle.addMessage(this, \play);
+				^source.bbcgarray[0].group.nodeID
+		}
+		stopToBundle { arg bundle;
+				bundle.addMessage(this, \stop);
+		}
+		freeToBundle { arg bundle, fadeTime;
+				if(fadeTime.isNil) {
+						bundle.addmessage(this, \free)
+				}{
+						bundle.sched(fadeTime, { source.free })
+				}
+		}
+}
 
 /*
-Re: JIT, bbcut  
+Re: JIT, bbcut
 by Julian Rohrhuber Mar 10, 2006; 02:31pm
 
-The code below seems reasonable. I haven't had the time to look at 
-the link. It shouldn't be too difficult. 
-If this doesn't conform with the Control classes (StreamControl / 
-SynthControl etc.) you have to write such a simple subclass. 
-buildForProxy needs to be implemented then. As I don't know BBCut 
-well enough I don't know when the busses are allocated and so on. 
+The code below seems reasonable. I haven't had the time to look at
+the link. It shouldn't be too difficult.
+If this doesn't conform with the Control classes (StreamControl /
+SynthControl etc.) you have to write such a simple subclass.
+buildForProxy needs to be implemented then. As I don't know BBCut
+well enough I don't know when the busses are allocated and so on.
 
->save following as extBBCutControl.sc 
-> 
->+ BBCutControl { 
-> 
->	playToBundle {|bundle, args, target| 
->	 bundle.addMessage(this, \play); 
->	 ^source.bbcgarray[0].group.nodeID 
->	} 
->	stopToBundle { arg bundle; 
->	 bundle.addMessage(this, \stop); 
->	} 
->	freeToBundle { arg bundle, fadeTime; 
->	 if(fadeTime.isNil) { 
->	 bundle.addmessage(this, \free) 
->	 }{ 
->	 bundle.sched(fadeTime, { source.free }) 
->	 } 
->	} 
+>save following as extBBCutControl.sc
+>
+>+ BBCutControl {
+>
+>	playToBundle {|bundle, args, target|
+>	 bundle.addMessage(this, \play);
+>	 ^source.bbcgarray[0].group.nodeID
+>	}
+>	stopToBundle { arg bundle;
+>	 bundle.addMessage(this, \stop);
+>	}
+>	freeToBundle { arg bundle, fadeTime;
+>	 if(fadeTime.isNil) {
+>	 bundle.addmessage(this, \free)
+>	 }{
+>	 bundle.sched(fadeTime, { source.free })
+>	 }
+>	}
 >}
-«  [hide part of quote]
+[hide part of quote]
 
-typo: addmessage -> addMessage 
--- 
+typo: addmessage -> addMessage
+--
 */
 
 =========
 
 /*
-Re: Synchronising BBCut with JITLib  
+Re: Synchronising BBCut with JITLib
 by Fredrik Olofsson Jul 09, 2005; 11:26pm
 
-hi jim, 
-yes, i've done this quite a bit.  but be warned... using bbcut inside 
-jitlib has been broken for quite some time.  here's a stop-gap 
-workaround until something better shows. 
+hi jim,
+yes, i've done this quite a bit.  but be warned... using bbcut inside
+jitlib has been broken for quite some time.  here's a stop-gap
+workaround until something better shows.
 */
 
-+ BBCutControl { 
-        playToBundle {|bundle| 
-                bundle.addMessage(this, \play); 
-                ^source.bbcgarray[0].group.nodeID 
-        } 
-        stopToBundle { arg bundle; 
-                bundle.addMessage(this, \stop); 
-        } 
-        freeToBundle { arg bundle, fadeTime; 
-                if(fadeTime.isNil) { 
-                        bundle.addmessage(this, \free) 
-                }{ 
-                        bundle.sched(fadeTime, { source.free }) 
-                } 
-        } 
-} 
++ BBCutControl {
+		playToBundle {|bundle|
+				bundle.addMessage(this, \play);
+				^source.bbcgarray[0].group.nodeID
+		}
+		stopToBundle { arg bundle;
+				bundle.addMessage(this, \stop);
+		}
+		freeToBundle { arg bundle, fadeTime;
+				if(fadeTime.isNil) {
+						bundle.addmessage(this, \free)
+				}{
+						bundle.sched(fadeTime, { source.free })
+				}
+		}
+}
 
-and some testcode... 
+and some testcode...
 
 
-s.boot 
-p= ProxySpace.push(s); 
-f= SF3("sounds/break", 4); 
-c= p.makeTempoClock(2.2).clock; 
+s.boot
+p= ProxySpace.push(s);
+f= SF3("sounds/break", 4);
+c= p.makeTempoClock(2.2).clock;
 
-~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(2, 2), c); 
-~beats2= BBCut(BBCutSynthSF(f), ChooseBlockProc(2, 4), c); 
+~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(2, 2), c);
+~beats2= BBCut(BBCutSynthSF(f), ChooseBlockProc(2, 4), c);
 
-~beats1.vol_(0.9).quant(4); 
-~beats2.vol_(0.7).quant(4); 
-~beats1.play(0); 
-~beats2.play(0); 
+~beats1.vol_(0.9).quant(4);
+~beats2.vol_(0.7).quant(4);
+~beats1.play(0);
+~beats2.play(0);
 
-( 
-~asdf= { 
-        var trig, freq; 
-        trig= Impulse.kr(c.tempo/4); 
-        freq= Stepper.kr(trig, 0, 100, 500, 98); 
-        SinOsc.ar(freq.dup, 0, Decay.kr(trig)); 
-} 
-) 
-( 
-c.playNextBar({ 
-        ~asdf.vol_(0.9).quant(1); 
-        ~asdf.play(0); 
-}) 
-) 
+(
+~asdf= {
+		var trig, freq;
+		trig= Impulse.kr(c.tempo/4);
+		freq= Stepper.kr(trig, 0, 100, 500, 98);
+		SinOsc.ar(freq.dup, 0, Decay.kr(trig));
+}
+)
+(
+c.playNextBar({
+		~asdf.vol_(0.9).quant(1);
+		~asdf.play(0);
+})
+)
 
-~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(1, 2), c); 
-~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(2, 2), c); 
-~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(4, 2), c); 
+~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(1, 2), c);
+~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(2, 2), c);
+~beats1= BBCut(BBCutSynthSF(f, pbsfunc: 0.5), ChooseBlockProc(4, 2), c);
 
-~asdf.stop 
-~beats1.stop 
-~beats2.stop 
+~asdf.stop
+~beats1.stop
+~beats2.stop
 
-~beats1.free 
-~beats2.free 
-~asdf.free 
+~beats1.free
+~beats2.free
+~asdf.free
 
 /*
-.release and .filter doesn't work.  don't know enough to fix it. 
-_f 
+.release and .filter doesn't work.  don't know enough to fix it.
+_f
 
-On 09.07.2005, at 20:07, collisionist wrote: 
+On 09.07.2005, at 20:07, collisionist wrote:
 
-> Does any one have experience of synchronising BBCut with JITLib? I see 
-> there are a couple of JITLib-specific classes in BBCut called 
-> "BBCutControl" and "bbcutjitlib", but I can't find any examples of how 
-> to use them, neither in the BBCut/JITLib distributions, nor sc-users. 
-> 
-> There is an example in BBCut called "bbcut and jitlib", but this only 
-> deals with playing a single process, whereas I'd really like to be 
-> able to synchronise a BBCut procedure with other elements (eg. a 
-> bassline) within JITLib. 
-> 
-> Any clues anyone? 
-> 
-> Apologies for asking about 3rd party libraries here, I know Nick 
-> Collins is busy with other stuff at the moment, so I'm hoping someone 
+> Does any one have experience of synchronising BBCut with JITLib? I see
+> there are a couple of JITLib-specific classes in BBCut called
+> "BBCutControl" and "bbcutjitlib", but I can't find any examples of how
+> to use them, neither in the BBCut/JITLib distributions, nor sc-users.
+>
+> There is an example in BBCut called "bbcut and jitlib", but this only
+> deals with playing a single process, whereas I'd really like to be
+> able to synchronise a BBCut procedure with other elements (eg. a
+> bassline) within JITLib.
+>
+> Any clues anyone?
+>
+> Apologies for asking about 3rd party libraries here, I know Nick
+> Collins is busy with other stuff at the moment, so I'm hoping someone
 > else will know.
 
-Re: Synchronising BBCut with JITLib  
+Re: Synchronising BBCut with JITLib
 by collision.ist@virgin.net Jul 10, 2005; 04:33pm
 
-Hey Fredrik 
+Hey Fredrik
 
-This is great. I'll be able to do something now. 
+This is great. I'll be able to do something now.
 
-Also, thanks for the (offlist) erratum. For the record: 
+Also, thanks for the (offlist) erratum. For the record:
 
-> ahh, crap! 
-> i should start to THINK before posting.  in my example please use _ 
-> for all quant 
-> ~beats1.vol_(0.9).quant_(4); 
-> ~beats2.vol_(0.7).quant_(4); 
-> sorry for that. 
+> ahh, crap!
+> i should start to THINK before posting.  in my example please use _
+> for all quant
+> ~beats1.vol_(0.9).quant_(4);
+> ~beats2.vol_(0.7).quant_(4);
+> sorry for that.
 
-Cheers, 
-Jim 
+Cheers,
+Jim
 */
 
 
@@ -2143,61 +2143,61 @@ Licence: Other
 Tags: buffer,gui
 
 /*
-Re: plotting a buffer in a gui panel  
+Re: plotting a buffer in a gui panel
 by grammerfest Oct 23, 2007; 10:54am
 
-Hey, 
+Hey,
 
-Just to add my two cents... this is what I do for plotting buffers, using blackrain's handy extension to SCSoundFileView: SCSoundFileView-plus.sc: 
+Just to add my two cents... this is what I do for plotting buffers, using blackrain's handy extension to SCSoundFileView: SCSoundFileView-plus.sc:
 */
 
-( 
-var path,b,folder,items,w,menu,sfv; 
+(
+var path,b,folder,items,w,menu,sfv;
 
-//put your folder of sounds here 
-path = "sounds/guitar_harmonics/"; 
+//put your folder of sounds here
+path = "sounds/guitar_harmonics/";
 
-b = Buffer.readDir(path,10,"aif");// using wslib 
+b = Buffer.readDir(path,10,"aif");// using wslib
 
-folder = (path ++ "*").pathMatch; 
-items = Array(folder.size); 
-folder.do{|path,i| 
-    var clip; 
-    clip = PathName(path); 
-    items.add(clip.fileNameWithoutExtension); 
-}; 
-    
-w = SCWindow.new.front; 
+folder = (path ++ "*").pathMatch;
+items = Array(folder.size);
+folder.do{|path,i|
+var clip;
+clip = PathName(path);
+items.add(clip.fileNameWithoutExtension);
+};
 
-menu = SCPopUpMenu(w,Rect(10,110,250,20)); 
-menu.items  = items; 
-menu.action_{|item| 
-        sfv.plotBuffer(b[item.value],showProgress:false);//plots selected buffer 
-};         
+w = SCWindow.new.front;
 
-sfv = SCSoundFileView(w,Rect(10,10,300,100)); 
+menu = SCPopUpMenu(w,Rect(10,110,250,20));
+menu.items = items;
+menu.action_{|item|
+	sfv.plotBuffer(b[item.value],showProgress:false);//plots selected buffer
+};
 
-) 
+sfv = SCSoundFileView(w,Rect(10,10,300,100));
 
-//code is a little messy but I'm a little foggy this morning 
+)
+
+//code is a little messy but I'm a little foggy this morning
 
 /***********************************************************
 
-Re: plotting a buffer in a gui panel  
+Re: plotting a buffer in a gui panel
 by Scott Wilson-8 Oct 22, 2007; 08:48pm
 
-Hey Dan, 
+Hey Dan,
 
-I don't think you can do this in a straightforward way. I suppose a   
-modified SCScope could do this and would be useful, but I don't think   
-it would work in its current form. 
+I don't think you can do this in a straightforward way. I suppose a
+modified SCScope could do this and would be useful, but I don't think
+it would work in its current form.
 
-There is of course Buffer:plot, but that's a lot of data to throw   
-around if you want it to update as recording is happening. Probably   
-best would be to mirror the data clientside in an array, and update/ 
-draw that with getn, taking a small chunk at a time. That might work. 
+There is of course Buffer:plot, but that's a lot of data to throw
+around if you want it to update as recording is happening. Probably
+best would be to mirror the data clientside in an array, and update/
+draw that with getn, taking a small chunk at a time. That might work.
 
-S. 
+S.
 */
 
 
@@ -2226,11 +2226,11 @@ I recently asked that and nobody has yet answered.
 
 *************************************************/
 
-// I added 
+// I added
 
 	
 	/**
-	 *	Add skins by GUI.skins.put(skinName,( fontSpecs: etc.  )  )
+	 *	Add skins by GUI.skins.put(skinName,( fontSpecs: etc. ) )
 	 *	Set that as default here.
 	 */
 	*setSkin { arg skinName;
@@ -2269,8 +2269,8 @@ thing.background_(GUI.skin.background)
 
 On Mar 21, 2008, at 10:10 AM, jostM wrote:
 
-Could someone give a short description of how GUI.skins is meant to be 
-used? I would like to replace my own colorScheme object with this 
+Could someone give a short description of how GUI.skins is meant to be
+used? I would like to replace my own colorScheme object with this
 eventually, sichce it is now part of SC.
 
 ***************************************************/
@@ -2289,7 +2289,7 @@ GUI.skins.put(\mySkin, (
 	fontColor: 	Color.black,
 	background: 	Color(0.8, 0.85, 0.7, 0.5),
 	foreground:	Color.grey(0.95),
-	onColor:		Color(0.5, 1, 0.5), 
+	onColor:		Color(0.5, 1, 0.5),
 	offColor:		Color.clear,
 	gap:			0 @ 0,
 	margin: 		2@2,
@@ -2380,37 +2380,37 @@ Licence: Other
 Tags: fx
 
 /*
-Re: graphic equalizer? 
+Re: graphic equalizer?
 by Alberto de Campo-2 Nov 08, 2008; 10:25am
-or you can use MidEQ, something like this, with JITLib gui: 
+or you can use MidEQ, something like this, with JITLib gui:
 */
 
-p = ProxySpace.push; 
-m = ProxyMixer(p); 
+p = ProxySpace.push;
+m = ProxyMixer(p);
 
-( 
-var freqs = 31.25 * (2 ** (0..9)); 
-var names = freqs.collect { |freq| ("dB_" ++ freq).replace("000", 
-"k").asSymbol }; 
+(
+var freqs = 31.25 * (2 ** (0..9));
+var names = freqs.collect { |freq| ("dB_" ++ freq).replace("000",
+"k").asSymbol };
 
-names.do (Spec.add(_, [-24, 24])); 
-Spec.add(\bandWidth, [0.03, 1, \exp]); 
-Spec.add(\postGain, [-24, 24]); 
+names.do (Spec.add(_, [-24, 24]));
+Spec.add(\bandWidth, [0.03, 1, \exp]);
+Spec.add(\postGain, [-24, 24]);
 
-~src = { PinkNoise.ar * 0.1 }; 
+~src = { PinkNoise.ar * 0.1 };
 
-~graphicEQ = { |bandWidth=0.5, postGain=1| 
-        var snd = ~src.ar; 
+~graphicEQ = { |bandWidth=0.5, postGain=1|
+	var snd = ~src.ar;
 
-        var gains = names.collect { |name| Control.names([name]).kr(0) }; 
-        freqs.do { |freq, i| snd = MidEQ.ar(snd, freq, bandWidth, gains[i]) }; 
-        snd * postGain.lag(0.1).dbamp; 
-}; 
-) 
+	var gains = names.collect { |name| Control.names([name]).kr(0) };
+	freqs.do { |freq, i| snd = MidEQ.ar(snd, freq, bandWidth, gains[i]) };
+	snd * postGain.lag(0.1).dbamp;
+};
+)
 
-// is that what you intended? 
+// is that what you intended?
 
-// best, adc 
+// best, adc
 
 
 
@@ -2434,8 +2434,8 @@ and execute:
 (
 var p, a, l, d, doc;
 p = Pipe.new(
- "curl http://search.twitter.com/search.atom?q=%23supercollider+play",
- "r"
+"curl http://search.twitter.com/search.atom?q=%23supercollider+play",
+"r"
 );
 a = "";
 l = p.getLine;
@@ -2446,10 +2446,10 @@ d = DOMDocument.new;
 d.parseXML(a);
 t = d.getElementsByTagName("entry").collect { |e|
 
- "// by " + e.getElementsByTagName("author").first
-         .getElementsByTagName("name").first.getText() + ":\n" +
+"// by " + e.getElementsByTagName("author").first
+		.getElementsByTagName("name").first.getText() + ":\n" +
 
- e.getElementsByTagName("title").first.getText()
+e.getElementsByTagName("title").first.getText()
 
 };
 
@@ -2477,7 +2477,7 @@ Licence: Other
 Tags: control
 
 /*
-You can send an envelope to a synth at run time using Control.names.  
+You can send an envelope to a synth at run time using Control.names.
 Here is a simple example:
 */
 
@@ -2491,7 +2491,7 @@ SynthDef(\test, {
 a = Synth.new(\test).setn(\freqenv, Env([440, 880, 660], [1, 1], \exp).asArray)
 
 /*
-Then, do whatever you want in the language before creating the note,  
+Then, do whatever you want in the language before creating the note,
 and just send your envelope. Is this what you mean?
 
 Best,
@@ -2614,488 +2614,488 @@ Licence: Other
 Tags: fx,pattern
 
 /*
-order of effects in Pfx 
+order of effects in Pfx
 by miguel.negrao Nov 10, 2008; 04:29pm
 
-Hi list, 
+Hi list,
 
-It appears that the order in the chain of the effects is the reverse of 
-what would be expected with Pfx. For example, from the help file: 
+It appears that the order in the chain of the effects is the reverse of
+what would be expected with Pfx. For example, from the help file:
 */
 
-( 
-var p, q, r, o; 
-p = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
+(
+var p, q, r, o;
+p = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2);
 
-q = Pfx(p, \echo, \dtime, 0.2, \decay, 3); 
+q = Pfx(p, \echo, \dtime, 0.2, \decay, 3);
 
-r = Pfx(q, \distort, \pregain, 20, \amp, 0.25); 
+r = Pfx(q, \distort, \pregain, 20, \amp, 0.25);
 
-o = Pfx(r, \wah); 
+o = Pfx(r, \wah);
 
-Pseq([p, q, r, o], 2).play; 
-) 
-        
+Pseq([p, q, r, o], 2).play;
+)
+
 /*
-this sounds as 
+this sounds as
 
-pattern->wah->distort->echo->out 
+pattern->wah->distort->echo->out
 
-which unless I'm missing something looks as the reverse of how things 
-work in supercollider. Why does this work this way ? 
+which unless I'm missing something looks as the reverse of how things
+work in supercollider. Why does this work this way ?
 
-also, how would i do something like ? 
+also, how would i do something like ?
 
-pattern1-> effect1 -| 
-pattern2-> effect2 -| -> effect3 
+pattern1-> effect1 -|
+pattern2-> effect2 -| -> effect3
 
-with the order of things switched I'm not sure how to do this... 
+with the order of things switched I'm not sure how to do this...
 
-Miguel Negrão 
+Miguel Negro
 */
 
 /*
-Re: order of effects in Pfx 
+Re: order of effects in Pfx
 by Julian Rohrhuber Nov 10, 2008; 04:41pm
-yes, this is (in)correct. 
-for separating the effects, you should wrap each in a Pbus. 
+yes, this is (in)correct.
+for separating the effects, you should wrap each in a Pbus.
 */
 
 
 
 
 
-q = Pbus(Pfx(...)); 
+q = Pbus(Pfx(...));
 
-etc. 
-I wonder if we should maybe do this automatically. 
+etc.
+I wonder if we should maybe do this automatically.
 
-seq([p, q, r, o], 2).play; 
->) 
-> 
->this sounds as 
-> 
->pattern->wah->distort->echo->out 
-> 
->which unless I'm missing something looks as the 
->reverse of how things work in supercollider. Why 
->does this work this way ? 
-> 
->also, how would i do something like ? 
-> 
->pattern1-> effect1 -| 
->pattern2-> effect2 -| -> effect3 
-> 
->with the order of things switched I'm not sure how to do this... 
-> 
->Miguel Negrão 
-> 
->_______________________________________________ 
->sc-users mailing list 
-> 
->info (subscription, etc.): 
+seq([p, q, r, o], 2).play;
+>)
+>
+>this sounds as
+>
+>pattern->wah->distort->echo->out
+>
+>which unless I'm missing something looks as the
+>reverse of how things work in supercollider. Why
+>does this work this way ?
+>
+>also, how would i do something like ?
+>
+>pattern1-> effect1 -|
+>pattern2-> effect2 -| -> effect3
+>
+>with the order of things switched I'm not sure how to do this...
+>
+>Miguel Negro
+>
+>_______________________________________________
+>sc-users mailing list
+>
+>info (subscription, etc.):
 >http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 >archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
 >search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
 ... [show rest of quote]
 
 
--- 
+--
 
 
 
 
 
-. 
+.
 
-_______________________________________________ 
-sc-users mailing list 
+_______________________________________________
+sc-users mailing list
 
 info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
 search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
 
-Re: order of effects in Pfx 
-by miguel.negrao Nov 10, 2008; 06:06pm :: Rate this Message:    - Use ratings to moderate (?)
+Re: order of effects in Pfx
+by miguel.negrao Nov 10, 2008; 06:06pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
 
 Julian Rohrhuber escreveu:
 
->> Hi list, 
->> 
->> It appears that the order in the chain of the effects is the reverse 
->> of what would be expected with Pfx. 
-> 
-> yes, this is (in)correct. 
-> for separating the effects, you should wrap each in a Pbus. 
-> 
-> q = Pbus(Pfx(...)); 
-> 
-> etc. 
+>> Hi list,
+>>
+>> It appears that the order in the chain of the effects is the reverse
+>> of what would be expected with Pfx.
+>
+> yes, this is (in)correct.
+> for separating the effects, you should wrap each in a Pbus.
+>
+> q = Pbus(Pfx(...));
+>
+> etc.
 > I wonder if we should maybe do this automatically.
 ... [show rest of quote]
 
-Wrapping in a Pbus did not change the order of the effects, the order is 
-  still reversed... 
+Wrapping in a Pbus did not change the order of the effects, the order is
+still reversed...
 
-Miguel Negrão 
+Miguel Negro
 
-> 
->> For example, from the help file: 
->> 
->> ( 
->> var p, q, r, o; 
->> p = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
->> 
->> q = Pfx(p, \echo, \dtime, 0.2, \decay, 3); 
->> 
->> r = Pfx(q, \distort, \pregain, 20, \amp, 0.25); 
->> 
->> o = Pfx(r, \wah); 
->> 
->> Pseq([p, q, r, o], 2).play; 
->> ) 
->> 
->> this sounds as 
->> 
->> pattern->wah->distort->echo->out 
->> 
->> which unless I'm missing something looks as the reverse of how things 
->> work in supercollider. Why does this work this way ? 
->> 
->> also, how would i do something like ? 
->> 
->> pattern1-> effect1 -| 
->> pattern2-> effect2 -| -> effect3 
->> 
->> with the order of things switched I'm not sure how to do this... 
->> 
->> Miguel Negrão 
->> 
->> _______________________________________________ 
->> sc-users mailing list 
->> 
->> info (subscription, etc.): 
+>
+>> For example, from the help file:
+>>
+>> (
+>> var p, q, r, o;
+>> p = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2);
+>>
+>> q = Pfx(p, \echo, \dtime, 0.2, \decay, 3);
+>>
+>> r = Pfx(q, \distort, \pregain, 20, \amp, 0.25);
+>>
+>> o = Pfx(r, \wah);
+>>
+>> Pseq([p, q, r, o], 2).play;
+>> )
+>>
+>> this sounds as
+>>
+>> pattern->wah->distort->echo->out
+>>
+>> which unless I'm missing something looks as the reverse of how things
+>> work in supercollider. Why does this work this way ?
+>>
+>> also, how would i do something like ?
+>>
+>> pattern1-> effect1 -|
+>> pattern2-> effect2 -| -> effect3
+>>
+>> with the order of things switched I'm not sure how to do this...
+>>
+>> Miguel Negro
+>>
+>> _______________________________________________
+>> sc-users mailing list
+>>
+>> info (subscription, etc.):
 >> http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 >> archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
 >> search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
-> 
+>
 >
 ... [show rest of quote]
 
 
-_______________________________________________ 
-sc-users mailing list 
+_______________________________________________
+sc-users mailing list
 
 info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
 search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
 
-Re: order of effects in Pfx 
-by James Harkins-2 Nov 10, 2008; 07:21pm :: Rate this Message:    - Use ratings to moderate (?)
+Re: order of effects in Pfx
+by James Harkins-2 Nov 10, 2008; 07:21pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
 
-On Mon, Nov 10, 2008 at 11:29 AM, Miguel Negrao 
-<miguel.negrao@...> wrote: 
-> Hi list, 
-> 
-> It appears that the order in the chain of the effects is the reverse of what 
-> would be expected with Pfx. For example, from the help file: 
+On Mon, Nov 10, 2008 at 11:29 AM, Miguel Negrao
+<miguel.negrao@...> wrote:
+> Hi list,
+>
+> It appears that the order in the chain of the effects is the reverse of what
+> would be expected with Pfx. For example, from the help file:
 
-This happens because the patterns evaluate from the outermost layer to 
-the innermost. 
+This happens because the patterns evaluate from the outermost layer to
+the innermost.
 
-o adds \wah to the tail of the group. 
-r adds \distort to the tail -- that is, after \wah 
-q adds \echo to the tail, after \distort 
+o adds \wah to the tail of the group.
+r adds \distort to the tail -- that is, after \wah
+q adds \echo to the tail, after \distort
 
-I don't have a good fix in mind for this (but Julian might already be 
-working on it?). 
+I don't have a good fix in mind for this (but Julian might already be
+working on it?).
 
-hjh 
+hjh
 
--- 
-James Harkins /// dewdrop world 
-jamshark70@... 
+--
+James Harkins /// dewdrop world
+jamshark70@...
 http://www.dewdrop-world.net
 
-"Come said the Muse, 
-Sing me a song no poet has yet chanted, 
-Sing me the universal."  -- Whitman 
+"Come said the Muse,
+Sing me a song no poet has yet chanted,
+Sing me the universal." -- Whitman
 
-_______________________________________________ 
-sc-users mailing list 
+_______________________________________________
+sc-users mailing list
 
 info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
 search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
 
-Re: order of effects in Pfx 
-by miguel.negrao Nov 10, 2008; 07:37pm :: Rate this Message:    - Use ratings to moderate (?)
+Re: order of effects in Pfx
+by miguel.negrao Nov 10, 2008; 07:37pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
 
 James Harkins escreveu:
 
-> On Mon, Nov 10, 2008 at 11:29 AM, Miguel Negrao 
-> <miguel.negrao@...> wrote: 
->> Hi list, 
->> 
->> It appears that the order in the chain of the effects is the reverse of what 
->> would be expected with Pfx. For example, from the help file: 
-> 
-> This happens because the patterns evaluate from the outermost layer to 
-> the innermost. 
-> 
-> o adds \wah to the tail of the group. 
-> r adds \distort to the tail -- that is, after \wah 
-> q adds \echo to the tail, after \distort 
-> 
-> I don't have a good fix in mind for this (but Julian might already be 
-> working on it?). 
-> 
-> hjh 
+> On Mon, Nov 10, 2008 at 11:29 AM, Miguel Negrao
+> <miguel.negrao@...> wrote:
+>> Hi list,
+>>
+>> It appears that the order in the chain of the effects is the reverse of what
+>> would be expected with Pfx. For example, from the help file:
+>
+> This happens because the patterns evaluate from the outermost layer to
+> the innermost.
+>
+> o adds \wah to the tail of the group.
+> r adds \distort to the tail -- that is, after \wah
+> q adds \echo to the tail, after \distort
+>
+> I don't have a good fix in mind for this (but Julian might already be
+> working on it?).
+>
+> hjh
 >
 ... [show rest of quote]
 
-for chains where each fx goes into just one fx it's okay, I can just put 
-them in reverse, but how do I define something like 
+for chains where each fx goes into just one fx it's okay, I can just put
+them in reverse, but how do I define something like
 
-pattern1-> effect1 -| 
-pattern2-> effect2 -| -> effect3 
+pattern1-> effect1 -|
+pattern2-> effect2 -| -> effect3
 
-with Pfx ? 
+with Pfx ?
 
-btw, it would be a good idea to mention this issue in the help file. 
+btw, it would be a good idea to mention this issue in the help file.
 
-thanks 
-Miguel Negrão 
+thanks
+Miguel Negro
 
-_______________________________________________ 
-sc-users mailing list 
+_______________________________________________
+sc-users mailing list
 
 info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
 search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
 
-Re: order of effects in Pfx 
-by James Harkins-2 Nov 10, 2008; 07:57pm :: Rate this Message:    - Use ratings to moderate (?)
+Re: order of effects in Pfx
+by James Harkins-2 Nov 10, 2008; 07:57pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
 
-On Mon, Nov 10, 2008 at 2:37 PM, Miguel Negrao 
-<miguel.negrao@...> wrote: 
-> for chains where each fx goes into just one fx it's okay, I can just put 
-> them in reverse, but how do I define something like 
-> 
-> pattern1-> effect1 -| 
-> pattern2-> effect2 -| -> effect3 
-> 
-> with Pfx ? 
+On Mon, Nov 10, 2008 at 2:37 PM, Miguel Negrao
+<miguel.negrao@...> wrote:
+> for chains where each fx goes into just one fx it's okay, I can just put
+> them in reverse, but how do I define something like
+>
+> pattern1-> effect1 -|
+> pattern2-> effect2 -| -> effect3
+>
+> with Pfx ?
 
-Maybe like this -- you can control the node order yourself with groups. 
+Maybe like this -- you can control the node order yourself with groups.
 
-fx3group = Group(s); 
-fx12group = Group.before(fx3group); 
+fx3group = Group(s);
+fx12group = Group.before(fx3group);
 
-fxbuses = { Bus.audio(s, 2) } ! 3; 
+fxbuses = { Bus.audio(s, 2) } ! 3;
 
-pfx1 = Pfx(pattern1, \fx1, \group, fx12group, \bus, fxbuses[0], ...); 
-pfx2 = Pfx(pattern1, \fx2, \group, fx12group, \bus, fxbuses[1], ...); 
+pfx1 = Pfx(pattern1, \fx1, \group, fx12group, \bus, fxbuses[0], ...);
+pfx2 = Pfx(pattern1, \fx2, \group, fx12group, \bus, fxbuses[1], ...);
 
-pfx3 = Pfx(Ppar([pfx1, pfx2]), \fx3, \group, fx3group, \bus, fxbuses[2], ...); 
+pfx3 = Pfx(Ppar([pfx1, pfx2]), \fx3, \group, fx3group, \bus, fxbuses[2], ...);
 
-At least as a start... for myself, I use MixerChannel for this kind of 
-signal management. It's much easier imho. I've always felt Pfx was 
-trying to stick a square peg into a round hole. 
+At least as a start... for myself, I use MixerChannel for this kind of
+signal management. It's much easier imho. I've always felt Pfx was
+trying to stick a square peg into a round hole.
 
-m3 = MixerChannel(\m3, s, 2, 2); 
+m3 = MixerChannel(\m3, s, 2, 2);
 
-m1 = MixerChannel(\m1, s, 2, 2, outbus: m3); 
-m2 = MixerChannel(\m2, s, 2, 2, outbus: m3); 
+m1 = MixerChannel(\m1, s, 2, 2, outbus: m3);
+m2 = MixerChannel(\m2, s, 2, 2, outbus: m3);
 
-fx1 = m1.playfx(\fx1, [... args ...]); 
-fx2 = m2.playfx(\fx2, [... args ...]); 
-fx3 = m3.playfx(\fx3, [... args ...]); 
+fx1 = m1.playfx(\fx1, [... args ...]);
+fx2 = m2.playfx(\fx2, [... args ...]);
+fx3 = m3.playfx(\fx3, [... args ...]);
 
-m1.play(pattern1); 
-m2.play(pattern2); 
+m1.play(pattern1);
+m2.play(pattern2);
 
-m1 and m2 are mixed together and sent to m3, where the combined signal 
-is processed by m3's effect. 
+m1 and m2 are mixed together and sent to m3, where the combined signal
+is processed by m3's effect.
 
-> btw, it would be a good idea to mention this issue in the help file. 
+> btw, it would be a good idea to mention this issue in the help file.
 
-It would be better to fix it :) 
-hjh 
+It would be better to fix it :)
+hjh
 
 
--- 
-James Harkins /// dewdrop world 
-jamshark70@... 
+--
+James Harkins /// dewdrop world
+jamshark70@...
 http://www.dewdrop-world.net
 
-"Come said the Muse, 
-Sing me a song no poet has yet chanted, 
-Sing me the universal."  -- Whitman 
+"Come said the Muse,
+Sing me a song no poet has yet chanted,
+Sing me the universal." -- Whitman
 
-_______________________________________________ 
-sc-users mailing list 
-
-info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
-archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
-search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
-
-Re: order of effects in Pfx 
-by Julian Rohrhuber Nov 10, 2008; 08:27pm :: Rate this Message:    - Use ratings to moderate (?)
-Reply | Reply to Author | Print | View Threaded | Show Only this Message
-
-I cannot reproduce the problem. Here is a test: 
-
-
-( 
-SynthDef(\distort, { arg out=0, pregain=40, amp=0.2, gate=1; 
-        var env; 
-        env = Linen.kr(gate, 0.05, 1, 0.1, 2); 
-        XOut.ar(out, env, (In.ar(out, 2) * pregain).distort * amp); 
-}, [\ir, 0.1, 0.1, 0]).store; 
-
-SynthDef(\addbeeps, { arg out=0, gate=1; 
-        var env; 
-        env = Linen.kr(gate, 0.05, 1, 0.1, 2); 
-        XOut.ar(out, env, (In.ar(out, 2) + (LFPulse.kr(1, 0, 0.3) * 
-SinOsc.ar(1000) * 0.4) )); 
-}, [\ir, 0.1, 0.1, 0]).store; 
-) 
-
-( 
-var a; 
-a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
-a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3)); 
-a = Pbus(Pfx(a, \addbeeps)); 
-a.play; 
-) 
-
-( 
-var a; 
-a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
-a = Pbus(Pfx(a, \addbeeps)); 
-
-a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3)); 
-a.play; 
-) 
-
--- 
-
-
-
-
-
-. 
-
-_______________________________________________ 
-sc-users mailing list 
+_______________________________________________
+sc-users mailing list
 
 info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
 search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
 
-Re: order of effects in Pfx 
-by miguel.negrao Nov 10, 2008; 08:43pm :: Rate this Message:    - Use ratings to moderate (?)
+Re: order of effects in Pfx
+by Julian Rohrhuber Nov 10, 2008; 08:27pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
 
-Yes, you are right, I must have mixed up something. Wrapping in Pbus 
-does correct the order. 
+I cannot reproduce the problem. Here is a test:
 
-thanks ! 
-Miguel Negrão 
+
+(
+SynthDef(\distort, { arg out=0, pregain=40, amp=0.2, gate=1;
+	var env;
+	env = Linen.kr(gate, 0.05, 1, 0.1, 2);
+	XOut.ar(out, env, (In.ar(out, 2) * pregain).distort * amp);
+}, [\ir, 0.1, 0.1, 0]).store;
+
+SynthDef(\addbeeps, { arg out=0, gate=1;
+	var env;
+	env = Linen.kr(gate, 0.05, 1, 0.1, 2);
+	XOut.ar(out, env, (In.ar(out, 2) + (LFPulse.kr(1, 0, 0.3) *
+SinOsc.ar(1000) * 0.4) ));
+}, [\ir, 0.1, 0.1, 0]).store;
+)
+
+(
+var a;
+a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2);
+a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3));
+a = Pbus(Pfx(a, \addbeeps));
+a.play;
+)
+
+(
+var a;
+a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2);
+a = Pbus(Pfx(a, \addbeeps));
+
+a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3));
+a.play;
+)
+
+--
+
+
+
+
+
+.
+
+_______________________________________________
+sc-users mailing list
+
+info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
+archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
+search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
+
+Re: order of effects in Pfx
+by miguel.negrao Nov 10, 2008; 08:43pm :: Rate this Message:	- Use ratings to moderate (?)
+Reply | Reply to Author | Print | View Threaded | Show Only this Message
+
+Yes, you are right, I must have mixed up something. Wrapping in Pbus
+does correct the order.
+
+thanks !
+Miguel Negro
 
 Julian Rohrhuber escreveu:
 
-> I cannot reproduce the problem. Here is a test: 
-> 
-> 
-> ( 
-> SynthDef(\distort, { arg out=0, pregain=40, amp=0.2, gate=1; 
->     var env; 
->     env = Linen.kr(gate, 0.05, 1, 0.1, 2); 
->     XOut.ar(out, env, (In.ar(out, 2) * pregain).distort * amp); 
-> }, [\ir, 0.1, 0.1, 0]).store; 
-> 
-> SynthDef(\addbeeps, { arg out=0, gate=1; 
->     var env; 
->     env = Linen.kr(gate, 0.05, 1, 0.1, 2); 
->     XOut.ar(out, env, (In.ar(out, 2) + (LFPulse.kr(1, 0, 0.3) * 
-> SinOsc.ar(1000) * 0.4) )); 
-> }, [\ir, 0.1, 0.1, 0]).store; 
-> ) 
-> 
-> ( 
-> var a; 
-> a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
-> a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3)); 
-> a = Pbus(Pfx(a, \addbeeps)); 
-> a.play; 
-> ) 
-> 
-> ( 
-> var a; 
-> a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2); 
-> a = Pbus(Pfx(a, \addbeeps)); 
-> 
-> a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3)); 
-> a.play; 
-> ) 
+> I cannot reproduce the problem. Here is a test:
+>
+>
+> (
+> SynthDef(\distort, { arg out=0, pregain=40, amp=0.2, gate=1;
+>   var env;
+>   env = Linen.kr(gate, 0.05, 1, 0.1, 2);
+>   XOut.ar(out, env, (In.ar(out, 2) * pregain).distort * amp);
+> }, [\ir, 0.1, 0.1, 0]).store;
+>
+> SynthDef(\addbeeps, { arg out=0, gate=1;
+>   var env;
+>   env = Linen.kr(gate, 0.05, 1, 0.1, 2);
+>   XOut.ar(out, env, (In.ar(out, 2) + (LFPulse.kr(1, 0, 0.3) *
+> SinOsc.ar(1000) * 0.4) ));
+> }, [\ir, 0.1, 0.1, 0]).store;
+> )
+>
+> (
+> var a;
+> a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2);
+> a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3));
+> a = Pbus(Pfx(a, \addbeeps));
+> a.play;
+> )
+>
+> (
+> var a;
+> a = Pbind(\degree, Prand((0..7),12), \dur, 0.3, \legato, 0.2);
+> a = Pbus(Pfx(a, \addbeeps));
+>
+> a = Pbus(Pfx(a, \echo, \dtime, 0.2, \decay, 3));
+> a.play;
+> )
 >
 ... [show rest of quote]
 
 
-_______________________________________________ 
-sc-users mailing list 
+_______________________________________________
+sc-users mailing list
 
 info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
 search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
 
-Re: order of effects in Pfx 
-by Julian Rohrhuber Nov 10, 2008; 08:45pm :: Rate this Message:    - Use ratings to moderate (?)
+Re: order of effects in Pfx
+by Julian Rohrhuber Nov 10, 2008; 08:45pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
 
-> 
->Maybe like this -- you can control the node order yourself with groups. 
-> 
->fx3group = Group(s); 
->fx12group = Group.before(fx3group); 
-> 
->fxbuses = { Bus.audio(s, 2) } ! 3; 
-> 
->pfx1 = Pfx(pattern1, \fx1, \group, fx12group, \bus, fxbuses[0], ...); 
->pfx2 = Pfx(pattern1, \fx2, \group, fx12group, \bus, fxbuses[1], ...); 
-> 
+>
+>Maybe like this -- you can control the node order yourself with groups.
+>
+>fx3group = Group(s);
+>fx12group = Group.before(fx3group);
+>
+>fxbuses = { Bus.audio(s, 2) } ! 3;
+>
+>pfx1 = Pfx(pattern1, \fx1, \group, fx12group, \bus, fxbuses[0], ...);
+>pfx2 = Pfx(pattern1, \fx2, \group, fx12group, \bus, fxbuses[1], ...);
+>
 >pfx3 = Pfx(Ppar([pfx1, pfx2]), \fx3, \group, fx3group, \bus, fxbuses[2], ...);
 ... [show rest of quote]
 
-in a sense, this solution contradicts the pattern paradigm. Patterns 
-should be always embeddable multiple times without interfering with 
-each other. For the above case, Pbus and Pgroup exist (which do this 
-parallelization). This is why I feel that Pfx should be automatically 
-wrapped in a Pbus. 
+in a sense, this solution contradicts the pattern paradigm. Patterns
+should be always embeddable multiple times without interfering with
+each other. For the above case, Pbus and Pgroup exist (which do this
+parallelization). This is why I feel that Pfx should be automatically
+wrapped in a Pbus.
 
-On the other hand, it is a matter of perspective whether mutual 
-influence on the level of audio counts and should be avoided by all 
-menas - after all, sounds influence each other by addition, too. But 
-in the case of Pfx, I'd rather explicitly make streams interfer than 
-to have interferences by default. 
-
-
--- 
+On the other hand, it is a matter of perspective whether mutual
+influence on the level of audio counts and should be avoided by all
+menas - after all, sounds influence each other by addition, too. But
+in the case of Pfx, I'd rather explicitly make streams interfer than
+to have interferences by default.
 
 
+--
 
 
 
-. 
 
-_______________________________________________ 
-sc-users mailing list 
+
+.
+
+_______________________________________________
+sc-users mailing list
 
 info (subscription, etc.): http://www.beast.bham.ac.uk/research/sc_mailing_lists.shtml
 archive: http://www.listarc.bham.ac.uk/marchives/sc-users/
@@ -3104,7 +3104,7 @@ search: http://www.listarc.bham.ac.uk/lists/sc-users/search/
 
 
 
-« Return to forum
+Return to forum
 LightInTheBox - Buy quality products at wholesale price!
 
 Free Forum Powered by Nabble
@@ -3154,110 +3154,110 @@ Licence: Other
 Tags: gui
 
 /*
-Creating unique varibles in a GUI, using arg? 
+Creating unique varibles in a GUI, using arg?
 by Paul Jones Nov 10, 2008; 08:03pm
 
-Hello, 
+Hello,
 
-  I'm trying to make a gui that will load samples into a buffer, this I can do. But I would like to (without writing a massive page) make a gui that creates multiple paths and assigns them to different buffers, with unique variable names.   
-See ~s1. 
+I'm trying to make a gui that will load samples into a buffer, this I can do. But I would like to (without writing a massive page) make a gui that creates multiple paths and assigns them to different buffers, with unique variable names.
+See ~s1.
 
-I would like to be able to switch between samples quickly, simply using (~s1 ++ "i" ).bufnum, but I don't know how to implement this. I can use |i| to change other things like button pos and color, but not what is really essential here! 
+I would like to be able to switch between samples quickly, simply using (~s1 ++ "i" ).bufnum, but I don't know how to implement this. I can use |i| to change other things like button pos and color, but not what is really essential here!
 
-Thanks 
+Thanks
 
-   Paul 
+Paul
 */
 
-(var win , but , but2 ; //boot gui for sample loading 
-//~snares= List[]; 
-win = SCWindow.new("sample",Rect(200,200,200,200)); 
-win.view.background = (Color.new255(20,0,2)); 
-8.do{|i| 
-	but = SCButton(win,Rect(0,i*25,100,20)); 
+(var win , but , but2 ; //boot gui for sample loading
+//~snares= List[];
+win = SCWindow.new("sample",Rect(200,200,200,200));
+win.view.background = (Color.new255(20,0,2));
+8.do{|i|
+	but = SCButton(win,Rect(0,i*25,100,20));
 	but.states = [[
 		"snare "++(i+1),
 		Color.new255(i*6, 139-(i*12), 69+(i*5)),
 		Color.new255(60-(i*6), 10+(i*5) , 130 - (i*12))
-	]]; 
+	]];
 	but.action = {
 		File.openDialog("", {arg path1;
 			~file1 = path1;
-			~s1 = Buffer.read(s,~file1); // it is ~s1 that needs to be unique for each button 
-			//~snares.add(~s1); 
-		}) 
-	} 
-}; 
+			~s1 = Buffer.read(s,~file1); // it is ~s1 that needs to be unique for each button
+			//~snares.add(~s1);
+		})
+	}
+};
 
-8.do{|i| 
-	but = SCButton(win,Rect(125,i*25,100,20)); 
+8.do{|i|
+	but = SCButton(win,Rect(125,i*25,100,20));
 	but.states = [[
 		"hat "++(i+1),
 		Color.new255(48-(i*6), 43+(i*12), 109-(i*5)),
 		Color.new255(12+(i*6), 50-(i*5) , 34 + (i*12))
-	]]; 
-	but.action = { 
+	]];
+	but.action = {
 		File.openDialog("", {arg path1;
-			~file1 = path1; 
-			~s2 = Buffer.read(s,~file1); 
-			//   ~snares.add(~s2); 
-		}) 
-	} 
-};win.front); 
-           
+			~file1 = path1;
+			~s2 = Buffer.read(s,~file1);
+			//  ~snares.add(~s2);
+		})
+	}
+};win.front);
+
 /*
-Re: Creating unique varibles in a GUI, using arg? 
+Re: Creating unique varibles in a GUI, using arg?
 by James Harkins-2 Nov 10, 2008; 08:07pm
 
-Don't put them in separate variables... put them in an array and 
-access the Buffers in the array by number. 
+Don't put them in separate variables... put them in an array and
+access the Buffers in the array by number.
 */
 
-// Which looks easier? 
+// Which looks easier?
 
-("s1" ++ index).asSymbol.envirGet 
+("s1" ++ index).asSymbol.envirGet
 
-//or 
+//or
 
-~s1[index] 
+~s1[index]
 
-// hjh 
+// hjh
 
 /*
-Re: Creating unique varibles in a GUI, using arg? 
+Re: Creating unique varibles in a GUI, using arg?
 by Paul Jones Nov 10, 2008; 09:08pm
 
-Ahh, got it. I was thinking this (but with list), but didn't realize I could use .put and arrange them this way. 
+Ahh, got it. I was thinking this (but with list), but didn't realize I could use .put and arrange them this way.
 
-here is code for anyone interested. 
+here is code for anyone interested.
 
-Thanks 
+Thanks
 
-  Paul 
+Paul
 */
 
 (
-var win , but , but2,but3,but4 ; //boot gui for sample loading 
-~snares= Array.newClear(8); 
-win = SCWindow.new("sample",Rect(200,200,250,200)); 
-win.view.background = (Color.new255(20,0,2)); 
-8.do{|i| 
-	but = SCButton(win,Rect(0,i*25,100,20)); 
+var win , but , but2,but3,but4 ; //boot gui for sample loading
+~snares= Array.newClear(8);
+win = SCWindow.new("sample",Rect(200,200,250,200));
+win.view.background = (Color.new255(20,0,2));
+8.do{|i|
+	but = SCButton(win,Rect(0,i*25,100,20));
 	but.states = [[
 		"snare "++(i+1),
 		Color.new255(i*6, 139-(i*12), 69+(i*5)),
 		Color.new255(60-(i*6), 10+(i*5) , 130 - (i*12))
-	]]; 
-	but.action = { 
+	]];
+	but.action = {
 		File.openDialog("", {arg path1;
-			~file1 = path1; 
-			~s1 = Buffer.read(s,~file1); 
-			~snares.put(i,~s1); 
-		}) 
-	} 
+			~file1 = path1;
+			~s1 = Buffer.read(s,~file1);
+			~snares.put(i,~s1);
+		})
+	}
 };
 win.front
-) 
+)
 
 ~snares[0]
 
@@ -3271,7 +3271,7 @@ Licence: Other
 Tags: patch,pattern
 
 /*
-If anyone likes dubstep this could be useful, in dub step you often find poly rhythms, one after the other this will layer them effortlessly with some "sick" bass coming out. Some fine tuning needed, or just record it n make tunes from it. 
+If anyone likes dubstep this could be useful, in dub step you often find poly rhythms, one after the other this will layer them effortlessly with some "sick" bass coming out. Some fine tuning needed, or just record it n make tunes from it.
 
 Thanks to some drum synthesis that got posted not long ago. Slightly (but not much) changed ...  http://supercollider.jp/uploads/img/42.rtf
 
@@ -3279,11 +3279,11 @@ P
 */
 
 
-(SynthDef(\fm , 
+(SynthDef(\fm ,
 
 {  |cfreq = 55 , mfreq = 110 , at = 0.01 , sus=1 , rel = 0.01 ,lforate = 2 ,fmamt =100 , lfoamt =100 ,phase = 0.5 , envamt = 2 ,at2 = 0.5,sus2 = 0.5 ,rel2 = 0.5|
-  
-  var cosc , mosc , env , lfo , env2;
+
+var cosc , mosc , env , lfo , env2;
 
 env = EnvGen.ar(Env.new([10e-10,1,1,10e-10],[at,sus,rel]),doneAction:2);
 
@@ -3303,61 +3303,61 @@ Out.ar(0,Pan2.ar(cosc,0,0.5));
 ).send(s))
 
 
-    SynthDef("hat", {    
-        arg outBus=0, amp=0.3;
-        var env1, env2, out, oscs1, noise, n, n2;
-        
-        n = 5;
-        thisThread.randSeed = 4;
-        
-        env1 = EnvGen.ar(Env.new([0, 1.0, 0], [0.001, 0.2], [0, -12]));
-        env2 = EnvGen.ar(Env.new([0, 1.0, 0.05, 0], [0.002, 0.05, 0.03], [0, -4, -4]), doneAction:2);
-        
-        oscs1 = Mix.fill(n, {|i|
-            SinOsc.ar(
-                ( i.linlin(0, n-1, 42, 74) + rand2(4.0) ).midicps,
-                SinOsc.ar( (i.linlin(0, n-1, 78, 80) + rand2(4.0) ).midicps, 0.0, 12),
-                1/n
-            )
-        });
-        
-        oscs1 = BHiPass.ar(oscs1, 1000, 2, env1);
-        n2 = 8;
-        noise = WhiteNoise.ar;
-        noise = Mix.fill(n2, {|i|
-            var freq;
-            freq = (i.linlin(0, n-1, 40, 50) + rand2(4.0) ).midicps.reciprocal;
-            CombN.ar(noise, 0.04, freq, 0.1)
-        }) * (1/n) + noise;
-        noise = BPF.ar(noise, 6000, 0.9, 0.5, noise);
-        noise = BLowShelf.ar(noise, 3000, 0.5, -6);
-        noise = BHiPass.ar(noise, 1000, 1.5, env2);
-        
-        out = noise + oscs1;
-        out = out.softclip;
-        out = out * amp;
-        
-        Out.ar(outBus, out.dup);
-    }).send(s);
-         
-(SynthDef("kick", {    
-        arg outBus=0 , dec = 0.2 , lev = 0.5 , at = 0.01;
-        var env0, env1, env1m, out;
-        
-        env0 =  EnvGen.ar(Env.new([0.5, 1, 0.5, 0], [at, dec, 0.26], [-4, -2, -4]), doneAction:2);
-        env1 = EnvGen.ar(Env.new([110, 59, 33], [0.005, 0.09], [-4, -5]));
-        env1m = env1.midicps;
-        
-        out = LFPulse.ar(env1m, 0, 0.5, 1, -0.5);
-        out = out + WhiteNoise.ar(1);
-        out = LPF.ar(out, env1m*1.5, env0);
-        out = out + SinOsc.ar(env1m, 0.5, env0);
-        
-        out = out * lev;
-        out = out.clip2(0.8);
-        
-        Out.ar(outBus, out.dup);
-    }).send(s);)
+	SynthDef("hat", {
+		arg outBus=0, amp=0.3;
+		var env1, env2, out, oscs1, noise, n, n2;
+
+		n = 5;
+		thisThread.randSeed = 4;
+
+		env1 = EnvGen.ar(Env.new([0, 1.0, 0], [0.001, 0.2], [0, -12]));
+		env2 = EnvGen.ar(Env.new([0, 1.0, 0.05, 0], [0.002, 0.05, 0.03], [0, -4, -4]), doneAction:2);
+
+		oscs1 = Mix.fill(n, {|i|
+			SinOsc.ar(
+				( i.linlin(0, n-1, 42, 74) + rand2(4.0) ).midicps,
+				SinOsc.ar( (i.linlin(0, n-1, 78, 80) + rand2(4.0) ).midicps, 0.0, 12),
+				1/n
+			)
+		});
+
+		oscs1 = BHiPass.ar(oscs1, 1000, 2, env1);
+		n2 = 8;
+		noise = WhiteNoise.ar;
+		noise = Mix.fill(n2, {|i|
+			var freq;
+			freq = (i.linlin(0, n-1, 40, 50) + rand2(4.0) ).midicps.reciprocal;
+			CombN.ar(noise, 0.04, freq, 0.1)
+		}) * (1/n) + noise;
+		noise = BPF.ar(noise, 6000, 0.9, 0.5, noise);
+		noise = BLowShelf.ar(noise, 3000, 0.5, -6);
+		noise = BHiPass.ar(noise, 1000, 1.5, env2);
+
+		out = noise + oscs1;
+		out = out.softclip;
+		out = out * amp;
+
+		Out.ar(outBus, out.dup);
+	}).send(s);
+
+(SynthDef("kick", {
+		arg outBus=0 , dec = 0.2 , lev = 0.5 , at = 0.01;
+		var env0, env1, env1m, out;
+
+		env0 =  EnvGen.ar(Env.new([0.5, 1, 0.5, 0], [at, dec, 0.26], [-4, -2, -4]), doneAction:2);
+		env1 = EnvGen.ar(Env.new([110, 59, 33], [0.005, 0.09], [-4, -5]));
+		env1m = env1.midicps;
+
+		out = LFPulse.ar(env1m, 0, 0.5, 1, -0.5);
+		out = out + WhiteNoise.ar(1);
+		out = LPF.ar(out, env1m*1.5, env0);
+		out = out + SinOsc.ar(env1m, 0.5, env0);
+
+		out = out * lev;
+		out = out.clip2(0.8);
+
+		Out.ar(outBus, out.dup);
+	}).send(s);)
 
 
 
@@ -3388,32 +3388,32 @@ inf.do{|i|
 if (i%1 == 0 , {
 
 
-2.do {~fmamt = ~jiz.next;  ~lforate = ~lfo.next;Synth(\fm, [\fmamt ,~jiz, 
-                     \lfoamt , 3.6 , 
-                     \cfreq , 55, 
-                     \mfreq , [112,222].choose , 
-                     \lforate ,1/3.21*~lforate , 
-                     \sus, 3.1 ,
-                     \rel, 0.1, 
-                     \phase , 0.4])};
-                     thisThread.clock.sched(0,Routine
-                     {
-                     ~kickspeed = ~kick.next;
-                    
-                     
-                     2.do{~lve =~dyn.next;
-                     
-                    Synth(\kick, [\lev,0.8,
-                                      \at, 0.1.rand,
-                                      \dec, 0.32]); 
-                    
-                     1.6.wait}});
-                     thisThread.clock.sched(0 , Routine{32.do{Synth(\hat,[\amp,~hat.next/3]
-                                                                             );0.1.wait}}) } ,0); 
-                     
-                      3.20.wait;}
+2.do {~fmamt = ~jiz.next;  ~lforate = ~lfo.next;Synth(\fm, [\fmamt ,~jiz,
+					\lfoamt , 3.6 ,
+					\cfreq , 55,
+					\mfreq , [112,222].choose ,
+					\lforate ,1/3.21*~lforate ,
+					\sus, 3.1 ,
+					\rel, 0.1,
+					\phase , 0.4])};
+					thisThread.clock.sched(0,Routine
+					{
+					~kickspeed = ~kick.next;
+
+
+					2.do{~lve =~dyn.next;
+
+					Synth(\kick, [\lev,0.8,
+									\at, 0.1.rand,
+									\dec, 0.32]);
+
+					1.6.wait}});
+					thisThread.clock.sched(0 , Routine{32.do{Synth(\hat,[\amp,~hat.next/3]
+																			);0.1.wait}}) } ,0);
+
+					3.20.wait;}
 }
- ).play  )
+).play  )
 
 
 {SinOsc.ar(55 + SinOsc.ar(110,0,40),0,1)}.play
@@ -3494,7 +3494,7 @@ Licence: Other
 Tags: class
 
 /*
-This might be of use to someone: I made a crossfader for any number of 
+This might be of use to someone: I made a crossfader for any number of
 signals:
 */
 
@@ -3503,33 +3503,33 @@ signals:
 
 CrossfadeN {
 
-    *ar { arg inArray, x;
-        ^super.new.init(inArray,x);
-    }
+	*ar { arg inArray, x;
+		^super.new.init(inArray,x);
+	}
 
-    init { arg inArray,x;
+	init { arg inArray,x;
 
-        var n = inArray.size,
-            transPoints = Array.fill(n,{|i| i/(n-1)}),
-            transFunctions;
+		var n = inArray.size,
+			transPoints = Array.fill(n,{|i| i/(n-1)}),
+			transFunctions;
 
-        transFunctions = Array.fill(n-1,{|i| 
-(max(min(x,transPoints[i+1]),transPoints[i])-transPoints[i])/(transPoints[i+1]-transPoints[i]) 
-});       
+		transFunctions = Array.fill(n-1,{|i|
+(max(min(x,transPoints[i+1]),transPoints[i])-transPoints[i])/(transPoints[i+1]-transPoints[i])
+});
 
-        ^(    (inArray[0]*(1-transFunctions[0])) +   
-            (inArray[n-1]*transFunctions[n-2])
-            + Mix.fill(n-2, { |i| 
+		^(	(inArray[0]*(1-transFunctions[0])) +
+			(inArray[n-1]*transFunctions[n-2])
+			+ Mix.fill(n-2, { |i|
 transFunctions[i]*(1-transFunctions[i+1])*inArray[i+1] }) )
 
 
-    }
+	}
 
 }
 
 /*
 Enjoy
-Miguel Negrão
+Miguel Negro
 */
 
 
@@ -3546,23 +3546,23 @@ SynthDef("recbuffer", {arg bufnum;
 }).send(s);
 	
 SynthDef("buffergrain", {arg bufnum, sndrate = 1, grate= 1, gfreq = 10, gdur = 0.1;
-    var pos, tr1, tr2;
-    tr1 = Impulse.kr(sndrate/BufDur.ir(bufnum));
-    pos = Phasor.ar(tr1, sndrate/BufFrames.ir(bufnum), 0, 1);
-    tr2 = Impulse.kr(gfreq);
-    Out.ar(0, GrainBuf.ar(2, tr2, gdur, bufnum, grate,  pos, 2, TRand.kr(-1,1, tr2), -1)); 
+	var pos, tr1, tr2;
+	tr1 = Impulse.kr(sndrate/BufDur.ir(bufnum));
+	pos = Phasor.ar(tr1, sndrate/BufFrames.ir(bufnum), 0, 1);
+	tr2 = Impulse.kr(gfreq);
+	Out.ar(0, GrainBuf.ar(2, tr2, gdur, bufnum, grate,  pos, 2, TRand.kr(-1,1, tr2), -1));
 }).send(s);
 
 r = Routine{ var bufdur = 3;
-   x.free;
-   b.free;
-   b = Buffer.alloc(s, bufdur*44100);
-   b.updateInfo({| buf | Synth("recbuffer", [\bufnum, buf])});
-   bufdur.yield;  
-   x = Synth("buffergrain", [\bufnum, b]);
-   };
+x.free;
+b.free;
+b = Buffer.alloc(s, bufdur*44100);
+b.updateInfo({| buf | Synth("recbuffer", [\bufnum, buf])});
+bufdur.yield;
+x = Synth("buffergrain", [\bufnum, b]);
+};
 )
-	 
+	
 
 r.reset; r.play; //this line to (re)record and grain right after
 
@@ -3581,25 +3581,25 @@ Licence: Other
 Tags: gui
 
 /*
-my most concise syntax for modular code with tabbed views is the 
+my most concise syntax for modular code with tabbed views is the
 following, btw:
 */
 
-    v=TabbedView.newBasic(w,nil,[]);
+	v=TabbedView.newBasic(w,nil,[]);
 
-    ("tab0.rtf").load.value(v.add("tab0"));
-    ("tab1.rtf").load.value(v.add("tab1"));
-    ("tab2.rtf").load.value(v.add("tab2"));
+	("tab0.rtf").load.value(v.add("tab0"));
+	("tab1.rtf").load.value(v.add("tab1"));
+	("tab2.rtf").load.value(v.add("tab2"));
 
-    where the content of the tab files is:
+	where the content of the tab files is:
 
 
-    {arg w;
-        w.flow{arg w;
-        //your stuff here
+	{arg w;
+		w.flow{arg w;
+		//your stuff here
 
-        }
-    }
+		}
+	}
 /*
 ------
 
@@ -3763,9 +3763,9 @@ Tags: class,gui
 /*
 Wouter, (or anybody interested in it)
 
-here is a kinda Pen additions workaround i use to draw curves  
+here is a kinda Pen additions workaround i use to draw curves
 (bezier)... untill a primitive solution is done
-(forget it if someone already did something like that.... i am not  
+(forget it if someone already did something like that.... i am not
 aware of all quarks and stuffs already done)
 sc code pasted... take whatever you want from it if it can help:
 */
@@ -3860,7 +3860,7 @@ PenStore {
 	
 	var ct, selected=1.neg;
 	ct = [20@100, 60@120, 85@50, 210@100];
-	w = SCWindow.new("Click on knots and drag - CurveTest", Rect(400,  
+	w = SCWindow.new("Click on knots and drag - CurveTest", Rect(400,
 400, 500, 500));
 	c = SCUserView(w,w.view.bounds).relativeOrigin_(false);
 	c.drawFunc = {
@@ -3969,17 +3969,17 @@ Licence: Other
 Tags: fx
 
 /*
-a nice dub delay...  
-by boonier Jan 11, 2007; 10:53pm :: Rate this Message:    - Use ratings to moderate (?)
+a nice dub delay...
+by boonier Jan 11, 2007; 10:53pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
-Whats the key to writing a proper authentic-sounding dub delay? 
+Whats the key to writing a proper authentic-sounding dub delay?
 
-i've written a very simple single delay line with feedback  & saturation, but I've got my ears set on something like the mda DubDelay. I has a lovely phasey character to it... 
+i've written a very simple single delay line with feedback  & saturation, but I've got my ears set on something like the mda DubDelay. I has a lovely phasey character to it...
 
-any ideas? 
+any ideas?
 
-Re: a nice dub delay...  
-by unaudio Jan 11, 2007; 11:13pm :: Rate this Message:    - Use ratings to moderate (?)
+Re: a nice dub delay...
+by unaudio Jan 11, 2007; 11:13pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
 well there should be a filter in the feedback line.. i'm not sure what exactly is an authentic sounding dub delay, but for me properly set up filter in the feedback path sounds dub enough.
 
@@ -3988,14 +3988,14 @@ On 1/12/07, boonier <smills@...> wrote:
 Whats the key to writing a proper authentic-sounding dub delay?
 
 i've written a very simple single delay line with feedback  & saturation,
-but I've got my ears set on something like the mda DubDelay. I has a lovely 
+but I've got my ears set on something like the mda DubDelay. I has a lovely
 phasey character to it...
 
 any ideas?
 
 
 --
-View this message in context: http://www.nabble.com/a-nice-dub-delay...-tf2962373.html#a8288324 
+View this message in context: http://www.nabble.com/a-nice-dub-delay...-tf2962373.html#a8288324
 Sent from the Supercollider - User mailing list archive at Nabble.com.
 
 _______________________________________________
@@ -4005,72 +4005,72 @@ http://www.create.ucsb.edu/mailman/listinfo/sc-users
 
 
 
--- 
-for my music go here: 
-http://www.sporadic-fault.co.nr 
-_______________________________________________ 
-sc-users mailing list 
-sc-users@... 
+--
+for my music go here:
+http://www.sporadic-fault.co.nr
+_______________________________________________
+sc-users mailing list
+sc-users@...
 http://www.create.ucsb.edu/mailman/listinfo/sc-users
 
-Re: a nice dub delay...  
-by Jan Trutzschler-2 Jan 12, 2007; 07:50am :: Rate this Message:    - Use ratings to moderate (?)
+Re: a nice dub delay...
+by Jan Trutzschler-2 Jan 12, 2007; 07:50am :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
-the tape delay from the LocalIn helpfile might be a good starting   
-point ... 
+the tape delay from the LocalIn helpfile might be a good starting
+point ...
 */
-//from the help file ... 
-( 
-z = SynthDef("tape", { 
-        var local, in, amp; 
-        
-        in = AudioIn.ar([1,2]); 
-        
-        amp = Amplitude.kr(Mix.ar(in)); 
-        in = in * (amp > 0.02); // noise gate 
-        
-        local = LocalIn.ar(2); 
-        local = OnePole.ar(local, 0.4); 
-        local = OnePole.ar(local, -0.08); 
-        
-        local = Rotate2.ar(local[0], local[1], 0.2); 
-         	
-        local = DelayN.ar(local, 0.25, 0.25); 
-        
-        local = LeakDC.ar(local);	
-        local = ((local + in) * 1.25).softclip; 
-                
-        LocalOut.ar(local); 
-        
-        Out.ar(0, local * 0.1); 
-}).play; 
-) 
+//from the help file ...
+(
+z = SynthDef("tape", {
+		var local, in, amp;
+
+		in = AudioIn.ar([1,2]);
+
+		amp = Amplitude.kr(Mix.ar(in));
+		in = in * (amp > 0.02); // noise gate
+
+		local = LocalIn.ar(2);
+		local = OnePole.ar(local, 0.4);
+		local = OnePole.ar(local, -0.08);
+
+		local = Rotate2.ar(local[0], local[1], 0.2);
+			
+		local = DelayN.ar(local, 0.25, 0.25);
+
+		local = LeakDC.ar(local);	
+		local = ((local + in) * 1.25).softclip;
+
+		LocalOut.ar(local);
+
+		Out.ar(0, local * 0.1);
+}).play;
+)
 /*
- Re: a nice dub delay...  
-by Bobby Whelan-2 Jan 12, 2007; 06:33pm :: Rate this Message:    - Use ratings to moderate (?)
+Re: a nice dub delay...
+by Bobby Whelan-2 Jan 12, 2007; 06:33pm :: Rate this Message:	- Use ratings to moderate (?)
 Reply | Reply to Author | Print | View Threaded | Show Only this Message
-i dont know how useful this might be, in the summer a friend and I had a 
-gig as dub dj's, he played the records, and 
-I put delay on them using this patch, it has a tap-tempo control so you 
-can have the delay be a subdivision of the beat. 
-The delay input is gated with a .perc envelope, which (the slightly odd 
-part) is triggered from Pd, where I had a bonk~ object 
-looking for particular parts of the beat, eg the snare and the hihats. 
-The .perc envelope has a nice sound in this context, because you can add 
-delay to just these sounds. There is also a sampling part of the patch, 
-i cant remember whether it actually worked tho ;) 
+i dont know how useful this might be, in the summer a friend and I had a
+gig as dub dj's, he played the records, and
+I put delay on them using this patch, it has a tap-tempo control so you
+can have the delay be a subdivision of the beat.
+The delay input is gated with a .perc envelope, which (the slightly odd
+part) is triggered from Pd, where I had a bonk~ object
+looking for particular parts of the beat, eg the snare and the hihats.
+The .perc envelope has a nice sound in this context, because you can add
+delay to just these sounds. There is also a sampling part of the patch,
+i cant remember whether it actually worked tho ;)
 
-...it has a filter too, which is nothing special, use the T key to tap 
-the tempo, and the F key to switch the filter in/out. 
+...it has a filter too, which is nothing special, use the T key to tap
+the tempo, and the F key to switch the filter in/out.
 
-(it requires BoxGrid) 
+(it requires BoxGrid)
 
 http://www.soundingbody.co.uk/sc/synths/dubDelay.html
 */
 //select all and execute as one
 //two delays with a single tap-tempo control (tap T Key)
 //delay is triggered by sending "n_set (nodeID) t_trig 1" to sc from pd
-//because pd has the bonk~ object which is rather useful with dub and 
+//because pd has the bonk~ object which is rather useful with dub and
 //delays :)
 // requires BoxGrid to be installed too
 
@@ -4151,7 +4151,7 @@ Buffer.alloc(s, 222000, 1, bufnum: i+6);
 
 recSynths = Array.fill(4, {arg i; Synth(\shortTermMemory, [0, 0, 1, 6+i, 2, 4.0])});
 
-filterSynth = Synth(\bandPassFilter, [0, 0, 1, 0, 2, 0 ]); 
+filterSynth = Synth(\bandPassFilter, [0, 0, 1, 0, 2, 0 ]);
 
 oldLengths = [0, 0, 0, 0];
 
@@ -4163,7 +4163,7 @@ win = SCWindow("", Rect(200, 300, 775, 195)).front
 	};
 	 filterSynth.free;
 	 });
-win.view.keyDownAction_({ arg this, that; 
+win.view.keyDownAction_({ arg this, that;
 	var diff;
 		if(that == $t, {
 		
@@ -4191,7 +4191,7 @@ recSynths.at(i).set(2, tempo) //keep recordings in time with current beat
 but = SCButton(win, Rect(20, 20, 20, 20)).states = [["capture"]];
 but.action = { synth.set(\t_trig, 1) };
 grid = BoxGrid.new(win, bounds: Rect(20, 50, 300, 20), columns: 16, rows: 1);
-grid.nodeDownAction_({arg nodeloc; 
+grid.nodeDownAction_({arg nodeloc;
 	synth.set(\del, tempo/(nodeloc.at(0)+1));
 		grid.clearGrid;
 
@@ -4208,7 +4208,7 @@ slid3 = SCSlider(win, Rect(50, 20, 270, 20))
 but2 = SCButton(win, Rect(450, 20, 20, 20)).states = [["capture"]];
 but2.action = { synth2.set(\t_trig, 1) };
 grid2 = BoxGrid.new(win, bounds: Rect(450, 50, 300, 20), columns: 16, rows: 1);
-grid2.nodeDownAction_({arg nodeloc; 
+grid2.nodeDownAction_({arg nodeloc;
 	synth2.set(\del, tempo/(nodeloc.at(0)+1));
 		grid2.clearGrid;
 
@@ -4280,7 +4280,7 @@ sampLevels = Array.fill(4, { arg i;
 SCSlider(win, Rect(530+(i*60), 130, 50, 50))
 	.action = {arg a; sampLevelsArray.put(i, a.value); };
 });
-//	SCDragSink(win, Rect(340, 130, 100, 30)); 
+//	SCDragSink(win, Rect(340, 130, 100, 30));
 	
 	
 //bobby
@@ -4298,13 +4298,13 @@ Tags: fx,patch
 /*
 Hi Julian,
 
-I'm actually having a little trouble with the single sample feedback 
-example; I haven't been able to figure out how to put  audiorate 
-UGens inside its feedback loop. Demand rate UGens and multiplication, 
+I'm actually having a little trouble with the single sample feedback
+example; I haven't been able to figure out how to put  audiorate
+UGens inside its feedback loop. Demand rate UGens and multiplication,
 addition etc yes,
 
-well, all audio rate ugens are processing blocks, so that you can not 
-effectively put them in the demand loop directly with both input and 
+well, all audio rate ugens are processing blocks, so that you can not
+effectively put them in the demand loop directly with both input and
 output.
 
 But you can put the ugen in the Duty output and write it back onto the buffer:
@@ -4364,20 +4364,20 @@ Tags: pattern
 /*
 On Apr 1, 2008, at 10:13 PM, James Harkins wrote:
 
-I may actually start using PbindProxy within chucklib objects 
-because I've often wanted to add and remove streams on the fly 
+I may actually start using PbindProxy within chucklib objects
+because I've often wanted to add and remove streams on the fly
 (which is not possible in Pbind without replacing the whole Pbind).
 
 
-Hmm... just looked at the implementation. I take it back. PbindProxy 
-effectively *does* reset the whole Pbind whenever you change a 
-stream, which makes it a really effective shortcut for what you can 
+Hmm... just looked at the implementation. I take it back. PbindProxy
+effectively *does* reset the whole Pbind whenever you change a
+stream, which makes it a really effective shortcut for what you can
 already do with changing the stream of an EventStreamPlayer.
 
 It resets it only the first time you add a new key.
 
 
-Chucklib supports something different - you can replace one/more 
+Chucklib supports something different - you can replace one/more
 child streams without affecting any of the others.
 */
 
@@ -4448,9 +4448,9 @@ btns variable.
 what should it do exactly?
 
 assining the buttons to keys (e.g. button0 -> key "0", button1 -> key "1", etc.)
-it´s fun to play it like this :)
+its fun to play it like this :)
 
-don´t know, if this makes sense ...
+dont know, if this makes sense ...
 
 cheers, sven
 */
@@ -4464,100 +4464,100 @@ Licence: Other
 Tags: control,gui
 
 /*
-plotting multiple envelopes  
+plotting multiple envelopes
 by clifton-15 Mar 07, 2006; 01:11pm
 
-You can get editing aswell with stacked views with a envelopeview ontop 
-This is a 1st draft, thought you might be interested though. 
+You can get editing aswell with stacked views with a envelopeview ontop
+This is a 1st draft, thought you might be interested though.
 */
 
-( 
-        var w,ev,bounds; 
-        var envelopes,views; 
-        var randomEnv,plotEnv; 
-        var n = 10,indexInfo; 
-        var getEnvIndexAndBreakpoint; 
-        
-        w = SCWindow("",Rect(100,100,620,400)).front; 
-        
-        bounds = Rect(10,10,600,150); 
-        
-        randomEnv = { |n=8,lo=0,hi=1| 
-                Env( 
-                        { rrand(lo.asFloat,hi.asFloat) }!n, 
-                        normalizeSum({ 1.0.rand }!(n - 1)), 
-                        { [ \lin,\sin,\welch,6.0.rand2].choose }!(n - 1) 
-                ) 
-        }; 
-        
-        plotEnv =  { |env,ms| 
-                var n = 300, t = env.times.sum, step = t / n; 
-                var array = env.prAsArray; 
-                ms.value = { |i| array.envAt(step*i) }!n 
-        }; 
-        
-        envelopes = { randomEnv.(10.rand+2) }!n; 
-        
-        views = { SCMultiSliderView(w,bounds).thumbSize_(1).valueThumbSize_(0) 
-                .drawLines_(true).drawRects_(false).strokeColor_(Color.blue) }!n; 
-        
-        
-        ev = SCEnvelopeView(w,bounds).thumbSize_(4); 
-        ev.backColor = Color.white; 
-        
-        getEnvIndexAndBreakpoint = { |index| 
-                var counter = 0, i =0, next = indexInfo.first; 
-                while ( { counter + next <= index},{ 
-                        counter = counter + next; 
-                        next = indexInfo[i = i + 1]; 
-                }); 
-                [i.asInt,asInt(index-counter),counter,next] // index,breakpoint,offset,length 
-        }; 
-        
-        indexInfo = Array.new; 
-        ev.value = [ 
-                envelopes.collect({ |env,i| 
-                        indexInfo = indexInfo.grow(1).add(env.levels.size); 
-                        integrate([0.0]++env.times).asFloat 
-                }).flat, 
-                envelopes.collect({ |env| env.levels.asFloat }).flat, 
-        ]; 
-        
-        ev.action = { |v| 
-                var index,break,os,len,env,times; 
-                
-                #index,break,os,len = getEnvIndexAndBreakpoint.(v.index); 
-                
-                env = envelopes[index]; 
-                
-                times = v.value[0][os..os+len-1]; 
-                times[0] =0.0; 
-                times[len-1] =1.0; 
-                times = sort(times); 
-                
-                env.times = times[1..].differentiate; 
-                env.levels[break] = v.value[1][os+break]; 
-                envelopes[index] = env; 
-                plotEnv.(env,views[index]); 
-                
-                
-                if(os != 0,{ 
-                        times = v.value[0][0..os-1] ++ times 
-                }); 
-                times = times ++ v.value[0][os+len..]; 
-                
-                v.value = [ 
-                        times, 
-                        v.value[1] 
-                ]; 
-                
-        }; 
-                
-        views.do({ |v,i| 
-                plotEnv.(envelopes[i],v) 
-        }) 
+(
+	var w,ev,bounds;
+	var envelopes,views;
+	var randomEnv,plotEnv;
+	var n = 10,indexInfo;
+	var getEnvIndexAndBreakpoint;
 
-) 
+	w = SCWindow("",Rect(100,100,620,400)).front;
+
+	bounds = Rect(10,10,600,150);
+
+	randomEnv = { |n=8,lo=0,hi=1|
+		Env(
+			{ rrand(lo.asFloat,hi.asFloat) }!n,
+			normalizeSum({ 1.0.rand }!(n - 1)),
+			{ [ \lin,\sin,\welch,6.0.rand2].choose }!(n - 1)
+		)
+	};
+
+	plotEnv = { |env,ms|
+		var n = 300, t = env.times.sum, step = t / n;
+		var array = env.prAsArray;
+		ms.value = { |i| array.envAt(step*i) }!n
+	};
+
+	envelopes = { randomEnv.(10.rand+2) }!n;
+
+	views = { SCMultiSliderView(w,bounds).thumbSize_(1).valueThumbSize_(0)
+		.drawLines_(true).drawRects_(false).strokeColor_(Color.blue) }!n;
+
+
+	ev = SCEnvelopeView(w,bounds).thumbSize_(4);
+	ev.backColor = Color.white;
+
+	getEnvIndexAndBreakpoint = { |index|
+		var counter = 0, i =0, next = indexInfo.first;
+		while ( { counter + next <= index},{
+			counter = counter + next;
+			next = indexInfo[i = i + 1];
+		});
+		[i.asInt,asInt(index-counter),counter,next] // index,breakpoint,offset,length
+	};
+
+	indexInfo = Array.new;
+	ev.value = [
+		envelopes.collect({ |env,i|
+			indexInfo = indexInfo.grow(1).add(env.levels.size);
+			integrate([0.0]++env.times).asFloat
+		}).flat,
+		envelopes.collect({ |env| env.levels.asFloat }).flat,
+	];
+
+	ev.action = { |v|
+		var index,break,os,len,env,times;
+
+		#index,break,os,len = getEnvIndexAndBreakpoint.(v.index);
+
+		env = envelopes[index];
+
+		times = v.value[0][os..os+len-1];
+		times[0] =0.0;
+		times[len-1] =1.0;
+		times = sort(times);
+
+		env.times = times[1..].differentiate;
+		env.levels[break] = v.value[1][os+break];
+		envelopes[index] = env;
+		plotEnv.(env,views[index]);
+
+
+		if(os != 0,{
+			times = v.value[0][0..os-1] ++ times
+		});
+		times = times ++ v.value[0][os+len..];
+
+		v.value = [
+			times,
+			v.value[1]
+		];
+
+	};
+
+	views.do({ |v,i|
+		plotEnv.(envelopes[i],v)
+	})
+
+)
 
 
 
@@ -4568,81 +4568,81 @@ Language: C
 Licence: Other
 Tags: patch
 
-/* James McCartney <asynth@...> writes: 
+/* James McCartney <asynth@...> writes:
 
-> On May 12, 2005, at 12:13 PM, Mario Lang wrote: 
-> 
->> do we have a better way to say: 
->> [0,1,2,3].mirror.collect([_,7]).flat 
->> i.e., some way to interleave? 
-> 
-> [[0,1,2,3].mirror, 7].flop.flat 
-> 
->> Pbind(\degree, Pseq([2,0,2,-1], 3), \gtranspose, 
->> Pseq([0,0,0,-1], 3)), 
->> Pbind(\degree, Pseq([2,0,2,-2], 3), \gtranspose, Pseq([1,0,1,0], 3)), 
->> Pbind(\degree, Pseq([2,0,2,-3], 3), \gtranspose, Pseq([1,0,1,0], 3)), 
-> 
-> You can write accidentals as a deviation in cents from the scale 
-> degree. For example 2.1 is 2 sharp by 100 cents. 1.9 is 2 flat by 100 
-> cents. (With negatives it works the same but looks different -2.1 is 
-> 100 cents *flat* of -2 and -1.9 is 100 cents sharp of -2.) You can 
+> On May 12, 2005, at 12:13 PM, Mario Lang wrote:
+>
+>> do we have a better way to say:
+>> [0,1,2,3].mirror.collect([_,7]).flat
+>> i.e., some way to interleave?
+>
+> [[0,1,2,3].mirror, 7].flop.flat
+>
+>> Pbind(\degree, Pseq([2,0,2,-1], 3), \gtranspose,
+>> Pseq([0,0,0,-1], 3)),
+>> Pbind(\degree, Pseq([2,0,2,-2], 3), \gtranspose, Pseq([1,0,1,0], 3)),
+>> Pbind(\degree, Pseq([2,0,2,-3], 3), \gtranspose, Pseq([1,0,1,0], 3)),
+>
+> You can write accidentals as a deviation in cents from the scale
+> degree. For example 2.1 is 2 sharp by 100 cents. 1.9 is 2 flat by 100
+> cents. (With negatives it works the same but looks different -2.1 is
+> 100 cents *flat* of -2 and -1.9 is 100 cents sharp of -2.) You can
 > deviate by +/- 499 cents from any scale degree.
 ... [show rest of quote]
 
-Thats pretty cool!  And simplifies my example quite a bit :-) 
+Thats pretty cool!  And simplifies my example quite a bit :-)
 
-Note the 
+Note the
 
-(2!9++(2.1!6)++(2!6)++(1!6)++(0!6)++(-1!3)).dup.add(0).rotate(2) 
-.add(0!3++(-1!3)++(-1.1!3)++(-2!3)++(-3..-6).stutter(6)).flop.flat 
+(2!9++(2.1!6)++(2!6)++(1!6)++(0!6)++(-1!3)).dup.add(0).rotate(2)
+.add(0!3++(-1!3)++(-1.1!3)++(-2!3)++(-3..-6).stutter(6)).flop.flat
 
-which generates 12 measures of notes! :-) 
+which generates 12 measures of notes! :-)
 
-Now I have a burning question on my mind: How do I use the resulting 
-event stream for different things than just playing?  I'd like to 
-iterate over the whole Ppar and say, extract a midinote 
-or some such. Trying things like: 
+Now I have a burning question on my mind: How do I use the resulting
+event stream for different things than just playing?  I'd like to
+iterate over the whole Ppar and say, extract a midinote
+or some such. Trying things like:
 
-melody=melody.asStream.nextN(100, Event.default.copy.putAll((root:4, octave:5, dur:1/4))).collect{|e|e[\midinote].value} 
+melody=melody.asStream.nextN(100, Event.default.copy.putAll((root:4, octave:5, dur:1/4))).collect{|e|e[\midinote].value}
 
-generates an error regarding nil not implementing +...  What 
-am I missing here, how do I extract event data? 
+generates an error regarding nil not implementing +...  What
+am I missing here, how do I extract event data?
 
-What I'd actually like to do is to be able to reuse the 
-Event stream for other things like, say, generate a guitar tab. 
+What I'd actually like to do is to be able to reuse the
+Event stream for other things like, say, generate a guitar tab.
 */
-s.boot; 
-Tempo.bpm=96; 
-( // Lute Suite no. 4, Prelude (BWV 1006a) 
-  // 3/4 
-Ppar([ 
-        Pbind(\octave, 3, \degree, Pseq([Pn(0,15),2],1), \dur, 6), // bass 
-        Pseq([ // melody 
-                Pbind(\degree, Pseq([\_,7,6,7,\_,4,2,4,0,1,0,-1,0,\_,-3,-5,-3], 1), 
-                        \dur, Pseq([1/2,Pn(1/4,4),Pn(1/2,3),Pn(1/4,6),Pn(1/2,3)], 1)), 
-                Pbind(\octave, 4, \degree, 
-                        Pseq([(0..3).mirror1,4].flop.flat++[0]++(7..4)++(7..1), 2)), 
-                Pbind(\octave, 4, \degree,Pseq((0..10)++[8,9,11]++(7..14)++[12,13],1)), 
-                Pbind(\degree, Pseq( 
-                        ({|i|[[if(i==0){7}{2},if(i==0){3}{1},2,3,2,1],4].flop.flat ++ 
-                                [0]++(7..4)++[0]++[(5..3),0].flop.flat}!2).flat, 1)), 
-                Pbind(\degree,Pseq([[2,0,-1,0,1,-1,0,2,1,2,3,1],0].flop.flat,2)), 
-                Pbind(\degree, Pseq( 
-                        (2!9++(2.1!6)++(2!6)++(1!6)++(0!6)++(-1!3)).dup.add(0).rotate(2) 
-                        .add(0!3++(-1!3)++(-1.1!3)++(-2!3)++(-3!6)++(-4!6)++(-5!6)++(-6!6)) 
-                        .flop.flat, 1)), 
-                Pbind(\octave, 4, \degree, Pseq([ 
-                        0,1,Pseq([0,1,2,4],2),0,1, 
-                        2,3,Pseq([2,3,4,7],2),2,3, 
-                        4,5,Pseq([4,5,5.1,9],2),4,5], 1)) 
-        ], 1)], 1).play(TempoClock.default, Event.default.copy.putAll( 
-        (root:4, dur:1/4, octave:5))) 
-) 
+s.boot;
+Tempo.bpm=96;
+( // Lute Suite no. 4, Prelude (BWV 1006a)
+// 3/4
+Ppar([
+		Pbind(\octave, 3, \degree, Pseq([Pn(0,15),2],1), \dur, 6), // bass
+		Pseq([ // melody
+				Pbind(\degree, Pseq([\_,7,6,7,\_,4,2,4,0,1,0,-1,0,\_,-3,-5,-3], 1),
+						\dur, Pseq([1/2,Pn(1/4,4),Pn(1/2,3),Pn(1/4,6),Pn(1/2,3)], 1)),
+				Pbind(\octave, 4, \degree,
+						Pseq([(0..3).mirror1,4].flop.flat++[0]++(7..4)++(7..1), 2)),
+				Pbind(\octave, 4, \degree,Pseq((0..10)++[8,9,11]++(7..14)++[12,13],1)),
+				Pbind(\degree, Pseq(
+						({|i|[[if(i==0){7}{2},if(i==0){3}{1},2,3,2,1],4].flop.flat ++
+								[0]++(7..4)++[0]++[(5..3),0].flop.flat}!2).flat, 1)),
+				Pbind(\degree,Pseq([[2,0,-1,0,1,-1,0,2,1,2,3,1],0].flop.flat,2)),
+				Pbind(\degree, Pseq(
+						(2!9++(2.1!6)++(2!6)++(1!6)++(0!6)++(-1!3)).dup.add(0).rotate(2)
+						.add(0!3++(-1!3)++(-1.1!3)++(-2!3)++(-3!6)++(-4!6)++(-5!6)++(-6!6))
+						.flop.flat, 1)),
+				Pbind(\octave, 4, \degree, Pseq([
+						0,1,Pseq([0,1,2,4],2),0,1,
+						2,3,Pseq([2,3,4,7],2),2,3,
+						4,5,Pseq([4,5,5.1,9],2),4,5], 1))
+		], 1)], 1).play(TempoClock.default, Event.default.copy.putAll(
+		(root:4, dur:1/4, octave:5)))
+)
 
--- 
-CYa, 
-  Mario 
+--
+CYa,
+Mario
 
 
 
@@ -4737,7 +4737,7 @@ a.readWithTask(block: 1, showProgress: false);	// dont show a progress bar
 a.waveColors = [Color.blue(alpha: 0.5)]; // multi channel files [chn1Color, chn2Color...]
 a.background = Color.new255(211, 211, 211);
 
-// grid 
+// grid
 a.gridOn = true;
 a.gridColor = Color.blue(alpha:0.5)
 a.gridResolution = 0.2;
@@ -4765,15 +4765,15 @@ a.setSelectionSize(0, 3200)
 a.setSelectionStart(0, 2000)
 
 // try setting a selection with the mouse on the view
-a.setEditableSelectionStart(0,true) // on by default 
+a.setEditableSelectionStart(0,true) // on by default
 a.setEditableSelectionSize(0,true) // on by default
 
 // now lock selection start
-a.setEditableSelectionStart(0,false) // on by default - only 
+a.setEditableSelectionStart(0,false) // on by default - only
 a.setEditableSelectionSize(0,true) // on by default
 
 // lock selection size
-a.setEditableSelectionStart(0,true) // on by default - only 
+a.setEditableSelectionStart(0,true) // on by default - only
 a.setEditableSelectionSize(0,false) // on by default
 
 // back to normal
@@ -4831,7 +4831,7 @@ v = SCSoundFileView.new(w,400 @ 80).canFocus_(false).gridOn_(true).timeCursorOn_
 e = SCSlider(w, 7 @ 80).action_({|slider| v.yZoom = slider.value * 0.95 + 0.5 });
 //d = SCSlider(w, Rect(10,190,600,7)).action_({|slider| v.scrollTo(slider.value) }); //simple scroll
 d = SC2DSlider(w, 400 @ 30) // scroll w/zoom x - felix!
-	.action_({|sl| 
+	.action_({|sl|
 		var y;
 		v.zoomToFrac(y = sl.y * 0.95 + 0.05);
 		v.scrollTo(sl.x);
@@ -4970,36 +4970,36 @@ Tags: patch
 
 
 (
-var numHarm = 40, freqJitterDensity = 500; 
+var numHarm = 40, freqJitterDensity = 500;
 
-SynthDef.new("additup1", 
+SynthDef.new("additup1",
 	{
 	arg freq = 440, amp = 1, out = 0,
 		freqJitterAmt = 0, harmMult = 1, harmOffset = 1, harmDecayPower = 1,
-		formFreqRatio = 1, formAttack = 0.005, formDecay = 0.003; 
+		formFreqRatio = 1, formAttack = 0.005, formDecay = 0.003;
 		
-		freq = MouseX.kr(30, 1600, 1); 
+		freq = MouseX.kr(30, 1600, 1);
 		
 		Out.ar(out, Pan2.ar(
 		
 			Mix.fill(
 				numHarm,
-				{ 
-				arg index; 
+				{
+				arg index;
 
 				Formlet.ar(
-					Impulse.ar(freq * Lag.ar(Dust2.ar( (freqJitterDensity + (freqJitterDensity * 0.2).rand2), freqJitterAmt, 1), 0.3), 1.0.rand), 
+					Impulse.ar(freq * Lag.ar(Dust2.ar( (freqJitterDensity + (freqJitterDensity * 0.2).rand2), freqJitterAmt, 1), 0.3), 1.0.rand),
 					freq * formFreqRatio * (index * harmMult + harmOffset),
 					formAttack,
 					formDecay,
-	                		1/((index * harmMult + harmOffset) ** harmDecayPower) 
-	            	) 
-				} 
+					1/((index * harmMult + harmOffset) ** harmDecayPower)
+	  		)
+				}
 			) * amp * 0.8,
-		0, 1)); 
-    } 
-    ).send(s); 
-) 
+		0, 1));
+}
+).send(s);
+)
 
 
 (
@@ -5011,7 +5011,7 @@ s.sendMsg("/s_new", "additup1", n, 0, 0);
 (
 //attack of the wasps
 
-s.sendMsg("/n_set", n, 
+s.sendMsg("/n_set", n,
 	\amp, 1.6,	
 	\freqJitterAmt, 40, \harmMult, 3, \harmOffset, 2, \harmDecayPower, 0.7,
 	\formFreqRatio, 0.2, \formAttack, 0.003, \formDecay, 0.0002
@@ -5058,36 +5058,36 @@ s.sendMsg("/n_free", n);
 
 (
 
-var numHarm = 20, freqJitterDensity = 200; 
+var numHarm = 20, freqJitterDensity = 200;
 
-SynthDef.new("additup2", 
+SynthDef.new("additup2",
 	{
 	arg freq = 223, amp = 1, out = 0,
 		freqJitterAmt = 0,
-		harmMult = 1, harmOffset = 1, harmDecayPower = 1; 
+		harmMult = 1, harmOffset = 1, harmDecayPower = 1;
 		
-		freq = MouseX.kr(30, 1600, 1); 
+		freq = MouseX.kr(30, 1600, 1);
 		
 		Out.ar(out, Pan2.ar(
 			Mix.fill(
 				numHarm,
-				{ 
-				arg index; 
+				{
+				arg index;
 
 				SinOsc.ar(
 					
-					(freq * Lag.ar(Dust2.ar( (freqJitterDensity + (freqJitterDensity * 0.2).rand2), freqJitterAmt, 1), 0.3)) 
+					(freq * Lag.ar(Dust2.ar( (freqJitterDensity + (freqJitterDensity * 0.2).rand2), freqJitterAmt, 1), 0.3))
 					* (index * harmMult + harmOffset),
 					1.00.rand,
-	                		1/((index * harmMult + harmOffset) ** harmDecayPower) 
-	            	) 
-				} 
+					1/((index * harmMult + harmOffset) ** harmDecayPower)
+	  		)
+				}
 			) * amp * 0.1,
-		0, 1)); 
-    } 
-    ).send(s); 
+		0, 1));
+}
+).send(s);
 
-) 
+)
 
 (
 n = s.nextNodeID;
@@ -5099,7 +5099,7 @@ s.sendMsg("/s_new", "additup2", n, 0, 0);
 (
 // hollow joy
 
-s.sendMsg("/n_set", n, 
+s.sendMsg("/n_set", n,
 	\amp, 1.2,	
 	\freqJitterAmt, 1.7, \harmMult, 1.4, \harmOffset, 1, \harmDecayPower, 1.3
 );
@@ -5265,7 +5265,7 @@ Tags: info
 
 /*
 On Jun 9, 2008, at 6:54 AM, Josh Parmenter wrote:
-Do you man the argument names? From  a binary synthdef file? You can  
+Do you man the argument names? From  a binary synthdef file? You can
 do it with SynthDescs, but it is a little tricky...
 */
 
@@ -5274,7 +5274,7 @@ do it with SynthDescs, but it is a little tricky...
 			SynthDescLib.global.read("synthdefs/default.scsyndef");
 			SynthDescLib.global.synthDescs.at(\default).controlNames.postln;
 
-// As for data types, it is always a number, or if Control.names is used  
+// As for data types, it is always a number, or if Control.names is used
 // (or an Array), then an array of numbers.
 
 //Or
@@ -5530,7 +5530,7 @@ Licence: Other
 Tags: gui,system,info
 
 /*
-there can be only one dialog open at a time, you will need to launch  
+there can be only one dialog open at a time, you will need to launch
 a routine and wait for the first dialog to finish:
 */
 
@@ -5552,7 +5552,7 @@ cond.test=false; cond.wait;
 )
 
 /*
-the "defer" is necessary because Condition-wait still breaks the  
+the "defer" is necessary because Condition-wait still breaks the
 AppClock thread.
 
 ciao, -sciss-
@@ -5562,7 +5562,7 @@ ciao, -sciss-
 
 /*
 Am 21.05.2008 um 18:53 schrieb TomD:
-I would like to use CocoaDialog to open successively two sound  
+I would like to use CocoaDialog to open successively two sound
 files like this for example :
 */
 
@@ -5577,8 +5577,8 @@ CocoaDialog.getPaths({ arg paths;
 }
 
 /*
-but it doesn't work, why ? Is there a way ? I've tried with  
-"wait" (eg "5.wait") put between two different CocoaDialogs but it  
+but it doesn't work, why ? Is there a way ? I've tried with
+"wait" (eg "5.wait") put between two different CocoaDialogs but it
 is constraining in time...
 */
 
@@ -5592,7 +5592,7 @@ Tags: patch
 
 /*
 Here's a version that works.
-It produces four FAILURE /n_set Node not found messages when started, 
+It produces four FAILURE /n_set Node not found messages when started,
 but it produces audio as intended.
 */
 
@@ -5611,8 +5611,8 @@ var sentfreq;
 
 ~numChans=2;
 
-SynthDef("threeSines", { arg freq=220, harmMult1=17, harmMult2=10, vol1=0.05, vol2=0.05, vol3=0.05, gate=1, 
-attack=0.35, decay=0.35, p1=0, p2=0, p3=0, a1=0.037, a2=0.037, a3=0.037, lfo1=0.15, lfo2=0.15, lfo3=0.15, envMax=1.0, cutoff=1000; e=Env.new([0, envMax, 
+SynthDef("threeSines", { arg freq=220, harmMult1=17, harmMult2=10, vol1=0.05, vol2=0.05, vol3=0.05, gate=1,
+attack=0.35, decay=0.35, p1=0, p2=0, p3=0, a1=0.037, a2=0.037, a3=0.037, lfo1=0.15, lfo2=0.15, lfo3=0.15, envMax=1.0, cutoff=1000; e=Env.new([0, envMax,
 envMax*0.2, 0], [attack, attack, decay], 'sine', 2);
 					y=Env.new([0, envMax, envMax, 0], [0.1, 6.5, 0.1]);
 					o = //Pan2.ar(SinOsc.ar(freq, 0, SinOsc.kr(lfo1, 2pi.rand, 0.01, a1)), p1)
@@ -5620,12 +5620,12 @@ envMax*0.2, 0], [attack, attack, decay], 'sine', 2);
 						+
 
 	//Pan2.ar(SinOsc.ar(freq*harmMult1, 0, SinOsc.kr(lfo2, 2pi.rand, 0.01, a2)), p2)
-						PanAz.ar(~numChans, 
+						PanAz.ar(~numChans,
 SinOsc.ar(freq*harmMult1, 0, SinOsc.kr(lfo2, 2pi.rand, 0.01, a2)), p2, 1, 3)
 						+
 
 	//Pan2.ar(SinOsc.ar(freq*harmMult2, 0, SinOsc.kr(lfo3, 2pi.rand, 0.01, a3)), p3);
-						PanAz.ar(~numChans, 
+						PanAz.ar(~numChans,
 SinOsc.ar(freq*harmMult2, 0, SinOsc.kr(lfo3, 2pi.rand, 0.01, a3)), p3, 1, 3);
 					p=RLPF.ar(o, cutoff, 0.2);
 					a=Impulse.ar(0, 0, envMax);
@@ -5687,9 +5687,9 @@ SinOsc.ar(freq*harmMult2, 0, SinOsc.kr(lfo3, 2pi.rand, 0.01, a3)), p3, 1, 3);
 ~p43=1.97531.round(1.97531);// 160/81
 ~p44=2.round(2);			// 2/1
 
-~fundlist=[~p1, ~p2, ~p3, ~p4, ~p5, ~p6, ~p7, ~p8, ~p9, ~p10, ~p11, 
+~fundlist=[~p1, ~p2, ~p3, ~p4, ~p5, ~p6, ~p7, ~p8, ~p9, ~p10, ~p11,
 ~p12, ~p13, ~p14, ~p15, ~p16, ~p17];
-~p1list=[~p18, ~p19, ~p20, ~p22, ~p24, ~p25, ~p26, ~p27, ~p28, ~p29, 
+~p1list=[~p18, ~p19, ~p20, ~p22, ~p24, ~p25, ~p26, ~p27, ~p28, ~p29,
 ~p30, ~p33, ~p43];
 
 
@@ -5744,14 +5744,14 @@ SinOsc.ar(freq*harmMult2, 0, SinOsc.kr(lfo3, 2pi.rand, 0.01, a3)), p3, 1, 3);
 		p44list=p1list*0.5;
 
 		masterlist=[~p1, ~p2, ~p3, ~p4, ~p5, ~p6, ~p7, ~p8, ~p9, ~p10, ~p11, ~p12, ~p13, ~p14,
-             ~p15, ~p16, ~p17, ~p18, ~p19, ~p20, ~p21, ~p22, ~p23, ~p24, ~p25, ~p26,
-             ~p28, ~p29, ~p30, ~p31, ~p32, ~p33, ~p34, ~p35, ~p36, ~p37, ~p38, ~p39,
-             ~p40, ~p41, ~p42, ~p43, ~p44];
+			~p15, ~p16, ~p17, ~p18, ~p19, ~p20, ~p21, ~p22, ~p23, ~p24, ~p25, ~p26,
+			~p28, ~p29, ~p30, ~p31, ~p32, ~p33, ~p34, ~p35, ~p36, ~p37, ~p38, ~p39,
+			~p40, ~p41, ~p42, ~p43, ~p44];
 
-          consonancelist=[ p1list, p2list, p3list, p4list, p5list, p6list, p7list,
-         		p8list, p9list, p10list, p11list, p12list, p13list, p14list,
-         		p15list, p16list, p17list, p18list, p19list, p20list, p21list,
-         		p22list, p23list, p24list, p25list, p26list, p27list, p28list,
+		consonancelist=[ p1list, p2list, p3list, p4list, p5list, p6list, p7list,
+				p8list, p9list, p10list, p11list, p12list, p13list, p14list,
+				p15list, p16list, p17list, p18list, p19list, p20list, p21list,
+				p22list, p23list, p24list, p25list, p26list, p27list, p28list,
 			p30list, p31list, p33list, p34list, p35list, p36list, p37list,
 			p38list, p39list, p40list, p41list, p42list, p43list, p44list ];
 
@@ -5763,7 +5763,7 @@ SinOsc.ar(freq*harmMult2, 0, SinOsc.kr(lfo3, 2pi.rand, 0.01, a3)), p3, 1, 3);
 		osc3freq=0;
 		osc3index=0;
 
-		inf.do({ arg i; var f, hm1, hm2, thisIndex, 
+		inf.do({ arg i; var f, hm1, hm2, thisIndex,
 nextIndex, p1, p2, p3, a1, a2, a3, f1, f2, f3, maxLev, percattack;
 				p1=1.0.rand2;
 				p2=1.0.rand2;
@@ -5780,33 +5780,33 @@ nextIndex, p1, p2, p3, a1, a2, a3, f1, f2, f3, maxLev, percattack;
 				//maxLev=rrand(0.3, 0.6);
 				percattack=0.1;
 
-				while ( { ~lastnode==~currentnode }, 
+				while ( { ~lastnode==~currentnode },
 { ~currentnode=~nlist.choose;});
 				~lastnode=~currentnode;
 
 
 				// Choose a node (synth) to change this time through
-				if ( (i>3), {n=~currentnode; 
+				if ( (i>3), {n=~currentnode;
 maxLev=rrand(0.3, 0.6);},
-						   { if ( (i==0), 
+						   { if ( (i==0),
 {n=2000;  maxLev=0.07; },
-						   
+						
 		{ if ( (i==1), {n=2001; maxLev=0.07; },
-						   
-				      { if ( (i==2), {n=2002; 
+						
+				  	{ if ( (i==2), {n=2002;
 maxLev=0.07; }, {n=2003; maxLev=0.07; ~lastnode=2003;}
-						   
-				             ) }
-						   
+						
+				 			) }
+						
 			)}
-						   
+						
 		)}
 						   );
 				//n.postln;
 				//("current node:  "++~currentnode).postln;
-				//("last node:  "++~lastnode).postln; 
+				//("last node:  "++~lastnode).postln;
 (" ").postln;
-					  
+					
 				if ( (n==2000),
 					{
 					if ( (currentFundIndex==0),
@@ -5816,24 +5816,24 @@ maxLev=0.07; }, {n=2003; maxLev=0.07; ~lastnode=2003;}
 								4, 4,
 								5, 5,
 								6, 6,
-								7, 8, 
+								7, 8,
 9, 10, 11, 12, 13, 14, 15].choose; },
 						{ thisIndex=[
-								-1, 
+								-1,
 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 								2, 2, 2, 2,
 								3, 3, 3,
 								4, 4,
 								5, 5,
-								6, 
+								6,
 6].choose; });
 
 
 	//("currentFundIndex="++currentFundIndex).postln;
 					//("thisIndex="++thisIndex).postln;
 					nextIndex=currentFundIndex+thisIndex;
-					if ( 
-(nextIndex>~fundlist.size), { nextIndex=(nextIndex%(~fundlist.size)) 
+					if (
+(nextIndex>~fundlist.size), { nextIndex=(nextIndex%(~fundlist.size))
 });
 					//("nextIndex="++nextIndex).postln;
 					f=fund*(~fundlist.wrapAt(nextIndex));
@@ -5845,7 +5845,7 @@ maxLev=0.07; }, {n=2003; maxLev=0.07; ~lastnode=2003;}
 			   		(decay+0.1).wait;
 					//nextIndex.postln;
 					//f.postln;
-					s.sendMsg("/s_new", 
+					s.sendMsg("/s_new",
 "threeSines", 2000, 1, 0,
 
 	"freq", f,
@@ -5859,131 +5859,131 @@ maxLev=0.07; }, {n=2003; maxLev=0.07; ~lastnode=2003;}
 	"harmMult2", hm2,
 
 	"p1", p1, "p2", p2, "p3", p3,
-				   	   		  
+				   	   		
 	"attack", attack,
-				   	   		  
+				   	   		
 	"envMax", maxLev,
-				   	   		  
+				   	   		
 	"cutoff", rrand(f, f*2),
-				   	   		  
+				   	   		
 	"percattack", percattack
 				   	   		 		);
 				   		   },
-				    {  if ( (n==2001),
-							{ 
+					{  if ( (n==2001),
+							{
 osc2index=consonancelist.at(currentFundIndex).size.rand;
-				   	   
+				   	
 osc2freq=fund*(consonancelist.at(currentFundIndex).at(osc2index));
-				   	   
+				   	
 s.sendMsg("/n_set", 2001, "gate", 0);
 				   	  		  (decay+0.1).wait;
-				   	   
+				   	
 s.sendMsg("/s_new", "threeSines", 2001, 1, 0,
-				   	   
+				   	
 				"freq", osc2freq,
-				   	   
+				   	
 				"a1", a1, "a2", a2, "a3", a3,
 
 				"lfo1", f1, "lfo2", f2, "lfo3", f3,
 
 				"harmMult1", hm1,
-				   	   
+				   	
 				"harmMult2", hm2,
-				   	   
+				   	
 				"p1", p1, "p2", p2, "p3", p3,
-				   	   		  
+				   	   		
 				"attack", attack,
-				   	   		  
+				   	   		
 				"envMax", maxLev,
-				   	   		  
-	              "cutoff", rrand(osc2freq, osc2freq*2),
-				   	   		  
-	              "percattack", percattack
-				   	   		  
+				   	   		
+	  			"cutoff", rrand(osc2freq, osc2freq*2),
+				   	   		
+	  			"percattack", percattack
+				   	   		
 				);
 				   	   		},
 				   	   		{ if ( (n==2002),
-				   	   		  
+				   	   		
 	{ osc3index=consonancelist.at(osc2index).size.rand;
-				   	   		  
+				   	   		
 
 osc3freq=osc2freq*(consonancelist.at(osc2index).at(osc3index));
-				   	   		  
-	  if ( (osc2index>34), { sentfreq=osc3freq*([0.5, 1].choose) 
+				   	   		
+	  if ( (osc2index>34), { sentfreq=osc3freq*([0.5, 1].choose)
 }, { sentfreq=osc3freq });
-				   	   		  
+				   	   		
 	  s.sendMsg("/n_set", 2002, "gate", 0);
-				   	   		  
+				   	   		
 	  (decay+0.1).wait;
-				   	   		  
+				   	   		
 	  s.sendMsg("/s_new", "threeSines", 2002, 1, 0,
-				   	   		  
-				         "freq", sentfreq,
-				   	   		  
-				         "a1", a1, "a2", a2, "a3", a3,
+				   	   		
+				 		"freq", sentfreq,
+				   	   		
+				 		"a1", a1, "a2", a2, "a3", a3,
 
-				         "lfo1", f1, "lfo2", f2, "lfo3", f3,
+				 		"lfo1", f1, "lfo2", f2, "lfo3", f3,
 
-				         "harmMult1", hm1,
-				   	   		  
-				         "harmMult2", hm2,
-				   	   		  
-				         "p1", p1, "p2", p2, "p3", p3,
-				   	   		  
-				         "attack", attack,
-				   	   		  
-				         "envMax", maxLev,
-				   	   		  
-	                       "cutoff", rrand(sentfreq, sentfreq*2),
-				   	   		  
-	                       "percattack", percattack
-				   	   		  
-			             );
+				 		"harmMult1", hm1,
+				   	   		
+				 		"harmMult2", hm2,
+				   	   		
+				 		"p1", p1, "p2", p2, "p3", p3,
+				   	   		
+				 		"attack", attack,
+				   	   		
+				 		"envMax", maxLev,
+				   	   		
+	   					"cutoff", rrand(sentfreq, sentfreq*2),
+				   	   		
+	   					"percattack", percattack
+				   	   		
+			 			);
 				   	   		 		},
-				   	   		  
+				   	   		
 	{ osc4index=consonancelist.at(osc3index).size.rand;
-				   	   		  
+				   	   		
 
 osc4freq=osc3freq*(consonancelist.at(osc3index).at(osc4index));
-				   	   		  
+				   	   		
 	  osc4freq=osc4freq*([1, 0.5].choose);
-				   	   		  
+				   	   		
 	  s.sendMsg("/n_set", 2003, "gate", 0);
-				   	   		  
+				   	   		
 	  (decay+0.1).wait;
-				   	   		  
+				   	   		
 	  s.sendMsg("/s_new", "threeSines", 2003, 1, 0,
-				   	   		  
-	                       "freq", osc4freq,
-				   	   		  
-	                       "a1", a1, "a2", a2, "a3", a3,
-				   	   		  
-	                       "lfo1", f1, "lfo2", f2, "lfo3", f3,
-				   	   		  
-	                       "harmMult1", hm1,
-				   	   		  
-	                       "harmMult2", hm2,
-				   	   		  
-	                       "p1", p1, "p2", p2, "p3", p3,
-				   	   		  
-	                       "attack", attack,
-				   	   		  
-				         "envMax", maxLev,
-				   	   		  
-	                       "cutoff", rrand(osc4freq, osc4freq*2),
-				   	   		  
-				         "percattack", percattack
-				   	   		  
-	                       );
+				   	   		
+	   					"freq", osc4freq,
+				   	   		
+	   					"a1", a1, "a2", a2, "a3", a3,
+				   	   		
+	   					"lfo1", f1, "lfo2", f2, "lfo3", f3,
+				   	   		
+	   					"harmMult1", hm1,
+				   	   		
+	   					"harmMult2", hm2,
+				   	   		
+	   					"p1", p1, "p2", p2, "p3", p3,
+				   	   		
+	   					"attack", attack,
+				   	   		
+				 		"envMax", maxLev,
+				   	   		
+	   					"cutoff", rrand(osc4freq, osc4freq*2),
+				   	   		
+				 		"percattack", percattack
+				   	   		
+	   					);
 				   	   		 		  })
 				   	   		  });
-				   	   		  
-	   	  
+				   	   		
+	   	
 				   	  });
-					 if ( (i>3), { 
-duration=([1.0, 1.5, 2.0, 2.0, 2.0, 2.5, 3.0, 3.5, 4.0, 3.5, 
+					 if ( (i>3), {
+duration=([1.0, 1.5, 2.0, 2.0, 2.0, 2.5, 3.0, 3.5, 4.0, 3.5,
 3.5].choose)+attack },
-							    { 
+								{
 duration=0.03/*rrand(0.4, 0.6)*/});
 		   			  duration.wait;
 	})
@@ -6108,10 +6108,10 @@ The concept is simple - you record into one very large buffer. at the end of the
 SynthDef(\recordnewbuf,{arg in=0, bufnum;  RecordBuf.ar( SoundIn.ar(in), bufnum); }).load(s);
 
 SynthDef("playback", { arg out=0,bufnum=0, rate=1, trigger=1, startPos=0, loop=0;
-    Out.ar(out,
-        Pan2.ar(PlayBuf.ar(1,bufnum, BufRateScale.kr(bufnum)*rate, trigger, BufFrames.kr(bufnum)*startPos, loop),0.0)
-    )
-}).load(s); 
+	Out.ar(out,
+		Pan2.ar(PlayBuf.ar(1,bufnum, BufRateScale.kr(bufnum)*rate, trigger, BufFrames.kr(bufnum)*startPos, loop),0.0)
+	)
+}).load(s);
 );
 
 ~bigBuf=Buffer.alloc(s,44100*600,1); // a big 'temporary' 600 seconds buf - can be longer if needed
@@ -6123,7 +6123,7 @@ SynthDef("playback", { arg out=0,bufnum=0, rate=1, trigger=1, startPos=0, loop=0
 )
 
 
-(   // stop record  
+(   // stop record
 ~length = ~sched.time;
 ~recsynth.free;   // free up the recorder
 ~usedBuf = Buffer.alloc(s, 44100*~length, 1); //add a new empty buffer to the list
@@ -6155,7 +6155,7 @@ Tags: system
 
 // from the main file in the directory.
 
-// Then you can easily shift the collection of files around on your system, 
+// Then you can easily shift the collection of files around on your system,
 // without having to worry that you have to change the paths all the time.
 
 // sincerely,
@@ -6168,7 +6168,7 @@ Tags: system
 this.executeFile("path/file.sc")
 
 // for the same purpose . . . pros/cons?
- 
+
 // Thanks,
 // micromoog
 
@@ -6335,22 +6335,22 @@ Best P
 
 SynthDef(\acid , {|gate=1, out=0, at=0.1, dec=2, sus=2, rel=1, suslev=0.5, at2=0.01, dec2=0.7, sus2=2, rel2=2, suslev2=0.4, lfoRate=3, freq=55, ffreq=5000, rez=1, lfoFFreqMod=2000, envFFreqMod=2000, lfoRezMod=0.3, envRezMod=0, width=0.5, pan=0, lev=0.2, fx|
 	var env,env2,lfo,filt,osc;
-                   
+
 	env = EnvGen.kr(Env.new([0,1,suslev,suslev,0],[at,dec,sus,rel],[-4,-4,-4,-4]),gate,doneAction:2);
-                   
+
 	env2 = EnvGen.kr(Env.new([0,1,suslev2,suslev2,0],[at2,dec2,sus2,rel2],[-4,-4,-4,-4]),gate);
-                   
+
 	lfo = SinOsc.ar(lfoRate,0);
-                   
+
 	osc = Pulse.ar(freq,width)*env;
-                   
+
 	filt = MoogFF.ar(osc,(ffreq+(lfo*lfoFFreqMod)+(env2*envFFreqMod)).clip(20,20000),(rez+(lfo*lfoRezMod)+(env2*envRezMod)).clip(0.01,3.9)).softclip;
-                   
+
 	Out.ar(out,Pan2.ar(filt,pan,lev));
-                   
+
 	Out.ar(fx,Pan2.ar(filt,0,lev));
-                   
-}).send(s); 
+
+}).send(s);
 
 
 
@@ -6378,7 +6378,7 @@ Depending on what's in the feedback loop it will probably need something to star
 
 Allpass filters will cause a reverb-like dispersion to build up.  FreqShift is a fun UGen to play with in feedback loops, especially with small amounts of shift.
 
-Always try adjusting the gain, it usually has quite a big effect.  
+Always try adjusting the gain, it usually has quite a big effect.
 
 Other than that - experiment - put different effects in the loop and see what happens.  It's a great way to waste time :)
 
@@ -6397,19 +6397,19 @@ Tags: synthdef,control
 // try this...
 
 SynthDef( \dustCrackle, { arg amp, freq, t_gate;
-       var env, envctl, playEnv, in, playMe;
-       env = Env.newClear( 5 );
-       envctl = Control.names( [\env ] ).kr( env.asArray );
-       playEnv = EnvGen.kr( envctl, t_gate );
-       in = Mix.new( [ Dust.ar( ( freq * 3 ), 0.9 ), Crackle.ar( freq, 0.3 ) ] ) * playEnv;
-       playMe = in * amp;
-       Out.ar( 0, playMe.dup );
-       }).memStore;
+	var env, envctl, playEnv, in, playMe;
+	env = Env.newClear( 5 );
+	envctl = Control.names( [\env ] ).kr( env.asArray );
+	playEnv = EnvGen.kr( envctl, t_gate );
+	in = Mix.new( [ Dust.ar( ( freq * 3 ), 0.9 ), Crackle.ar( freq, 0.3 ) ] ) * playEnv;
+	playMe = in * amp;
+	Out.ar( 0, playMe.dup );
+	}).memStore;
 
 
-      x = Synth( \dustCrackle, [ \t_gate, 1, \freq, 2, \amp, 0.9, \env, Env([ 0, 1 ], [ 3 ], \sin ) ] );
+	x = Synth( \dustCrackle, [ \t_gate, 1, \freq, 2, \amp, 0.9, \env, Env([ 0, 1 ], [ 3 ], \sin ) ] );
 
-    x.setn(\env, Env( [ 1, 0 ], [ 5 ], \sin ), \t_gate, 1);
+	x.setn(\env, Env( [ 1, 0 ], [ 5 ], \sin ), \t_gate, 1);
 
 
 /*
@@ -6430,25 +6430,25 @@ better way to do this, and was wondering if anyone had a nicer way of
 achieving the below:
 */
 SynthDef( \dustCrackle, { arg amp, freq, t_gate;
-       var env, envctl, playEnv, in, playMe;
-       env = Env.newClear( 5 );
-       envctl = Control.names( [\env ] ).kr( env.asArray );
-       playEnv = EnvGen.kr( envctl, t_gate );
-       in = Mix.new( [ Dust.ar( ( freq * 3 ), 0.9 ), Crackle.ar( freq, 0.3 )
+	var env, envctl, playEnv, in, playMe;
+	env = Env.newClear( 5 );
+	envctl = Control.names( [\env ] ).kr( env.asArray );
+	playEnv = EnvGen.kr( envctl, t_gate );
+	in = Mix.new( [ Dust.ar( ( freq * 3 ), 0.9 ), Crackle.ar( freq, 0.3 )
 ] ) * playEnv;
-       playMe = in * amp;
-       Out.ar( [ 0, 1 ], playMe );
-       //Pause.kr( gate1, 1002 );
-       }).memStore;
+	playMe = in * amp;
+	Out.ar( [ 0, 1 ], playMe );
+	//Pause.kr( gate1, 1002 );
+	}).memStore;
 
 //other long sustain, no looping
 //long sustain two
 (
 s.bind{
-       e = Env([ 0, 1 ], [ 3 ], \sin );
-       x = Synth( \dustCrackle, [ \t_gate, 1, \freq, 2, \amp, 0.9 ] );
-       x.setn( \env, e.asArray );
-       };
+	e = Env([ 0, 1 ], [ 3 ], \sin );
+	x = Synth( \dustCrackle, [ \t_gate, 1, \freq, 2, \amp, 0.9 ] );
+	x.setn( \env, e.asArray );
+	};
 )
 
 //with Routine, can fade out env and then release...
@@ -6702,9 +6702,9 @@ Tags: patch,FFT
 I wrote this for a mate who plays didge, sounds ok with didge, but better if
 one shouts abuse at it.
 
-Hope someone has a use for it. 
+Hope someone has a use for it.
 
-  XxX P
+XxX P
 */
 (
 SynthDef(\barry , { arg freq,modFreq,modAmt,ind1 = 2.0,ind2 =
@@ -6716,7 +6716,7 @@ SynthDef(\barry , { arg freq,modFreq,modAmt,ind1 = 2.0,ind2 =
 
 	# pitch , hasPitch = Pitch.kr(input);
 
-	pitch = Lag3.kr(pitch,rate); 
+	pitch = Lag3.kr(pitch,rate);
 
 	amp = Amplitude.ar(input);
 
@@ -6741,14 +6741,14 @@ SynthDef(\barry , { arg freq,modFreq,modAmt,ind1 = 2.0,ind2 =
 (
 // couldnt be arsed to label the sliders or any crap like that, they are,
 // Slider 1 FM amt, Slider 2 lag speed for pitch bend or not, slider 3 fm index
-// 1, slider 4 fm index 2. 
+// 1, slider 4 fm index 2.
 
 
 ~win =SCWindow.new("didge", Rect(100,100,300,300/1.6142));
 ~slide = 4.collect{|i| SCSlider(~win,Rect(10,10+(i*35),280,30))};
 ~but = SCButton(~win, Rect(10,160,50,20)).states_([["start"],["stop"]])
 .action_({|num| case{num.value==0}{~bob = Synth(\barry)}
-                   {num.value==1}{~bob.free}});
+				{num.value==1}{~bob.free}});
 ~slide[0].action_({|val| ~bob.set(\sens,val.value*2)});
 ~slide[1].action_({|val| ~bob.set(\rate,val.value/2)});
 ~slide[2].action_({|val| ~bob.set(\ind1,val.value*4)});
@@ -6795,41 +6795,41 @@ Language: C
 Licence: Other
 Tags: gui
 
-( 
+(
 
-~win = SCWindow.new("Drum Composer",Rect(100,200,1000,500)); 
-~win.view.background = Color.new255(32,178,170); 
+~win = SCWindow.new("Drum Composer",Rect(100,200,1000,500));
+~win.view.background = Color.new255(32,178,170);
 
-~patbuts = 64.collect { |i| 
-        var vpos, button; 
-        vpos = 50 + (i div: 16 * 25); 
-        button = Button.new(~win,Rect( 11+((i%16)*65),vpos,65,20)) 
-                .states_([["Pattern " ++ i]]) 
-                .action_({ ~patwins[i].front }); 
-}; 
-~win.front; 
+~patbuts = 64.collect { |i|
+	var vpos, button;
+	vpos = 50 + (i div: 16 * 25);
+	button = Button.new(~win,Rect( 11+((i%16)*65),vpos,65,20))
+		.states_([["Pattern " ++ i]])
+		.action_({ ~patwins[i].front });
+};
+~win.front;
 
-~patwins = 64.collect { |poo| 
-        var patwin, mainSl, sliders, showNSliders; 
+~patwins = 64.collect { |poo|
+	var patwin, mainSl, sliders, showNSliders;
 
-        patwin = Window.new("Pattern " ++ poo, Rect(0,400,982,400)); 
+	patwin = Window.new("Pattern " ++ poo, Rect(0,400,982,400));
 
-        mainSl = Slider.new(patwin,Rect(0,10,50,50)) 
-                .step_(1/32) 
-                .action_({ |view| 
-                        showNSliders.value( 
-[1,32,'lin',1,0].asSpec.map(view.value)); 
-                }); 
-        sliders = 32.collect { |o| Slider.new(patwin, 
-Rect(10+(o*25),200,20,40))  }; 
+	mainSl = Slider.new(patwin,Rect(0,10,50,50))
+		.step_(1/32)
+		.action_({ |view|
+			showNSliders.value(
+[1,32,'lin',1,0].asSpec.map(view.value));
+		});
+	sliders = 32.collect { |o| Slider.new(patwin,
+Rect(10+(o*25),200,20,40)) };
 
-        showNSliders = { |n| 
-                sliders.do { |sl, i| sl.visible_(i < n) }; 
-        }; 
-        showNSliders.value(1); 
-        patwin; 
-}; 
-) 
+	showNSliders = { |n|
+		sliders.do { |sl, i| sl.visible_(i < n) };
+	};
+	showNSliders.value(1);
+	patwin;
+};
+)
 
 
 
@@ -6897,6 +6897,3 @@ Language: (null)
 Licence: (null)
 
 5.exprand
-
-
-
