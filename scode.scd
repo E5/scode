@@ -27,6 +27,7 @@ archivePath= (Document.current.dir ++ "/archiveTest.scarc").standardizePath;
 if(File.exists(archivePath), {
 		archive= ZArchive.read(archivePath);
 		k= archive.readItem(Event);
+		archive.close;
 		"Archive exists.".postln;
 	},{
 		k= ();
