@@ -1,8 +1,8 @@
 (
 
-var	gui_tagList, gui_snippetList, gui_addTag, gui_deleteTag, gui_addSnippet, gui_snippetInfo, gui_snippet, appliedTags,
-currentTag, currentSnippet, updateTagButtons, snippetAddTag, snippetHeader,
-saveAll, archivePath, archiveFile;
+var	gui_tagList, gui_snippetList, gui_addTag, gui_deleteTag, gui_addSnippet, gui_snippetInfo, gui_snippet, gui_appliedTags,
+currentTag, currentSnippet, updateTagButtons, gui_snippetAddTag, snippetHeader,
+gui_saveAll, archivePath, archiveFile;
 
 archivePath= (thisProcess.nowExecutingPath.dirname ++ "/archiveTest.scarc").standardizePath;
 
@@ -120,7 +120,7 @@ gui_addSnippet= SmoothButton(w, 20@20)
 			gui_snippet.enabled_(true);
 
 			// enable the snippet's Add Tag button
-			snippetAddTag.enabled_(true);
+			gui_snippetAddTag.enabled_(true);
 		}
 	);
 }
@@ -162,7 +162,7 @@ gui_snippet= TextView(w, 730@300)
 
 w.view.decorator.nextLine;
 
-snippetAddTag= SmoothButton(w, 60@20)
+gui_snippetAddTag= SmoothButton(w, 60@20)
 .states_([ [ "Add...", Color.black, Color.clear ] ])
 .action_{|me|
 	SCRequestString(
@@ -183,7 +183,7 @@ snippetAddTag= SmoothButton(w, 60@20)
 
 updateTagButtons= {|snippet|
 	// remove existing buttons
-	appliedTags.do{|item, i|
+	gui_appliedTags.do{|item, i|
 		item.remove;
 		w.refresh;
 	};
@@ -192,7 +192,7 @@ updateTagButtons= {|snippet|
 
 	// collect the current snippet's tags
 	// build the tag buttons array
-	appliedTags= Array.fill(
+	gui_appliedTags= Array.fill(
 		~archive.snippets[snippet].tags.size,
 		{|i|
 			SmoothButton(w, 60@20)
@@ -211,7 +211,7 @@ updateTagButtons= {|snippet|
 
 w.view.decorator.nextLine;
 
-saveAll= SmoothButton(w, 100@20)
+gui_saveAll= SmoothButton(w, 100@20)
 .states_([ [ "Save All..." ] ])
 .action_{|me|
 	archiveFile= ZArchive.write(archivePath);
