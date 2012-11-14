@@ -18,7 +18,7 @@ to a snippet.
 
 var	tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
 currentTag, currentSnippet, updateTagButtons, snippetAddTag, snippetHeader,
-saveAll, archivePath, archive;
+saveAll, archivePath, archive, snippetInfo;
 
 archivePath= (thisProcess.nowExecutingPath.dirname ++ "/archiveTest.scarc").standardizePath;
 
@@ -111,15 +111,20 @@ addSnippet= SmoothButton(w, 20@20)
 		"Untitled Snippet",
 		"Please enter your snippet title",
 		{ |newSnippetTitle|
+
 			// add a new snippet Event
 			k.snippets= k.snippets.add(());
+
 			// get the new snippet array size
 			x= k.snippets.size;
 			currentSnippet= x-1;
+
 			// store the title
 			k.snippets[currentSnippet].title= newSnippetTitle;
+
 			// make space for Tags
 			k.snippets[currentSnippet].tags= Set[];
+
 			// update the snippetList
 			snippetList.items= k.snippets.collect({|item, i| item.title}).sort;
 			snippetList.value= currentSnippet;
@@ -127,11 +132,12 @@ addSnippet= SmoothButton(w, 20@20)
 			snippet.stringColor_(Color.grey);
 			k.snippets[currentSnippet].snippet= "empty snippet";
 			snippet.string_(k.snippets[currentSnippet].snippet);
+
 			// enable the text editor
 			snippet.enabled_(true);
+
 			// enable the snippet's Add Tag button
 			snippetAddTag.enabled_(true);
-
 		}
 	);
 }
@@ -140,31 +146,45 @@ addSnippet= SmoothButton(w, 20@20)
 .border_(1)
 .resize_(1);
 
-//snippetHeader= CompositeView(w, 730@50)
-//	.background_(Color.grey(0.9));
-//snippetHeader.addFlowLayout(10@10, 10@10);
+w.view.decorator.shift(530, 0);
+
+snippetInfo= SmoothButton(w, 20@20)
+.states_([
+	[ 'i', Color.white, Color.blue.alpha_(0.25) ] ])
+.action_{|me|
+}
+.focusColor_(Color.clear)
+.border_(1)
+.enabled_(false)
+.resize_(3);
+
+// w.view.decorator.nextLine;
 //
-//SmoothButton(snippetHeader, 710@20)
-//	.states_([[ \none, Color.white, Color.clear ] ])
-//	.action_{|me| }
-//	.focusColor_(Color.white)
-////	.focusColor_(Color.clear)
-//	.radius_(0)
-//	.border_(0)
-//	.enabled_(true);
+// snippetHeader= CompositeView(w, 730@50)
+// .background_(Color.grey(0.9));
+// snippetHeader.addFlowLayout(10@10, 10@10);
 //
-//snippetHeader.decorator.reset;
+// SmoothButton(snippetHeader, 710@20)
+// .states_([[ \none, Color.white, Color.clear ] ])
+// .action_{|me| }
+// .focusColor_(Color.white)
+// // .focusColor_(Color.clear)
+// .radius_(0)
+// .border_(0)
+// .enabled_(true);
 //
-//StaticText(snippetHeader, 610@20)
-//	.string_("XxX")
-////	.background_(Color.red)
-//	.font_(Font( Font.defaultSansFace, 16 ).boldVariant);
+// snippetHeader.decorator.reset;
 //
-//w.view.decorator.shift(0, -9);
+// StaticText(snippetHeader, 610@20)
+// .string_("XxX")
+// // .background_(Color.red)
+// .font_(Font( Font.defaultSansFace, 16 ).boldVariant);
+//
+// w.view.decorator.shift(0, -9);
 
 snippet= TextView(w, 730@300)
 .action_{|me|
-	//		me.value.postln;
+	// me.value.postln;
 }
 .hasVerticalScroller_(true)
 .hasHorizontalScroller_(true)
