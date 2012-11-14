@@ -39,8 +39,9 @@ currentTag= 0;
 
 w= Window("scode", Rect(318, 325, 750, 640)).front;
 w.addFlowLayout(10@10, 10@10);
+// w.minSize_(Size.new(200, 200));
 
-tagList= ListView(w, 130@220)
+tagList= ListView(w, 140@220)
 .action_{|me|
 	currentTag= me.value;
 	// switch(me.value,
@@ -50,15 +51,17 @@ tagList= ListView(w, 130@220)
 	// 	3, {deleteTag.enabled= true;}
 	// );
 }
-.items_(["= ALL ="] ++ k.tags.asArray.sort);
+.items_(["= ALL ="] ++ k.tags.asArray.sort)
+.resize_(1);
 
-snippetList= ListView(w, 590@220)
+snippetList= ListView(w, 580@220)
 .action_{|me|
 	currentSnippet= me.value;
 	snippet.string= k.snippets[currentSnippet].snippet;
 	updateTagButtons.value(currentSnippet);
 }
-.items_(k.snippets.collect({|item, i| item.title}).sort);
+.items_(k.snippets.collect({|item, i| item.title}).sort)
+.resize_(2);
 
 w.view.decorator.nextLine;
 
@@ -78,7 +81,8 @@ addTag= SmoothButton(w, 20@20)
 .focusColor_(Color.clear)
 .radius_(0)
 .border_(1)
-.enabled_(false);
+.enabled_(false)
+.resize_(1);
 
 deleteTag= SmoothButton(w, 20@20)
 .states_([
@@ -94,9 +98,10 @@ deleteTag= SmoothButton(w, 20@20)
 .focusColor_(Color.clear)
 .radius_(0)
 .border_(1)
-.enabled_(false);
+.enabled_(false)
+.resize_(1);
 
-w.view.decorator.shift(80, 0);
+w.view.decorator.shift(90, 0);
 
 addSnippet= SmoothButton(w, 20@20)
 .states_([
@@ -132,7 +137,8 @@ addSnippet= SmoothButton(w, 20@20)
 }
 .focusColor_(Color.clear)
 .radius_(0)
-.border_(1);
+.border_(1)
+.resize_(1);
 
 //snippetHeader= CompositeView(w, 730@50)
 //	.background_(Color.grey(0.9));
@@ -156,7 +162,7 @@ addSnippet= SmoothButton(w, 20@20)
 //
 //w.view.decorator.shift(0, -9);
 
-snippet= TextView(w, 730@250)
+snippet= TextView(w, 730@300)
 .action_{|me|
 	//		me.value.postln;
 }
@@ -174,7 +180,8 @@ snippet= TextView(w, 730@250)
 			me.syntaxColorize;
 			k.snippets[currentSnippet].snippet_(me.string);
 	});
-});
+})
+.resize_(5);
 
 w.view.decorator.nextLine;
 
@@ -193,7 +200,8 @@ snippetAddTag= SmoothButton(w, 60@20)
 }
 .focusColor_(Color.clear)
 .border_(1)
-.enabled_(false);
+.enabled_(false)
+.resize_(7);
 
 updateTagButtons= {|snippet|
 	// remove existing buttons
@@ -229,5 +237,7 @@ saveAll= SmoothButton(w, 100@20)
 	archive.writeClose;
 }
 .focusColor_(Color.clear)
-.border_(1);
+.border_(1)
+.resize_(7);
+
 )
