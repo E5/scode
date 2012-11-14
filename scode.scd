@@ -16,9 +16,9 @@ to a snippet.
 
 *******************************************************************************/
 
-var	tagList, snippetList, addTag, deleteTag, addSnippet, snippet, appliedTags,
+var	gui_tagList, gui_snippetList, gui_addTag, gui_deleteTag, gui_addSnippet, gui_snippetInfo, gui_snippet, appliedTags,
 currentTag, currentSnippet, updateTagButtons, snippetAddTag, snippetHeader,
-saveAll, archivePath, archive, snippetInfo;
+saveAll, archivePath, archive;
 
 archivePath= (thisProcess.nowExecutingPath.dirname ++ "/archiveTest.scarc").standardizePath;
 
@@ -41,23 +41,23 @@ w= Window("scode", Rect(318, 325, 750, 640)).front;
 w.addFlowLayout(10@10, 10@10);
 // w.minSize_(Size.new(200, 200));
 
-tagList= ListView(w, 140@220)
+gui_tagList= ListView(w, 140@220)
 .action_{|me|
 	currentTag= me.value;
 	// switch(me.value,
-	// 	0, {deleteTag.enabled= false;},
-	// 	1, {deleteTag.enabled= true;},
-	// 	2, {deleteTag.enabled= true;},
-	// 	3, {deleteTag.enabled= true;}
+	// 	0, {gui_deleteTag.enabled= false;},
+	// 	1, {gui_deleteTag.enabled= true;},
+	// 	2, {gui_deleteTag.enabled= true;},
+	// 	3, {gui_deleteTag.enabled= true;}
 	// );
 }
 .items_(["= ALL ="] ++ k.tags.asArray.sort)
 .resize_(1);
 
-snippetList= ListView(w, 580@220)
+gui_snippetList= ListView(w, 580@220)
 .action_{|me|
 	currentSnippet= me.value;
-	snippet.string= k.snippets[currentSnippet].snippet;
+	gui_snippet.string= k.snippets[currentSnippet].snippet;
 	updateTagButtons.value(currentSnippet);
 }
 .items_(k.snippets.collect({|item, i| item.title}).sort)
@@ -65,7 +65,7 @@ snippetList= ListView(w, 580@220)
 
 w.view.decorator.nextLine;
 
-addTag= SmoothButton(w, 20@20)
+gui_addTag= SmoothButton(w, 20@20)
 .states_([
 	[ '+', Color.white, Color.black.alpha_(0.25) ] ])
 .action_{|me|
@@ -74,7 +74,7 @@ addTag= SmoothButton(w, 20@20)
 		"please enter your new tag",
 		{ |newTag|
 			k.tags= k.tags.add(newTag);
-			tagList.items_(["= ALL ="] ++ k.tags.asArray.sort);
+			gui_tagList.items_(["= ALL ="] ++ k.tags.asArray.sort);
 		}
 	);
 }
@@ -84,9 +84,8 @@ addTag= SmoothButton(w, 20@20)
 .enabled_(false)
 .resize_(1);
 
-deleteTag= SmoothButton(w, 20@20)
-.states_([
-	[ '-', Color.white, Color.black.alpha_(0.25) ] ])
+gui_deleteTag= SmoothButton(w, 20@20)
+.states_([ [ '-', Color.white, Color.black.alpha_(0.25) ] ])
 .action_{|me|
 	SCAlert(
 		"Are you sure?\nThis will remove this tag from all snippets",
@@ -103,9 +102,8 @@ deleteTag= SmoothButton(w, 20@20)
 
 w.view.decorator.shift(90, 0);
 
-addSnippet= SmoothButton(w, 20@20)
-.states_([
-	[ '+', Color.white, Color.black.alpha_(0.25) ] ])
+gui_addSnippet= SmoothButton(w, 20@20)
+.states_([ [ '+', Color.white, Color.black.alpha_(0.25) ] ])
 .action_{|me|
 	SCRequestString(
 		"Untitled Snippet",
@@ -125,16 +123,16 @@ addSnippet= SmoothButton(w, 20@20)
 			// make space for Tags
 			k.snippets[currentSnippet].tags= Set[];
 
-			// update the snippetList
-			snippetList.items= k.snippets.collect({|item, i| item.title}).sort;
-			snippetList.value= currentSnippet;
-			snippet.font_(Font("HelveticaNeue-Italic", 14));
-			snippet.stringColor_(Color.grey);
+			// update the gui_snippetList
+			gui_snippetList.items= k.snippets.collect({|item, i| item.title}).sort;
+			gui_snippetList.value= currentSnippet;
+			gui_snippet.font_(Font("HelveticaNeue-Italic", 14));
+			gui_snippet.stringColor_(Color.grey);
 			k.snippets[currentSnippet].snippet= "empty snippet";
-			snippet.string_(k.snippets[currentSnippet].snippet);
+			gui_snippet.string_(k.snippets[currentSnippet].snippet);
 
 			// enable the text editor
-			snippet.enabled_(true);
+			gui_snippet.enabled_(true);
 
 			// enable the snippet's Add Tag button
 			snippetAddTag.enabled_(true);
@@ -148,11 +146,9 @@ addSnippet= SmoothButton(w, 20@20)
 
 w.view.decorator.shift(530, 0);
 
-snippetInfo= SmoothButton(w, 20@20)
-.states_([
-	[ 'i', Color.white, Color.blue.alpha_(0.25) ] ])
-.action_{|me|
-}
+gui_snippetInfo= SmoothButton(w, 20@20)
+.states_([ [ 'i', Color.white, Color.blue.alpha_(0.25) ] ])
+.action_{|me| }
 .focusColor_(Color.clear)
 .border_(1)
 .enabled_(false)
@@ -182,32 +178,31 @@ snippetInfo= SmoothButton(w, 20@20)
 //
 // w.view.decorator.shift(0, -9);
 
-snippet= TextView(w, 730@300)
-.action_{|me|
-	// me.value.postln;
-}
+gui_snippet= TextView(w, 730@300)
+.action_{|me| /*me.value.postln;*/ }
 .hasVerticalScroller_(true)
 .hasHorizontalScroller_(true)
 .autohidesScrollers_(true)
 .enabled_(false)
 .usesTabToFocusNextView_(false)
 .mouseUpAction_({|me, x, y, modifiers, buttonNumber, clickCount, pos|
-	if (me.string == "empty snippet", {
-		me.string= "";
-		me.stringColor_(Color.black);
-		me.font_(Font(Font.defaultMonoFace, 9));
+	if (me.string == "empty snippet",
+		{
+			me.string= "";
+			me.stringColor_(Color.black);
+			me.font_(Font(Font.defaultMonoFace, 9));
 		},{
 			me.syntaxColorize;
 			k.snippets[currentSnippet].snippet_(me.string);
-	});
+		}
+	);
 })
 .resize_(5);
 
 w.view.decorator.nextLine;
 
 snippetAddTag= SmoothButton(w, 60@20)
-.states_([
-	[ "Add...", Color.black, Color.clear ] ])
+.states_([ [ "Add...", Color.black, Color.clear ] ])
 .action_{|me|
 	SCRequestString(
 		"new tag",
@@ -234,16 +229,19 @@ updateTagButtons= {|snippet|
 
 	// collect the current snippet's tags
 	// build the tag buttons array
-	appliedTags= Array.fill(k.snippets[snippet].tags.size, {|i|
-		SmoothButton(w, 60@20)
-		.states_([
-			[k.snippets[snippet].tags.asArray[i], Color.black, Color.clear ],
-			[k.snippets[snippet].tags.asArray[i], Color.white, Color.black.alpha_(0.25)]
-		])
-		.action_{|me| }
-		.focusColor_(Color.clear)
-		.border_(1);
-	});
+	appliedTags= Array.fill(
+		k.snippets[snippet].tags.size,
+		{|i|
+			SmoothButton(w, 60@20)
+			.states_([
+				[k.snippets[snippet].tags.asArray[i], Color.black, Color.clear ],
+				[k.snippets[snippet].tags.asArray[i], Color.white, Color.black.alpha_(0.25)]
+			])
+			.action_{|me| }
+			.focusColor_(Color.clear)
+			.border_(1);
+		}
+	);
 
 };
 
