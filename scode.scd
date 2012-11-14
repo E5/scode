@@ -18,20 +18,24 @@ to a snippet.
 
 var	gui_tagList, gui_snippetList, gui_addTag, gui_deleteTag, gui_addSnippet, gui_snippetInfo, gui_snippet, appliedTags,
 currentTag, currentSnippet, updateTagButtons, snippetAddTag, snippetHeader,
-saveAll, archivePath, archive;
+saveAll, archivePath, archiveFile;
 
 archivePath= (thisProcess.nowExecutingPath.dirname ++ "/archiveTest.scarc").standardizePath;
 
 if (File.exists(archivePath),
 	{
-		archive= ZArchive.read(archivePath);
-		k= archive.readItem(Event);
-		archive.close;
+		archiveFile= ZArchive.read(archivePath);
+		~archive= archiveFile.readItem(Event);
+		// k= archiveFile.readItem(Event);
+		archiveFile.close;
 		"Archive exists.".postln;
 	},{
-		k= ();
-		k.tags= Set[];
-		k.snippets= [];
+		~archive= ();
+		~archive.tags= Set[];
+		~archive.snippets= [];
+		// k= ();
+		// k.tags= Set[];
+		// k.snippets= [];
 	}
 );
 
@@ -51,16 +55,16 @@ gui_tagList= ListView(w, 140@220)
 	// 	3, {gui_deleteTag.enabled= true;}
 	// );
 }
-.items_(["= ALL ="] ++ k.tags.asArray.sort)
+.items_(["= ALL ="] ++ ~archive.tags.asArray.sort)
 .resize_(1);
 
 gui_snippetList= ListView(w, 580@220)
 .action_{|me|
 	currentSnippet= me.value;
-	gui_snippet.string= k.snippets[currentSnippet].snippet;
+	gui_snippet.string= ~archive.snippets[currentSnippet].snippet;
 	updateTagButtons.value(currentSnippet);
 }
-.items_(k.snippets.collect({|item, i| item.title}).sort)
+.items_(~archive.snippets.collect({|item, i| item.title}).sort)
 .resize_(2);
 
 w.view.decorator.nextLine;
@@ -73,8 +77,8 @@ gui_addTag= SmoothButton(w, 20@20)
 		"new tag",
 		"please enter your new tag",
 		{ |newTag|
-			k.tags= k.tags.add(newTag);
-			gui_tagList.items_(["= ALL ="] ++ k.tags.asArray.sort);
+			~archive.tags= ~archive.tags.add(newTag);
+			gui_tagList.items_(["= ALL ="] ++ ~archive.tags.asArray.sort);
 		}
 	);
 }
@@ -111,25 +115,28 @@ gui_addSnippet= SmoothButton(w, 20@20)
 		{ |newSnippetTitle|
 
 			// add a new snippet Event
-			k.snippets= k.snippets.add(());
+			~archive.snippets= ~archive.snippets.add(());
 
 			// get the new snippet array size
-			x= k.snippets.size;
-			currentSnippet= x-1;
+			currentSnippet= ~archive.snippets.size -1;
+			// x= ~archive.snippets.size;
+			// currentSnippet= x-1;
 
 			// store the title
-			k.snippets[currentSnippet].title= newSnippetTitle;
+			~archive.snippets[currentSnippet].title= newSnippetTitle;
 
 			// make space for Tags
-			k.snippets[currentSnippet].tags= Set[];
+			~archive.snippets[currentSnippet].tags= Set[];
 
 			// update the gui_snippetList
-			gui_snippetList.items= k.snippets.collect({|item, i| item.title}).sort;
+			gui_snippetList.items= ~archive.snippets.collect({|item, i| item.title}).sort;
 			gui_snippetList.value= currentSnippet;
 			gui_snippet.font_(Font("HelveticaNeue-Italic", 14));
 			gui_snippet.stringColor_(Color.grey);
-			k.snippets[currentSnippet].snippet= "empty snippet";
-			gui_snippet.string_(k.snippets[currentSnippet].snippet);
+
+			// put default text into the new snippet
+			~archive.snippets[currentSnippet].snippet= "empty snippet";
+			gui_snippet.string_(~archive.snippets[currentSnippet].snippet);
 
 			// enable the text editor
 			gui_snippet.enabled_(true);
@@ -193,7 +200,7 @@ gui_snippet= TextView(w, 730@300)
 			me.font_(Font(Font.defaultMonoFace, 9));
 		},{
 			me.syntaxColorize;
-			k.snippets[currentSnippet].snippet_(me.string);
+			~archive.snippets[currentSnippet].snippet_(me.string);
 		}
 	);
 })
@@ -208,7 +215,7 @@ snippetAddTag= SmoothButton(w, 60@20)
 		"new tag",
 		"please enter your new tag",
 		{ |newTag|
-			k.snippets[currentSnippet].tags.add(newTag);
+			~archive.snippets[currentSnippet].tags.add(newTag);
 			updateTagButtons.value(currentSnippet);
 		}
 	);
@@ -230,12 +237,12 @@ updateTagButtons= {|snippet|
 	// collect the current snippet's tags
 	// build the tag buttons array
 	appliedTags= Array.fill(
-		k.snippets[snippet].tags.size,
+		~archive.snippets[snippet].tags.size,
 		{|i|
 			SmoothButton(w, 60@20)
 			.states_([
-				[k.snippets[snippet].tags.asArray[i], Color.black, Color.clear ],
-				[k.snippets[snippet].tags.asArray[i], Color.white, Color.black.alpha_(0.25)]
+				[~archive.snippets[snippet].tags.asArray[i], Color.black, Color.clear ],
+				[~archive.snippets[snippet].tags.asArray[i], Color.white, Color.black.alpha_(0.25)]
 			])
 			.action_{|me| }
 			.focusColor_(Color.clear)
@@ -250,9 +257,9 @@ w.view.decorator.nextLine;
 saveAll= SmoothButton(w, 100@20)
 .states_([ [ "Save All..." ] ])
 .action_{|me|
-	archive= ZArchive.write(archivePath);
-	archive.writeItem(k);
-	archive.writeClose;
+	archiveFile= ZArchive.write(archivePath);
+	archiveFile.writeItem(~archive);
+	archiveFile.writeClose;
 }
 .focusColor_(Color.clear)
 .border_(1)
