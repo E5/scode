@@ -14,7 +14,7 @@ if (File.exists(archivePath),
 		"Archive exists.".postln;
 	},{
 		~archive= ();
-		~archive.tags= Set[];
+		~archive.tagList= Set[];
 		~archive.snippets= [];
 	}
 );
@@ -34,7 +34,7 @@ gui_tagList= ListView(w, 140@220)
 	// 	3, {gui_deleteTag.enabled= true;}
 	// );
 }
-.items_(["= ALL ="] ++ ~archive.tags.asArray.sort)
+.items_(["= ALL ="] ++ ~archive.tagList.asArray.sort)
 .resize_(1);
 
 gui_snippetList= ListView(w, 580@220)
@@ -56,8 +56,9 @@ gui_addTag= SmoothButton(w, 20@20)
 		"new tag",
 		"please enter your new tag",
 		{ |newTag|
-			~archive.tags= ~archive.tags.add(newTag);
-			gui_tagList.items_(["= ALL ="] ++ ~archive.tags.asArray.sort);
+			~archive.tagList= ~archive.tagList.add(newTag);
+			gui_tagList.items_(["= ALL ="] ++ ~archive.tagList.asArray.sort);
+			// w.refresh;
 		}
 	);
 }
@@ -170,6 +171,8 @@ snippetAddTag= SmoothButton(w, 60@20)
 		{ |newTag|
 			~archive.snippets[currentSnippet].tags.add(newTag);
 			updateTagButtons.value(currentSnippet);
+			~archive.tagList= ~archive.tagList.add(newTag);
+			gui_tagList.items_(["= ALL ="] ++ ~archive.tagList.asArray.sort);
 		}
 	);
 }
