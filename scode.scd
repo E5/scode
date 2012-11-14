@@ -161,32 +161,8 @@ gui_snippetInfo= SmoothButton(w, 20@20)
 .enabled_(false)
 .resize_(3);
 
-// w.view.decorator.nextLine;
-//
-// snippetHeader= CompositeView(w, 730@50)
-// .background_(Color.grey(0.9));
-// snippetHeader.addFlowLayout(10@10, 10@10);
-//
-// SmoothButton(snippetHeader, 710@20)
-// .states_([[ \none, Color.white, Color.clear ] ])
-// .action_{|me| }
-// .focusColor_(Color.white)
-// // .focusColor_(Color.clear)
-// .radius_(0)
-// .border_(0)
-// .enabled_(true);
-//
-// snippetHeader.decorator.reset;
-//
-// StaticText(snippetHeader, 610@20)
-// .string_("XxX")
-// // .background_(Color.red)
-// .font_(Font( Font.defaultSansFace, 16 ).boldVariant);
-//
-// w.view.decorator.shift(0, -9);
-
 gui_snippet= TextView(w, 730@300)
-.action_{|me| /*me.value.postln;*/ }
+.action_{|me| }
 .hasVerticalScroller_(true)
 .hasHorizontalScroller_(true)
 .autohidesScrollers_(true)
