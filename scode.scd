@@ -1,20 +1,4 @@
 (
-/*******************************************************************************
-
-scode
-
-A utility for storing snippets of SC code. Uses tags for categorising. All code,
-tags and other information is stored in a big saveable Dictionary.
-
-Each entry in the snippet table should contain these fields:
-
-Title, Date, Author, Taglist, Snippet
-
-There will be a separate tags table that updates a list of all tags as they are
-added. This will enable the user to add a tag without necessarily assigning it
-to a snippet.
-
-*******************************************************************************/
 
 var	gui_tagList, gui_snippetList, gui_addTag, gui_deleteTag, gui_addSnippet, gui_snippetInfo, gui_snippet, appliedTags,
 currentTag, currentSnippet, updateTagButtons, snippetAddTag, snippetHeader,
@@ -26,16 +10,12 @@ if (File.exists(archivePath),
 	{
 		archiveFile= ZArchive.read(archivePath);
 		~archive= archiveFile.readItem(Event);
-		// k= archiveFile.readItem(Event);
 		archiveFile.close;
 		"Archive exists.".postln;
 	},{
 		~archive= ();
 		~archive.tags= Set[];
 		~archive.snippets= [];
-		// k= ();
-		// k.tags= Set[];
-		// k.snippets= [];
 	}
 );
 
@@ -43,7 +23,6 @@ currentTag= 0;
 
 w= Window("scode", Rect(318, 325, 750, 640)).front;
 w.addFlowLayout(10@10, 10@10);
-// w.minSize_(Size.new(200, 200));
 
 gui_tagList= ListView(w, 140@220)
 .action_{|me|
@@ -119,8 +98,6 @@ gui_addSnippet= SmoothButton(w, 20@20)
 
 			// get the new snippet array size
 			currentSnippet= ~archive.snippets.size -1;
-			// x= ~archive.snippets.size;
-			// currentSnippet= x-1;
 
 			// store the title
 			~archive.snippets[currentSnippet].title= newSnippetTitle;
