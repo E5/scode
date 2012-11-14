@@ -232,7 +232,7 @@ updateTagButtons= {|snippet|
 		w.refresh;
 	};
 
-	w.view.decorator.reset.shift(70, 520);
+	w.view.decorator.reset.shift(70, 570);
 
 	// collect the current snippet's tags
 	// build the tag buttons array
@@ -246,7 +246,8 @@ updateTagButtons= {|snippet|
 			])
 			.action_{|me| }
 			.focusColor_(Color.clear)
-			.border_(1);
+			.border_(1)
+			.resize_(7);
 		}
 	);
 
