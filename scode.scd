@@ -153,13 +153,20 @@ gui_snippet= TextView(w, 730@300)
 			me.stringColor_(Color.black);
 			// me.font_(Font(/*Font.defaultMonoFace*/"Monaco", 16));
 		},{
+			// syntaxColorize not working (qt?)
 			gui_snippet.syntaxColorize;
 			~archive.snippets[currentSnippet].snippet_(me.string);
 		}
 	);
 })
 .resize_(5)
-.font_(Font(/*Font.defaultMonoFace*/"Monaco", 16));
+.font_(Font("Monaco", 16))
+// .font_(Font(Font.defaultMonoFace, 16)) // .defaultMonoFace not working
+.keyDownAction_({| me, char, modifiers, unicode, keycode, key |
+	// syntaxColorize not working (qt?)
+	gui_snippet.syntaxColorize;
+	~archive.snippets[currentSnippet].snippet_(me.string);
+});
 
 w.view.decorator.nextLine;
 
