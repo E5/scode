@@ -109,7 +109,7 @@ gui_addSnippet= SmoothButton(w, 20@20)
 			// update the gui_snippetList
 			gui_snippetList.items= ~archive.snippets.collect({|item, i| item.title}).sort;
 			gui_snippetList.value= currentSnippet;
-			gui_snippet.font_(Font("HelveticaNeue-Italic", 14));
+			// gui_snippet.font_(Font("HelveticaNeue-Italic", 14));
 			gui_snippet.stringColor_(Color.grey);
 
 			// put default text into the new snippet
@@ -140,7 +140,7 @@ gui_snippetInfo= SmoothButton(w, 20@20)
 .resize_(3);
 
 gui_snippet= TextView(w, 730@300)
-.action_{|me| }
+.action_{|me| 666.postln }
 .hasVerticalScroller_(true)
 .hasHorizontalScroller_(true)
 .autohidesScrollers_(true)
@@ -151,14 +151,15 @@ gui_snippet= TextView(w, 730@300)
 		{
 			me.string= "";
 			me.stringColor_(Color.black);
-			me.font_(Font(Font.defaultMonoFace, 9));
+			// me.font_(Font(/*Font.defaultMonoFace*/"Monaco", 16));
 		},{
-			me.syntaxColorize;
+			gui_snippet.syntaxColorize;
 			~archive.snippets[currentSnippet].snippet_(me.string);
 		}
 	);
 })
-.resize_(5);
+.resize_(5)
+.font_(Font(/*Font.defaultMonoFace*/"Monaco", 16));
 
 w.view.decorator.nextLine;
 
