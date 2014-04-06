@@ -13,9 +13,13 @@ if (File.exists(archivePath),
 		archiveFile.close;
 		"Archive exists.".postln;
 	},{
-		~archive= ();
-		~archive.tagList= Set[];
-		~archive.snippets= [];
+		~archive= (
+			tagList: Set[],
+			snippets: [],
+		);
+		// ~archive= ();
+		// ~archive.tagList= Set[];
+		// ~archive.snippets= [];
 	}
 );
 
@@ -33,6 +37,7 @@ gui_tagList= ListView(w, 140@220)
 	// 	2, {gui_deleteTag.enabled= true;},
 	// 	3, {gui_deleteTag.enabled= true;}
 	// );
+	gui_snippetList.items_(~archive.snippets.select({|item, i| item.tags.includes(me.items[currentTag])}).sort)
 }
 .items_(["= ALL ="] ++ ~archive.tagList.asArray.sort)
 .resize_(1);
